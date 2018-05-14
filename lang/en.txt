@@ -3673,4 +3673,10 @@ IDENTICAL MOD LISTS LOADED!#
 #
 3003 Steam Achievements are disabled#
 
+# Mods
+3004 A bunch of equipment suddenly appears before you!
+3005 Your equipment shakes, but ultimately happens.
+3006 Your equipment pouch feels lighter.
+
+
 3099 end#
