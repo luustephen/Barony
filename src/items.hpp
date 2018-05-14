@@ -103,6 +103,7 @@ typedef enum ItemType
 	SCROLL_DESTROYARMOR,
 	SCROLL_TELEPORTATION,
 	SCROLL_SUMMON,
+	SCROLL_EQUIPMENT,
 	MAGICSTAFF_LIGHT,
 	MAGICSTAFF_DIGGING,
 	MAGICSTAFF_LOCKING,
@@ -413,6 +414,7 @@ void item_ScrollRepair(Item* item, int player);
 void item_ScrollDestroyArmor(Item* item, int player);
 void item_ScrollTeleportation(Item* item, int player);
 void item_ScrollSummon(Item* item, int player);
+void item_ScrollEquipment(Item* item, int player);
 void item_AmuletSexChange(Item* item, int player);
 void item_ToolTowel(Item*& item, int player);
 void item_ToolTinOpener(Item* item, int player);
