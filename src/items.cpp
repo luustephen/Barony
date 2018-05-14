@@ -1878,6 +1878,13 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
+		case SCROLL_EQUIPMENT:
+			item_ScrollEquipment(item, player);
+			if ( !players[player]->entity->isBlind() )
+			{
+				consumeItem(item);
+			}
+			break;
 		case MAGICSTAFF_LIGHT:
 		case MAGICSTAFF_DIGGING:
 		case MAGICSTAFF_LOCKING:

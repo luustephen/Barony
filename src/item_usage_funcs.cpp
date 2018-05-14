@@ -2375,6 +2375,107 @@ void item_ScrollSummon(Item* item, int player)
 	}
 }
 
+void item_ScrollEquipment(Item* item, int player)
+{
+	Item* target;
+	node_t* node, *nextnode;
+	int foundequip = 0;
+
+	if (players[player] == nullptr || players[player]->entity == nullptr)
+	{
+		return;
+	}
+
+	// this is a CLIENT function
+	if (player != clientnum)
+	{
+		return;
+	}
+
+	if (players[player]->entity->isBlind())
+	{
+		messagePlayer(player, language[775]);
+		return;
+	}
+
+	if ( player == clientnum )
+	{
+		conductIlliterate = false;
+	}
+	item->identified = 1;
+	messagePlayer(player, language[848]);
+	if ( item->beatitude >= 0 )
+	{
+		messagePlayer(player, language[3004]);
+		//dropItem(newItem(FOOD_FISH, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//dropItem(newItem(FOOD_BREAD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//dropItem(newItem(FOOD_APPLE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//dropItem(newItem(FOOD_CHEESE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//dropItem(newItem(FOOD_MEAT, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(WOODEN_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(QUARTERSTAFF, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRONZE_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRONZE_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRONZE_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRONZE_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_HALBERD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_BATTLEAXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(STEEL_SHIELD_RESISTANCE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(MIRROR_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		/*dropItem(newItem(GLOVES, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(GLOVES_DEXTERITY, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRACERS, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRACERS_CONSTITUTION, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(GAUNTLETS, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(GAUNTLETS_STRENGTH, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(ARTIFACT_GLOVES, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(CRYSTAL_GLOVES, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(BRASS_KNUCKLES, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(IRON_KNUCKLES, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		dropItem(newItem(SPIKED_GAUNTLETS, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		*/
+
+		return;
+	}
+	else
+	{
+		for ( node = stats[player]->inventory.first; node != NULL; node = nextnode )
+		{
+			nextnode = node->next;
+			target = (Item*)node->element;
+			if ( itemCategory(target) == WEAPON || itemCategory(target) == ARMOR )
+			{
+				if ( rand() % 2 == 0 )   // 50% chance of destroying that food item
+				{
+					consumeItem(target);
+				}
+				foundequip = 1;
+			}
+		}
+	}
+	if ( foundequip == 0 )
+	{
+		messagePlayer(player, language[3005]);
+	}
+	else
+	{
+		messagePlayer(player, language[3006]);
+	}
+}
+
 void item_ToolTowel(Item*& item, int player)
 {
 	if ( player == clientnum )
