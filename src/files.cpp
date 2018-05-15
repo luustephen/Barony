@@ -1302,7 +1302,7 @@ void physfsReloadSounds(bool reloadAll)
 				{
 #ifdef USE_FMOD
 					FMOD_Sound_Release(sounds[c]);    //Free the sound in FMOD
-#elif USE_OPENAL
+#elif define USE_OPENAL
 					OPENAL_Sound_Release(sounds[c]); //Free the sound in OPENAL
 #endif
 				}
@@ -1335,7 +1335,7 @@ void physfsReloadSounds(bool reloadAll)
 				{
 					printlog("warning: failed to load '%s' listed at line %d in sounds.txt\n", name, c + 1);
 				}
-#elif USE_OPENAL
+#elif define USE_OPENAL
 				if ( !reloadAll )
 				{
 					OPENAL_Sound_Release(sounds[c]);
