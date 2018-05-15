@@ -1,3 +1,4 @@
+#define BASE_DATA_DIR "./"
 
 #if 1
 	#define WINDOWS
