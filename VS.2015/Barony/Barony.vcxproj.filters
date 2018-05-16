@@ -452,6 +452,9 @@
     <ClInclude Include="..\..\src\cppfuncs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\VS-libs\Release\physfs.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\src\game.ico">
@@ -462,5 +465,120 @@
     <ResourceCompile Include="..\..\src\wingameicon.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\VS-libs\Release\fmodex.def">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\fmodex.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\fmodex.exp">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\fmodex.exports">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\fmodexL.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\fmodexp.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\libfreetype-6.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\libpng16.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\libpng16-16.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\oalinst.exe">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\ogg.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\OpenAL11CoreSDK.exe">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\SDL2.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\SDL2_image.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\SDL2_net.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\SDL2_ttf.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\steam_api.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\vorbis.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\vorbisfile.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\zlib.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\..\VS-libs\Release\zlib1.dll">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\VS-libs\Release\fmodex.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\fmodex_vc.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\libpng16.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\libpng16_static.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\ogg.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\OpenAL32.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\SDL2.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\SDL2_image.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\SDL2_net.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\SDL2_ttf.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\SDL2main.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\steam_api.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\vorbis.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\vorbisfile.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\zlib.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
+    <Library Include="..\..\VS-libs\Release\zlibstatic.lib">
+      <Filter>Resource Files</Filter>
+    </Library>
   </ItemGroup>
 </Project>

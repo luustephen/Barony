@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -15,19 +15,19 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>barony</RootNamespace>
     <ProjectName>barony_test</ProjectName>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -85,7 +85,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>OpenGL32.lib;glu32.lib;SDL2.lib;SDL2main.lib;SDL2_net.lib;SDL2_image.lib;fmodex_vc.lib;libpng.lib;zlib.lib;steam_api.lib;SDL2_ttf.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenGL32.lib;glu32.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\SDL2.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\SDL2main.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\SDL2_net.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\SDL2_image.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\fmodex_vc.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\libpng16_staticd.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\zlibstaticd.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\steam_api.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\SDL2_ttf.lib;C:\Users\GameOn\source\repos\Barony\VS-libs\Debug\physfs-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -232,12 +232,54 @@
     <ClInclude Include="..\..\src\stat.hpp" />
     <ClInclude Include="..\..\src\steam.hpp" />
     <ClInclude Include="..\..\VS-includes\Config.hpp" />
+    <ClInclude Include="..\..\VS-libs\Release\physfs.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\src\game.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\wingameicon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\VS-libs\Release\fmodex.def" />
+    <None Include="..\..\VS-libs\Release\fmodex.dll" />
+    <None Include="..\..\VS-libs\Release\fmodex.exp" />
+    <None Include="..\..\VS-libs\Release\fmodex.exports" />
+    <None Include="..\..\VS-libs\Release\fmodexL.dll" />
+    <None Include="..\..\VS-libs\Release\fmodexp.dll" />
+    <None Include="..\..\VS-libs\Release\libfreetype-6.dll" />
+    <None Include="..\..\VS-libs\Release\libpng16-16.dll" />
+    <None Include="..\..\VS-libs\Release\libpng16.dll" />
+    <None Include="..\..\VS-libs\Release\oalinst.exe" />
+    <None Include="..\..\VS-libs\Release\ogg.dll" />
+    <None Include="..\..\VS-libs\Release\OpenAL11CoreSDK.exe" />
+    <None Include="..\..\VS-libs\Release\SDL2.dll" />
+    <None Include="..\..\VS-libs\Release\SDL2_image.dll" />
+    <None Include="..\..\VS-libs\Release\SDL2_net.dll" />
+    <None Include="..\..\VS-libs\Release\SDL2_ttf.dll" />
+    <None Include="..\..\VS-libs\Release\steam_api.dll" />
+    <None Include="..\..\VS-libs\Release\vorbis.dll" />
+    <None Include="..\..\VS-libs\Release\vorbisfile.dll" />
+    <None Include="..\..\VS-libs\Release\zlib.dll" />
+    <None Include="..\..\VS-libs\Release\zlib1.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\VS-libs\Release\fmodex.lib" />
+    <Library Include="..\..\VS-libs\Release\fmodex_vc.lib" />
+    <Library Include="..\..\VS-libs\Release\libpng16.lib" />
+    <Library Include="..\..\VS-libs\Release\libpng16_static.lib" />
+    <Library Include="..\..\VS-libs\Release\ogg.lib" />
+    <Library Include="..\..\VS-libs\Release\OpenAL32.lib" />
+    <Library Include="..\..\VS-libs\Release\SDL2.lib" />
+    <Library Include="..\..\VS-libs\Release\SDL2main.lib" />
+    <Library Include="..\..\VS-libs\Release\SDL2_image.lib" />
+    <Library Include="..\..\VS-libs\Release\SDL2_net.lib" />
+    <Library Include="..\..\VS-libs\Release\SDL2_ttf.lib" />
+    <Library Include="..\..\VS-libs\Release\steam_api.lib" />
+    <Library Include="..\..\VS-libs\Release\vorbis.lib" />
+    <Library Include="..\..\VS-libs\Release\vorbisfile.lib" />
+    <Library Include="..\..\VS-libs\Release\zlib.lib" />
+    <Library Include="..\..\VS-libs\Release\zlibstatic.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
