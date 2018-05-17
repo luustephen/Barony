@@ -583,7 +583,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Release\lang\en.txt" />
-    <Text Include="..\Release\items\items.txt" />
-    <Text Include="..\Release\items\items_global.txt" />
+    <Text Include="..\..\items\items.txt" />
+    <Text Include="..\..\items\items_global.txt" />
   </ItemGroup>
 </Project>
