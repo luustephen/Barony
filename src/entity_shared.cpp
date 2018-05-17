@@ -335,6 +335,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"artifact_orb_green",
 	"tunic",
 	"hat_fez",
+	"scroll_equipment",
 	""
 };
 

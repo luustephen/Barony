@@ -1878,13 +1878,6 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
-		case SCROLL_EQUIPMENT:
-			item_ScrollEquipment(item, player);
-			if ( !players[player]->entity->isBlind() )
-			{
-				consumeItem(item);
-			}
-			break;
 		case MAGICSTAFF_LIGHT:
 		case MAGICSTAFF_DIGGING:
 		case MAGICSTAFF_LOCKING:
@@ -2062,6 +2055,13 @@ void useItem(Item* item, int player)
 		case ARTIFACT_ORB_PURPLE:
 		case ARTIFACT_ORB_GREEN:
 			equipItem(item, &stats[player]->weapon, player);
+			break;
+		case SCROLL_EQUIPMENT:
+			item_ScrollEquipment(item, player);
+			if (!players[player]->entity->isBlind())
+			{
+				consumeItem(item);
+			}
 			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);

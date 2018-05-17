@@ -103,7 +103,6 @@ typedef enum ItemType
 	SCROLL_DESTROYARMOR,
 	SCROLL_TELEPORTATION,
 	SCROLL_SUMMON,
-	SCROLL_EQUIPMENT,
 	MAGICSTAFF_LIGHT,
 	MAGICSTAFF_DIGGING,
 	MAGICSTAFF_LOCKING,
@@ -238,9 +237,10 @@ typedef enum ItemType
 	ARTIFACT_ORB_PURPLE,
 	ARTIFACT_ORB_GREEN,
 	TUNIC,
-	HAT_FEZ
+	HAT_FEZ,
+	SCROLL_EQUIPMENT
 } ItemType;
-const int NUMITEMS = 217;
+const int NUMITEMS = 218;
 
 //NOTE: If you change this, make sure to update NUMCATEGORIES in game.h to reflect the total number of categories. Not doing that will make bad things happen.
 typedef enum Category

@@ -156,6 +156,7 @@ int initGame()
 	fp = openDataFile("items/items.txt", "r");
 	for ( c = 0; !feof(fp); ++c )
 	{
+		printlog("%d | ",c);
 		if ( c > ARTIFACT_BOW )
 		{
 			newItems = c - ARTIFACT_BOW - 1;
