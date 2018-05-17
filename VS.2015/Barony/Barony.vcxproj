@@ -281,6 +281,11 @@
     <Library Include="..\..\VS-libs\Release\zlib.lib" />
     <Library Include="..\..\VS-libs\Release\zlibstatic.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Release\items\items.txt" />
+    <Text Include="..\Release\items\items_global.txt" />
+    <Text Include="..\Release\lang\en.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

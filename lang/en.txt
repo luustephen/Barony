@@ -2930,6 +2930,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2295 tunic#
 2296 fez#
 2297 fez#
+2298 scroll of equipment#
+2299 scroll#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

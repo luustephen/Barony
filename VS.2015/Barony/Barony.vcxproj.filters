@@ -581,4 +581,9 @@
       <Filter>Resource Files</Filter>
     </Library>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Release\lang\en.txt" />
+    <Text Include="..\Release\items\items.txt" />
+    <Text Include="..\Release\items\items_global.txt" />
+  </ItemGroup>
 </Project>

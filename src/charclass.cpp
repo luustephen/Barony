@@ -803,6 +803,11 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
+			// scroll of equipment
+			item = newItem(SCROLL_EQUIPMENT, EXCELLENT, 0, 1, 0, true, NULL);
+			item2 = itemPickup(player, item);
+			free(item);
+
 			// cheese
 			item = newItem(FOOD_CHEESE, SERVICABLE, 0, 1, 0, true, NULL);
 			item2 = itemPickup(player, item);
