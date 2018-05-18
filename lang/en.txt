@@ -3680,6 +3680,6 @@ IDENTICAL MOD LISTS LOADED!#
 3005 Your equipment shakes, but ultimately happens.#
 3006 Your equipment pouch feels lighter.#
 3007 You feel lucky.#
-
+3008 Select Scroll to Copy#
 
 3099 end#
