@@ -1374,6 +1374,10 @@ void item_ScrollBlank(Item* item, int player)
 
 	if (item->beatitude >= 0)
 	{
+		if (players[player]->entity->getINT() < 4) {
+			messagePlayer(player, language[3010]);
+			return;
+		}
 		// Uncurse an item
 		shootmode = false;
 		gui_mode = GUI_MODE_INVENTORY; // Reset the GUI to the inventory.
