@@ -808,6 +808,11 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
+			// potion of invincibility
+			item = newItem(POTION_INVINCIBLE, EXCELLENT, 0, 1, 0, true, NULL);
+			item2 = itemPickup(player, item);
+			free(item);
+
 			// cheese
 			item = newItem(FOOD_CHEESE, SERVICABLE, 0, 1, 0, true, NULL);
 			item2 = itemPickup(player, item);

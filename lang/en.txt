@@ -2932,6 +2932,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2297 fez#
 2298 scroll of equipment#
 2299 scroll#
+2300 potion of invincibility#
+2301 potion#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
@@ -3681,5 +3683,8 @@ IDENTICAL MOD LISTS LOADED!#
 3006 Your equipment pouch feels lighter.#
 3007 You feel lucky.#
 3008 Select Scroll to Copy#
+
+
+3011 You feel invincible.#
 
 3099 end#
