@@ -282,6 +282,9 @@
     <ClCompile Include="..\..\src\interface\removecurse.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
+	<ClCompile Include="..\..\src\interface\copyscroll.cpp">
+      <Filter>Source Files\interface</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\interface\screenshot.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
@@ -582,8 +585,8 @@
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Release\lang\en.txt" />
     <Text Include="..\..\items\items.txt" />
     <Text Include="..\..\items\items_global.txt" />
+    <Text Include="..\..\lang\en.txt" />
   </ItemGroup>
 </Project>
