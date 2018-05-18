@@ -847,3 +847,16 @@ void initRemoveCurseGUIControllerCode()
 	}
 }
 
+void initCopyScrollGUIControllerCode()
+{
+	if ( copyscroll_items[0] )
+	{
+		selectedCopyScrollSlot = 0;
+		warpMouseToSelectedCopyScrollSlot();
+	}
+	else
+	{
+		selectedCopyScrollSlot = -1;
+	}
+}
+

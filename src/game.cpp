@@ -3178,6 +3178,7 @@ int main(int argc, char** argv)
 							updateChestInventory();
 							updateIdentifyGUI();
 							updateRemoveCurseGUI();
+							updateCopyScrollGUI(clientnum);
 							updateBookGUI();
 							//updateRightSidebar();
 

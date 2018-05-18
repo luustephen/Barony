@@ -377,6 +377,18 @@ void select_inventory_slot(int x, int y)
 				warpMouseToSelectedRemoveCurseSlot();
 			}
 		}
+		else if (copyscrollgui_active)
+		{
+			warpInv = false;
+			y = INVENTORY_SIZEY - 1;
+
+			//Warp into Remove Curse GUI "inventory"...if there is anything there.
+			if (copyscroll_items[0])
+			{
+				selectedCopyScrollSlot = 0;
+				warpMouseToSelectedCopyScrollSlot();
+			}
+		}
 
 		if ( warpInv )   //Wrap around to top.
 		{

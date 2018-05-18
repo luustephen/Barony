@@ -181,6 +181,7 @@ public:
 
 void initIdentifyGUIControllerCode();
 void initRemoveCurseGUIControllerCode();
+void initCopyScrollGUIControllerCode();
 
 extern Player** players;
 //In the process of switching from the old entity player array, all of the old uses of player need to be hunted down and then corrected to account for the new array.

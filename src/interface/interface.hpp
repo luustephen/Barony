@@ -246,7 +246,6 @@ extern int removecursescroll;
 static const int NUM_REMOVE_CURSE_GUI_ITEMS = 4;
 extern Item* removecurse_items[NUM_REMOVE_CURSE_GUI_ITEMS];
 //extern SDL_Surface *removecurseGUI_img; //Nah, just use the identify GUI's image. It works well enough. No need to double the resources.
-
 void closeRemoveCurseGUI();
 void updateRemoveCurseGUI(); //Updates the remove curse GUI.
 void removecurseGUIRemoveCurse(Item* item); //Uncurse the given item.
@@ -255,6 +254,28 @@ void removecurseGUIRemoveCurse(Item* item); //Uncurse the given item.
 extern int selectedRemoveCurseSlot;
 void selectRemoveCurseSlot(int slot);
 void warpMouseToSelectedRemoveCurseSlot();
+
+//Copy scroll GUI definitions.
+#define COPYSCROLL_GUI_X (((xres / 2) - (inventoryChest_bmp->w / 2)) + removecursegui_offset_x)
+#define COPYSCROLL_GUI_Y (((yres / 2) - (inventoryChest_bmp->h / 2)) + removecursegui_offset_y)
+extern bool copyscrollgui_active;
+extern int copyscrollgui_offset_x;
+extern int copyscrollgui_offset_y;
+extern bool dragging_copyscrollGUI; //The copy scroll GUI is being dragged.
+extern int copyscroll;
+static const int NUM_COPY_SCROLL_GUI_ITEMS = 4;
+extern Item* copyscroll_items[NUM_COPY_SCROLL_GUI_ITEMS];
+//extern SDL_Surface *removecurseGUI_img; //Nah, just use the identify GUI's image. It works well enough. No need to double the resources.
+void closeCopyScrollGUI();
+void updateCopyScrollGUI(int player); //Updates the copy scroll GUI.
+void copyscrollGUICopyScroll(Item* item, int player); //Copy the scroll
+//void updateCopyScrollGUI(); //Updates the copy scroll GUI.
+//void copyscrollGUICopyScroll(Item* item); //Copy the scroll
+
+//Gamepad-support related stuff.
+extern int selectedCopyScrollSlot;
+void selectCopyScrollSlot(int slot);
+void warpMouseToSelectedCopyScrollSlot();
 
 
 /*

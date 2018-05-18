@@ -1351,6 +1351,8 @@ void item_ScrollLight(Item* item, int player)
 
 void item_ScrollBlank(Item* item, int player)
 {
+	Item* target = nullptr;
+
 	if (players[player] == nullptr || players[player]->entity == nullptr)
 	{
 		return;
@@ -1363,16 +1365,41 @@ void item_ScrollBlank(Item* item, int player)
 
 	if (players[player]->entity->isBlind())
 	{
-		messagePlayer(player, language[775]);
+		if (player == clientnum)
+		{
+			messagePlayer(player, language[775]);
+		}
 		return;
 	}
 
-	if (player == clientnum)
+	if (item->beatitude >= 0)
 	{
-		conductIlliterate = false;
+		// Uncurse an item
+		shootmode = false;
+		gui_mode = GUI_MODE_INVENTORY; // Reset the GUI to the inventory.
+		copyscrollgui_active = true;
+		removecursegui_active = false;
+		identifygui_active = false;
+
+		if (identifygui_active)
+		{
+			CloseIdentifyGUI();
+		}
+
+		if (removecursegui_active)
+		{
+			closeRemoveCurseGUI();
+		}
+
+		if (openedChest[player])
+		{
+			openedChest[player]->closeChest();
+		}
+
+		initCopyScrollGUIControllerCode();
+
+		return;
 	}
-	item->identified = 1;
-	messagePlayer(player, language[852]);
 }
 
 void item_ScrollEnchantWeapon(Item* item, int player)
