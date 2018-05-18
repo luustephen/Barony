@@ -284,7 +284,7 @@
   <ItemGroup>
     <Text Include="..\..\items\items.txt" />
     <Text Include="..\..\items\items_global.txt" />
-    <Text Include="..\Release\lang\en.txt" />
+    <Text Include="..\..\lang\en.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
