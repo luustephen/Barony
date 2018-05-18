@@ -582,8 +582,8 @@
     </Library>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\Release\lang\en.txt" />
     <Text Include="..\..\items\items.txt" />
     <Text Include="..\..\items\items_global.txt" />
+    <Text Include="..\..\lang\en.txt" />
   </ItemGroup>
 </Project>
