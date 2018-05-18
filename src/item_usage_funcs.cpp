@@ -2406,116 +2406,146 @@ void item_ScrollEquipment(Item* item, int player)
 	messagePlayer(player, language[848]);
 
 	//Small possibility to luckily roll artifact 
-	if (rand() & 100 == 1)
+	if (rand() & 100 == 1) 
+	{
+		messagePlayer(player, language[3007]);
 		item->beatitude = 4;
-
+	}
 
 	//Spawn Wood/Bronze equipment
 	if ( item->beatitude == 0 )
 	{
 		messagePlayer(player, language[3004]);
-		int numPossible = 6;
-		int* whichItem = new int[numPossible];
+		int numItems = 6;						//Number of items that can possibly spawn	
+		int maxPossible = rand() % numItems + 1;//Max number of items that actually spawn
+		int* whichItem = new int[maxPossible];
 
-		for ( int i = 0; i < numPossible; i++ )
+		for ( int i = 0; i < maxPossible; i++ )
 		{
-			whichItem[numPossible] = rand() % numPossible;
+			whichItem[i] = rand() % numItems;
 		}
 
-		if(whichItem[0] == 0 || whichItem[1] == 0 || whichItem[2] == 0 || whichItem[3] == 0 || whichItem[4] == 0 || whichItem[5] == 0 || whichItem[6] == 0)
-			dropItem(newItem(WOODEN_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 1 || whichItem[1] == 1 || whichItem[2] == 1 || whichItem[3] == 1 || whichItem[4] == 1 || whichItem[5] == 1 || whichItem[6] == 1)
-			dropItem(newItem(QUARTERSTAFF, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 2 || whichItem[1] == 2 || whichItem[2] == 2 || whichItem[3] == 2 || whichItem[4] == 2 || whichItem[5] == 2 || whichItem[6] == 2)
-			dropItem(newItem(BRONZE_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 3 || whichItem[1] == 3 || whichItem[2] == 3 || whichItem[3] == 3 || whichItem[4] == 3 || whichItem[5] == 3 || whichItem[6] == 3)
-			dropItem(newItem(BRONZE_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 4 || whichItem[1] == 4 || whichItem[2] == 4 || whichItem[3] == 4 || whichItem[4] == 4 || whichItem[5] == 4 || whichItem[6] == 4)
-			dropItem(newItem(BRONZE_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 5 || whichItem[1] == 5 || whichItem[2] == 5 || whichItem[3] == 5 || whichItem[4] == 5 || whichItem[5] == 5 || whichItem[6] == 5)
-			dropItem(newItem(BRONZE_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//To add another possible drop, increment numItems and add an if statement here
+		for ( int i = 0; i < maxPossible; i++ )
+		{
+			int k = 0;
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(WOODEN_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(QUARTERSTAFF, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(BRONZE_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(BRONZE_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(BRONZE_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+					dropItem(newItem(BRONZE_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		}
+
 		delete[] whichItem;
 		whichItem = NULL;
 		return;
 	}
+
 	//Spawn Iron equipment
 	else if (item->beatitude == 1)
 	{
 		messagePlayer(player, language[3004]);
-		int numPossible = 6;
-		int* whichItem = new int[numPossible];
+		int numItems = 5;						//Number of items that can possibly spawn
+		int maxPossible = rand() % 5 + 1;//Max number of items that actually spawn
+		int* whichItem = new int[maxPossible];
 
-		for (int i = 0; i < numPossible; i++)
+		for (int i = 0; i < maxPossible; i++)
 		{
-			whichItem[numPossible] = rand() % numPossible;
+			whichItem[i] = rand() % numItems;
 		}
 
-		if (whichItem[0] == 0 || whichItem[1] == 0 || whichItem[2] == 0 || whichItem[3] == 0 || whichItem[4] == 0 || whichItem[5] == 0 || whichItem[6] == 0)
-			dropItem(newItem(IRON_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 1 || whichItem[1] == 1 || whichItem[2] == 1 || whichItem[3] == 1 || whichItem[4] == 1 || whichItem[5] == 1 || whichItem[6] == 1)
-			dropItem(newItem(IRON_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 2 || whichItem[1] == 2 || whichItem[2] == 2 || whichItem[3] == 2 || whichItem[4] == 2 || whichItem[5] == 2 || whichItem[6] == 2)
-			dropItem(newItem(IRON_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 3 || whichItem[1] == 3 || whichItem[2] == 3 || whichItem[3] == 3 || whichItem[4] == 3 || whichItem[5] == 3 || whichItem[6] == 3)
-			dropItem(newItem(IRON_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 4 || whichItem[1] == 4 || whichItem[2] == 4 || whichItem[3] == 4 || whichItem[4] == 4 || whichItem[5] == 4 || whichItem[6] == 4)
-			dropItem(newItem(IRON_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//To add another possible drop, increment numItems and add an if statement here
+		for (int i = 0; i < maxPossible; i++)
+		{
+			int k = 0;
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(IRON_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(IRON_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(IRON_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(IRON_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(IRON_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		}
 		delete[] whichItem;
 		whichItem = NULL;
 		return;
 	}
+
 	//Spawn Steel equipment
 	else if (item->beatitude == 2)
 	{
 		messagePlayer(player, language[3004]);
-		int numPossible = 6;
-		int* whichItem = new int[numPossible];
+		int numItems = 6;						//Number of items that can possibly spawn
+		int maxPossible = rand() % 4 + 1;//Max number of items that actually spawn
+		int* whichItem = new int[maxPossible];
 
-		for (int i = 0; i < numPossible; i++)
+		for (int i = 0; i < maxPossible; i++)
 		{
-			whichItem[numPossible] = rand() % numPossible;
+			whichItem[i] = rand() % numItems;
 		}
 
-		if (whichItem[0] == 0 || whichItem[1] == 0 || whichItem[2] == 0 || whichItem[3] == 0 || whichItem[4] == 0 || whichItem[5] == 0 || whichItem[6] == 0)
-			dropItem(newItem(STEEL_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 1 || whichItem[1] == 1 || whichItem[2] == 1 || whichItem[3] == 1 || whichItem[4] == 1 || whichItem[5] == 1 || whichItem[6] == 1)
-			dropItem(newItem(STEEL_HALBERD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 2 || whichItem[1] == 2 || whichItem[2] == 2 || whichItem[3] == 2 || whichItem[4] == 2 || whichItem[5] == 2 || whichItem[6] == 2)
-			dropItem(newItem(STEEL_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 3 || whichItem[1] == 3 || whichItem[2] == 3 || whichItem[3] == 3 || whichItem[4] == 3 || whichItem[5] == 3 || whichItem[6] == 3)
-			dropItem(newItem(STEEL_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 4 || whichItem[1] == 4 || whichItem[2] == 4 || whichItem[3] == 4 || whichItem[4] == 4 || whichItem[5] == 4 || whichItem[6] == 4)
-			dropItem(newItem(STEEL_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 5 || whichItem[1] == 5 || whichItem[2] == 5 || whichItem[3] == 5 || whichItem[4] == 5 || whichItem[5] == 5 || whichItem[6] == 5)
-			dropItem(newItem(STEEL_SHIELD_RESISTANCE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//To add another possible drop, increment numItems and add an if statement here
+		for (int i = 0; i < maxPossible; i++)
+		{
+			int k = 0;
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_SHIELD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_HALBERD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_SWORD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_MACE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_AXE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(STEEL_SHIELD_RESISTANCE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		}
 		delete[] whichItem;
 		whichItem = NULL;
 		return;
 	}
+
 	//Spawn Crystal equipment
 	else if (item->beatitude == 3)
 	{
 		messagePlayer(player, language[3004]);
-		int numPossible = 6;
-		int* whichItem = new int[numPossible];
+		int numItems = 6;						//Number of items that can possibly spawn
+		int maxPossible = rand() % 3 + 1;//Max number of items that actually spawn
+		int* whichItem = new int[maxPossible];
 
-		for (int i = 0; i < numPossible; i++)
+		for (int i = 0; i < maxPossible; i++)
 		{
-			whichItem[numPossible] = rand() % numPossible;
+			whichItem[i] = rand() % numItems;
 		}
 
-		if (whichItem[0] == 0 || whichItem[1] == 0 || whichItem[2] == 0 || whichItem[3] == 0 || whichItem[4] == 0 || whichItem[5] == 0 || whichItem[6] == 0)
-			dropItem(newItem(CRYSTAL_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 1 || whichItem[1] == 1 || whichItem[2] == 1 || whichItem[3] == 1 || whichItem[4] == 1 || whichItem[5] == 1 || whichItem[6] == 1)
-			dropItem(newItem(CRYSTAL_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 2 || whichItem[1] == 2 || whichItem[2] == 2 || whichItem[3] == 2 || whichItem[4] == 2 || whichItem[5] == 2 || whichItem[6] == 2)
-			dropItem(newItem(CRYSTAL_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 3 || whichItem[1] == 3 || whichItem[2] == 3 || whichItem[3] == 3 || whichItem[4] == 3 || whichItem[5] == 3 || whichItem[6] == 3)
-			dropItem(newItem(CRYSTAL_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 4 || whichItem[1] == 4 || whichItem[2] == 4 || whichItem[3] == 4 || whichItem[4] == 4 || whichItem[5] == 4 || whichItem[6] == 4)
-			dropItem(newItem(CRYSTAL_BATTLEAXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		if (whichItem[0] == 5 || whichItem[1] == 5 || whichItem[2] == 5 || whichItem[3] == 5 || whichItem[4] == 5 || whichItem[5] == 5 || whichItem[6] == 5)
-			dropItem(newItem(MIRROR_SHIELD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//To add another possible drop, increment numItems and add an if statement here
+		for (int i = 0; i < maxPossible; i++)
+		{
+			int k = 0;
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(CRYSTAL_SHIELD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(CRYSTAL_SPEAR, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(CRYSTAL_SWORD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(CRYSTAL_MACE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(CRYSTAL_BATTLEAXE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(MIRROR_SHIELD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+		}
 		delete[] whichItem;
 		whichItem = NULL;
 		return;
@@ -2524,24 +2554,30 @@ void item_ScrollEquipment(Item* item, int player)
 	else if (item->beatitude >= 4)
 	{
 		messagePlayer(player, language[3004]);
-		int numPossible = 5;
-		int* whichItem = new int[numPossible];
+		int numItems = 5;						//Number of items that can possibly spawn
+		int maxPossible = rand() % 2 + 1;		//Max number of items that actually spawn
+		int* whichItem = new int[maxPossible];
 
-		for (int i = 0; i < numPossible; i++)
+		for (int i = 0; i < maxPossible; i++)
 		{
-			whichItem[numPossible] = rand() % numPossible;
+			whichItem[i] = rand() % numItems;
 		}
 
-		if (whichItem[0] == 0 || whichItem[1] == 0 || whichItem[2] == 0 || whichItem[3] == 0 || whichItem[4] == 0 || whichItem[5] == 0 || whichItem[6] == 0)
-			dropItem(newItem(ARTIFACT_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		else if (whichItem[0] == 1 || whichItem[1] == 1 || whichItem[2] == 1 || whichItem[3] == 1 || whichItem[4] == 1 || whichItem[5] == 1 || whichItem[6] == 1)
-			dropItem(newItem(ARTIFACT_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		else if (whichItem[0] == 2 || whichItem[1] == 2 || whichItem[2] == 2 || whichItem[3] == 2 || whichItem[4] == 2 || whichItem[5] == 2 || whichItem[6] == 2)
-			dropItem(newItem(ARTIFACT_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		else if (whichItem[0] == 3 || whichItem[1] == 3 || whichItem[2] == 3 || whichItem[3] == 3 || whichItem[4] == 3 || whichItem[5] == 3 || whichItem[6] == 3)
-			dropItem(newItem(ARTIFACT_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
-		else if (whichItem[0] == 4 || whichItem[1] == 4 || whichItem[2] == 4 || whichItem[3] == 4 || whichItem[4] == 4 || whichItem[5] == 4 || whichItem[6] == 4)
-			dropItem(newItem(ARTIFACT_BOW, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		//To add another possible drop, increment numItems and add an if statement here
+		for (int i = 0; i < maxPossible; i++)
+		{
+			int k = 0;
+			if ( whichItem[i] == k++ )
+				dropItem(newItem(ARTIFACT_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			else if ( whichItem[i] == k++ )
+				dropItem(newItem(ARTIFACT_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			else if ( whichItem[i] == k++ )
+				dropItem(newItem(ARTIFACT_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			else if ( whichItem[i] == k++ )
+				dropItem(newItem(ARTIFACT_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+			else if ( whichItem[i] == k++ )
+				dropItem(newItem(ARTIFACT_BOW, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+		}
 		delete[] whichItem;
 		whichItem = NULL;
 		return;
@@ -2554,7 +2590,7 @@ void item_ScrollEquipment(Item* item, int player)
 			target = (Item*)node->element;
 			if ( itemCategory(target) == WEAPON || itemCategory(target) == ARMOR )
 			{
-				if ( rand() % 2 == 0 )   // 50% chance of destroying that food item
+				if ( rand() % 2 == 0 )   // 50% chance of destroying that weapon/armor item
 				{
 					consumeItem(target);
 				}
