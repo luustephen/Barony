@@ -3683,6 +3683,8 @@ IDENTICAL MOD LISTS LOADED!#
 3006 Your equipment pouch feels lighter.#
 3007 You feel lucky.#
 3008 Select Scroll to Copy#
+3009 You successfully copied a scroll.#
+3010 You are not smart enough to copy a scroll.#
 
 
 3011 You feel invincible.#

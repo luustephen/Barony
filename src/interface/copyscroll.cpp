@@ -365,7 +365,19 @@ void copyscrollGUICopyScroll(Item* item, int player)
 	}
 
 	newItem(item->type, item->status, item->beatitude, 1, rand(), true, &stats[player]->inventory);
-	consumeItem(item);
+	list_t* copyInv = &stats[player]->inventory;
+	node_t* node = nullptr;
+	item = nullptr;
+	for (node = copyInv->first; node != nullptr; node = node->next)
+	{
+		item = (Item*)node->element;
+		if (item->type == SCROLL_BLANK)
+		{
+			consumeItem(item);
+			break;
+		}
+	}
+	messagePlayer(player, language[3009]);
 	closeCopyScrollGUI();
 }
 
