@@ -6295,9 +6295,15 @@ int AC(Stat* stat)
 			armor += 5 + stat->PROFICIENCIES[PRO_SHIELD] / 5;
 		}
 	}
-	if  (stat->EFFECTS[EFF_INVINCIBLE] == true ) 
+
+	if  ( stat->EFFECTS[EFF_STURDY] == true ) 
 	{
-		armor += 900;
+		armor = armor * 2;
+	}
+
+	if ( stat->EFFECTS[EFF_VULNERABLE] == true)
+	{
+		armor = armor / 2;
 	}
 
 	return armor;

@@ -2064,7 +2064,7 @@ void useItem(Item* item, int player)
 			}
 			break;
 		case POTION_INVINCIBLE:
-			item_PotionInvincible(item, players[player]->entity);
+			item_PotionSturdy(item, players[player]->entity);
 			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);

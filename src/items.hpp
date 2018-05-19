@@ -425,7 +425,7 @@ void item_Food(Item*& item, int player);
 void item_FoodTin(Item*& item, int player);
 void item_Gem(Item* item, int player);
 void item_Spellbook(Item*& item, int player);
-void item_PotionInvincible(Item*& item, Entity* entity);
+void item_PotionSturdy(Item*& item, Entity* entity);
 
 //General functions.
 Item* newItem(ItemType type, Status status, Sint16 beatitude, Sint16 count, Uint32 appearance, bool identified, list_t* inventory);

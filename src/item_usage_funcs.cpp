@@ -1159,7 +1159,7 @@ void item_PotionRestoreMagic(Item*& item, Entity* entity)
 	consumeItem(item);
 }
 
-void item_PotionInvincible(Item*& item, Entity* entity)
+void item_PotionSturdy(Item*& item, Entity* entity)
 {
 	if (!entity)
 	{
@@ -1208,26 +1208,16 @@ void item_PotionInvincible(Item*& item, Entity* entity)
 	{
 		//Cursed effect inebriates you.
 		messagePlayer(player, language[2900]);
-		messagePlayer(player, language[758]);
-		messagePlayer(player, language[759]);
-		if (player >= 0)
-		{
-			stats->EFFECTS_TIMERS[EFF_DRUNK] = 1000 + rand() % 300;
-			stats->EFFECTS_TIMERS[EFF_DRUNK] = std::max(300, stats->EFFECTS_TIMERS[EFF_DRUNK] - (entity->getPER() + entity->getCON()) * 40);
-		}
-		else
-		{
-			stats->EFFECTS_TIMERS[EFF_DRUNK] = 1000 + rand() % 300;
-		}
-		stats->HUNGER += 50;
-		entity->modHP(5);
+		messagePlayer(player, language[3012]);
+		stats->EFFECTS[EFF_VULNERABLE] = true;
+		stats->EFFECTS_TIMERS[EFF_VULNERABLE] = 1300;
 		serverUpdateEffects(player);
 	}
 	else
 	{
 		messagePlayer(player, language[3011]);
-		stats->EFFECTS[EFF_INVINCIBLE] = true;
-		stats->EFFECTS_TIMERS[EFF_INVINCIBLE] = 2000;
+		stats->EFFECTS[EFF_STURDY] = true;
+		stats->EFFECTS_TIMERS[EFF_STURDY] = 1300;
 		serverUpdateEffects(player);
 	}
 
