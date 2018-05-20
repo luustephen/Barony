@@ -2903,6 +2903,13 @@ void actPlayer(Entity* my)
 						entity->z = weaponarm->z + 1.5;
 						entity->pitch = weaponarm->pitch + .25;
 					}
+					else if (entity->sprite == items[FIREBOW].index)
+					{
+						entity->x = weaponarm->x - .5 * cos(weaponarm->yaw);
+						entity->y = weaponarm->y - .5 * sin(weaponarm->yaw);
+						entity->z = weaponarm->z + 1;
+						entity->pitch = weaponarm->pitch + .25;
+					}
 					else
 					{
 						entity->x = weaponarm->x + .5 * cos(weaponarm->yaw) * (PLAYER_ATTACK == 0);

@@ -2063,8 +2063,11 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
-		case POTION_INVINCIBLE:
+		case POTION_STURDY:
 			item_PotionSturdy(item, players[player]->entity);
+			break;
+		case FIREBOW:
+			equipItem(item, &stats[player]->weapon, player);
 			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
@@ -2563,6 +2566,10 @@ Sint32 Item::weaponGetAttack() const
 		attack += 6;
 	}
 	else if ( type == CRYSTAL_SHURIKEN )
+	{
+		attack += 8;
+	}
+	else if (type == FIREBOW)
 	{
 		attack += 8;
 	}
@@ -3169,6 +3176,7 @@ bool isRangedWeapon(const Item& item)
 		case SHORTBOW:
 		case CROSSBOW:
 		case ARTIFACT_BOW:
+		case FIREBOW:
 			return true;
 		default:
 			return false;

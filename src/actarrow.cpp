@@ -320,6 +320,18 @@ void actArrow(Entity* my)
 						}
 					}
 
+					if (my->arrowFireTime > 0 && damage > 0)
+					{
+						hitstats->poisonKiller = my->parent;
+						hit.entity->SetEntityOnFire();
+						if (hit.entity->behavior == &actPlayer)
+						{
+							Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 0);
+							messagePlayerColor(hit.entity->skill[2], color, language[590]);
+							serverUpdateEffects(hit.entity->skill[2]);
+						}
+					}
+
 					// update enemy bar for attacker
 					if ( !strcmp(hitstats->name, "") )
 					{

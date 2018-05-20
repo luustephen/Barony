@@ -281,6 +281,10 @@ void actHudWeapon(Entity* my)
 		{
 			rangedweapon = true;
 		}
+		else if (stats[clientnum]->weapon->type == FIREBOW)
+		{
+			rangedweapon = true;
+		}
 		else if ( stats[clientnum]->weapon->type == CROSSBOW )
 		{
 			rangedweapon = true;
@@ -527,7 +531,7 @@ void actHudWeapon(Entity* my)
 					}
 					else if ( rangedweapon )
 					{
-						if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW )
+						if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW )
 						{
 							if ( !stats[clientnum]->defending && !throwGimpTimer )
 							{
@@ -712,7 +716,7 @@ void actHudWeapon(Entity* my)
 			{
 				if ( stats[clientnum]->weapon )
 				{
-					if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW )
+					if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW)
 					{
 #ifdef SOUND
 						if ( bowDrawingSoundPlaying && bowDrawingSound )
@@ -1015,7 +1019,7 @@ void actHudWeapon(Entity* my)
 		{
 			if (stats[clientnum]->weapon)
 			{
-				if (stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW)
+				if (stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW )
 				{
 					if (bowFire)
 					{
@@ -1406,7 +1410,7 @@ void actHudWeapon(Entity* my)
 				my->pitch = HUDWEAPON_PITCH - camera_shakey2 / 200.f;
 				my->roll = HUDWEAPON_ROLL;
 			}
-			else if (item->type == SLING || item->type == SHORTBOW || item->type == ARTIFACT_BOW)
+			else if (item->type == SLING || item->type == SHORTBOW || item->type == ARTIFACT_BOW || item->type == FIREBOW )
 			{
 				my->x = 6 + HUDWEAPON_MOVEX;
 				my->y = 3 + HUDWEAPON_MOVEY;

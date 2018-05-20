@@ -808,8 +808,13 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
-			// potion of invincibility
-			item = newItem(POTION_INVINCIBLE, EXCELLENT, 0, 1, 0, true, NULL);
+			// potion of sturdiness
+			item = newItem(POTION_STURDY, EXCELLENT, 0, 1, 0, true, NULL);
+			item2 = itemPickup(player, item);
+			free(item);
+
+			// firebow
+			item = newItem(FIREBOW, EXCELLENT, 0, 1, 0, true, NULL);
 			item2 = itemPickup(player, item);
 			free(item);
 

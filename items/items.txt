@@ -2163,3 +2163,11 @@ items/images/PotionRed.png
 items/images/PotionGreen.png
 items/images/PotionPurple.png
 items/images/PotionWhite.png
+
+685
+686
+1
+WEAPON
+20
+160
+items/images/Firebow.png

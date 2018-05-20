@@ -328,6 +328,7 @@ public:
 	Sint32& arrowPower;
 	Sint32& arrowPoisonTime;
 	Sint32& arrowArmorPierce;
+	Sint32& arrowFireTime;
 
 	//--PUBLIC ITEM SKILLS--
 	Sint32& itemNotMoving; // skill[18]
@@ -819,8 +820,8 @@ void actAmbientParticleEffectIdle(Entity* my);
 
 //checks if a sprite falls in certain sprite ranges
 
-static const int NUM_ITEM_STRINGS = 222;
-static const int NUM_ITEM_STRINGS_BY_TYPE = 94;
+static const int NUM_ITEM_STRINGS = 223;
+static const int NUM_ITEM_STRINGS_BY_TYPE = 95;
 static const int NUM_EDITOR_SPRITES = 130;
 static const int NUM_EDITOR_TILES = 300;
 

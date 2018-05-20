@@ -2934,6 +2934,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2299 scroll#
 2300 potion of sturdiness#
 2301 potion#
+2302 firebow#
+2303 firebow#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

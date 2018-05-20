@@ -209,7 +209,8 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	actmagicOrbitStartZ(fskill[3]),
 	goldAmount(skill[0]),
 	goldAmbience(skill[1]),
-	goldSokoban(skill[2])
+	goldSokoban(skill[2]),
+	arrowFireTime(skill[3])
 {
 	int c;
 	// add the entity to the entity list
@@ -4220,7 +4221,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 			}
 
 			// ranged weapons (bows)
-			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW )
+			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW)
 			{
 				// damage weapon if applicable
 				if ( rand() % 50 == 0 && myStats->weapon->type != ARTIFACT_BOW )
@@ -4265,6 +4266,11 @@ void Entity::attack(int pose, int charge, Entity* target)
 				else if ( myStats->weapon->type == CROSSBOW )
 				{
 					entity = newEntity(167, 1, map.entities, nullptr); // bolt
+					playSoundEntity(this, 239 + rand() % 3, 96);
+				}
+				else if (myStats->weapon->type == FIREBOW)
+				{
+					entity = newEntity(688, 1, map.entities, nullptr); // fire arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else
@@ -7672,7 +7678,7 @@ int getWeaponSkill(Item* weapon)
 	{
 		return PRO_AXE;
 	}
-	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW )
+	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW || weapon->type == FIREBOW)
 	{
 		return PRO_RANGED;
 	}
@@ -8124,6 +8130,10 @@ bool Entity::hasRangedWeapon() const
 		return true;
 	}
 	else if ( itemCategory(myStats->weapon) == POTION )
+	{
+		return true;
+	}
+	else if (myStats->weapon->type == FIREBOW)
 	{
 		return true;
 	}
@@ -8814,6 +8824,13 @@ void Entity::handleHumanoidWeaponLimb(Entity* weaponLimb, Entity* weaponArmLimb)
 			weaponLimb->y = weaponArmLimb->y;
 			weaponLimb->z = weaponArmLimb->z + 1;
 			weaponLimb->pitch = weaponArmLimb->pitch;
+		}
+		else if (weaponLimb->sprite == items[FIREBOW].index)
+		{
+			weaponLimb->x = weaponArmLimb->x - 1.5 * cos(weaponArmLimb->yaw);
+			weaponLimb->y = weaponArmLimb->y - 1.5 * sin(weaponArmLimb->yaw);
+			weaponLimb->z = weaponArmLimb->z + 2;
+			weaponLimb->pitch = weaponArmLimb->pitch + .25;
 		}
 		else
 		{
@@ -10417,6 +10434,12 @@ void Entity::setRangedProjectileAttack(Entity& marksman, Stat& myStats)
 			{
 				this->arrowArmorPierce = 0;
 			}
+		}
+
+		if (myStats.weapon->type == FIREBOW)
+		{
+			// fire arrow
+			this->arrowFireTime = 540;    // 9 seconds of fire
 		}
 	}
 }

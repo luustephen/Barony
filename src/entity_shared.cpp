@@ -336,7 +336,8 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"tunic",
 	"hat_fez",
 	"scroll_equipment",
-	"potion_invincible",
+	"potion_sturdy",
+	"firebow",
 	""
 };
 
@@ -450,7 +451,8 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"artifact_orb_blue",
 		"artifact_orb_red",
 		"artifact_orb_purple",
-		"artifact_orb_green"
+		"artifact_orb_green",
+		"firebow"
 		""
 	},
 	{
