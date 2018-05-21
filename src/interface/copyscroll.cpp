@@ -364,8 +364,8 @@ void copyscrollGUICopyScroll(Item* item, int player)
 		return;
 	}
 
-	newItem(item->type, item->status, item->beatitude, 1, rand(), true, &stats[player]->inventory);
-	list_t* copyInv = &stats[player]->inventory;
+	newItem(item->type, item->status, item->beatitude, 1, rand(), true, &stats[clientnum]->inventory);
+	list_t* copyInv = &stats[clientnum]->inventory;
 	node_t* node = nullptr;
 	item = nullptr;
 	for (node = copyInv->first; node != nullptr; node = node->next)
@@ -377,7 +377,7 @@ void copyscrollGUICopyScroll(Item* item, int player)
 			break;
 		}
 	}
-	messagePlayer(player, language[3009]);
+	messagePlayer(clientnum, language[3009]);
 	closeCopyScrollGUI();
 }
 
