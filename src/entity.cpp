@@ -210,7 +210,7 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	goldAmount(skill[0]),
 	goldAmbience(skill[1]),
 	goldSokoban(skill[2]),
-	arrowFireTime(skill[3])
+	arrowFireTime(skill[6])
 {
 	int c;
 	// add the entity to the entity list
