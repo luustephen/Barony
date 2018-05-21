@@ -282,7 +282,7 @@
     <ClCompile Include="..\..\src\interface\removecurse.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
-	<ClCompile Include="..\..\src\interface\copyscroll.cpp">
+    <ClCompile Include="..\..\src\interface\copyscroll.cpp">
       <Filter>Source Files\interface</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\interface\screenshot.cpp">
@@ -463,6 +463,7 @@
     <Image Include="..\..\src\game.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\..\items\images\firebow.png" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\wingameicon.rc">
@@ -533,6 +534,10 @@
     <None Include="..\..\VS-libs\Release\zlib1.dll">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\..\models\particles\FireArrow.vox" />
+    <None Include="..\..\models\items\FirebowKnocked_FP.vox" />
+    <None Include="..\..\models\items\Firebow.vox" />
+    <None Include="..\..\models\items\Firebow_FP.vox" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\VS-libs\Release\fmodex.lib">
@@ -588,5 +593,6 @@
     <Text Include="..\..\items\items.txt" />
     <Text Include="..\..\items\items_global.txt" />
     <Text Include="..\..\lang\en.txt" />
+    <Text Include="..\..\models\models.txt" />
   </ItemGroup>
 </Project>

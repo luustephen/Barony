@@ -684,3 +684,6 @@ models/particles/BloodPuddleBlackSmall.vox
 models/particles/BloodDropBlack.vox
 models/items/fez.vox
 models/items/Firebow.vox
+models/items/Firebow_FP.vox
+models/items/FirebowKnocked_FP.vox
+models/particles/FireArrow.vox

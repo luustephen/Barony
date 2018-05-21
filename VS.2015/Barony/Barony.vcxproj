@@ -236,12 +236,17 @@
     <ClInclude Include="..\..\VS-libs\Release\physfs.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\items\images\firebow.png" />
     <Image Include="..\..\src\game.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\wingameicon.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\models\items\Firebow.vox" />
+    <None Include="..\..\models\items\FirebowKnocked_FP.vox" />
+    <None Include="..\..\models\items\Firebow_FP.vox" />
+    <None Include="..\..\models\particles\FireArrow.vox" />
     <None Include="..\..\VS-libs\Release\fmodex.def" />
     <None Include="..\..\VS-libs\Release\fmodex.dll" />
     <None Include="..\..\VS-libs\Release\fmodex.exp" />
@@ -286,6 +291,7 @@
     <Text Include="..\..\items\items.txt" />
     <Text Include="..\..\items\items_global.txt" />
     <Text Include="..\..\lang\en.txt" />
+    <Text Include="..\..\models\models.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
