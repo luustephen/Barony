@@ -551,7 +551,8 @@ void actHudWeapon(Entity* my)
 											messagePlayer(clientnum, "Fuck you");
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
 											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
-											serverUpdateEffects(clientnum);
+											//serverUpdateEffects(clientnum);
+											serverUpdateEffects(players[clientnum]->entity->skill[2]);
 										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
