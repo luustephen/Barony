@@ -770,9 +770,6 @@ void serverUpdateEntityFlag(Entity* entity, int flag)
 void serverUpdateEffects(int player)
 {
 	int j;
-	char message[20];
-	sprintf(message, "Test: %d\nClientNUM: %d\0", player, clientnum);
-	messagePlayer(clientnum, message);
 
 	if ( multiplayer != SERVER || clientnum == player )
 	{
