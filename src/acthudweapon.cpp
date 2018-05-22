@@ -546,7 +546,7 @@ void actHudWeapon(Entity* my)
 										char message[40];
 										sprintf(message, "clientnum: %d\0", clientnum);
 										messagePlayer(clientnum, message);
-										if ((int)players[clientnum]->entity->getDEX() >= 3) 
+										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
 										{
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
 											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;

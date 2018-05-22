@@ -1125,6 +1125,9 @@ void Entity::effectTimes()
 						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
 						break;
 					case EFF_FIRING:
+						char message[40];
+						sprintf(message, "clientnum: %d\0", clientnum);
+						messagePlayer(clientnum, message);
 						players[clientnum]->entity->attack(0, 0, nullptr);
 						break;
 					default:
