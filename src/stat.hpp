@@ -49,6 +49,7 @@ static const int EFF_HP_REGEN = 22;
 static const int EFF_MP_REGEN = 23;
 static const int EFF_STURDY = 24;
 static const int EFF_VULNERABLE = 25;
+static const int EFF_FIRING = 26;
 static const int NUMEFFECTS = 32;
 
 // stats

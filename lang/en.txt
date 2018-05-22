@@ -3688,6 +3688,7 @@ IDENTICAL MOD LISTS LOADED!#
 3009 You successfully copied a scroll.#
 3010 You are not smart enough to copy a scroll.#
 3011 You feel your armor harden around you.#
-3012 You armor feels paper thin.#
+3012 Your armor feels paper thin.#
+3013 You feel your armor return to normal.#
 
 3099 end#

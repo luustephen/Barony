@@ -1118,6 +1118,16 @@ void Entity::effectTimes()
 					case EFF_SLOW:
 						messagePlayer(player, language[604]); // "You return to your normal speed."
 						break;
+					case EFF_STURDY:
+						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
+						break;
+					case EFF_VULNERABLE:
+						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
+						break;
+					case EFF_FIRING:
+						dissipate = true;
+						players[clientnum]->entity->attack(0, 0, nullptr);
+						break;
 					default:
 						break;
 				}

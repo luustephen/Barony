@@ -542,6 +542,12 @@ void actHudWeapon(Entity* my)
 									{
 										bowFire = false;
 										players[clientnum]->entity->attack(0, 0, nullptr);
+										if ((int)players[clientnum]->entity->getDEX() >= 3) 
+										{
+											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
+											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
+											serverUpdateEffects(clientnum);
+										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
 									}
