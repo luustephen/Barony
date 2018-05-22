@@ -548,6 +548,7 @@ void actHudWeapon(Entity* my)
 										messagePlayer(clientnum, message);
 										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
 										{
+											messagePlayer(clientnum, "Fuck you");
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
 											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
 											serverUpdateEffects(clientnum);
