@@ -1125,8 +1125,7 @@ void Entity::effectTimes()
 						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
 						break;
 					case EFF_FIRING:
-						dissipate = true;
-						players[player]->entity->attack(0, 0, nullptr);
+						players[clientnum]->entity->attack(0, 0, nullptr);
 						break;
 					default:
 						break;
