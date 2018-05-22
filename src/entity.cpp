@@ -1126,7 +1126,7 @@ void Entity::effectTimes()
 						break;
 					case EFF_FIRING:
 						dissipate = true;
-						players[clientnum]->entity->attack(0, 0, nullptr);
+						players[player]->entity->attack(0, 0, nullptr);
 						break;
 					default:
 						break;
