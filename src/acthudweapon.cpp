@@ -20,6 +20,7 @@
 #include "collision.hpp"
 #include "player.hpp"
 #include "scores.hpp"
+#include <stdlib.h>
 
 Entity* hudweapon = NULL;
 Entity* hudarm = NULL;
@@ -542,6 +543,9 @@ void actHudWeapon(Entity* my)
 									{
 										bowFire = false;
 										players[clientnum]->entity->attack(0, 0, nullptr);
+										char message[40];
+										sprintf(message, "clientnum: %d\0", clientnum);
+										messagePlayer(clientnum, message);
 										if ((int)players[clientnum]->entity->getDEX() >= 3) 
 										{
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
