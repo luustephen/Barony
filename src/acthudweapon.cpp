@@ -551,10 +551,8 @@ void actHudWeapon(Entity* my)
 											messagePlayer(clientnum, "Fuck you");
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
 											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
-											for (int p = 0; p < MAXPLAYERS; p++)
-											{
-												serverUpdateEffects(p);
-											}
+											players[clientnum]->entity->effectTimes();
+											//serverUpdateEffectsForEntity(true);
 											//serverUpdateEffects(clientnum);
 											//serverUpdateEffects(players[clientnum]->entity->skill[2]);
 										}
