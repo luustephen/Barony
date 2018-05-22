@@ -543,15 +543,18 @@ void actHudWeapon(Entity* my)
 									{
 										bowFire = false;
 										players[clientnum]->entity->attack(0, 0, nullptr);
+										Entity* thisEntity = players[clientnum]->entity;
 										char message[40];
 										sprintf(message, "clientnum: %d\0", clientnum);
 										messagePlayer(clientnum, message);
 										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
 										{
 											messagePlayer(clientnum, "Fuck you");
-											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
-											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
-											players[clientnum]->entity->effectTimes();
+											thisEntity->getStats()->EFFECTS[EFF_FIRING] = true;
+											thisEntity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
+											//players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
+											//players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
+											//players[clientnum]->entity->effectTimes();
 											//serverUpdateEffectsForEntity(true);
 											//serverUpdateEffects(clientnum);
 											//serverUpdateEffects(players[clientnum]->entity->skill[2]);
