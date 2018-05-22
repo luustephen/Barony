@@ -552,7 +552,7 @@ void actHudWeapon(Entity* my)
 											players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
 											players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
 											//serverUpdateEffects(clientnum);
-											serverUpdateEffects(players[clientnum]->entity->skill[2]);
+											//serverUpdateEffects(players[clientnum]->entity->skill[2]);
 										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
