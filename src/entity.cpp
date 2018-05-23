@@ -658,7 +658,6 @@ Counts down effect timers and toggles effects whose timers reach zero
 
 void Entity::effectTimes()
 {
-	messagePlayer(clientnum, "asdasd");
 	Stat* myStats = this->getStats();
 	int player, c;
 	spell_t* spell = NULL;
@@ -677,7 +676,6 @@ void Entity::effectTimes()
 	{
 		player = -1;
 	}
-	messagePlayer(clientnum, "asdasd2");
 
 	spell_t* invisibility_hijacked = nullptr; //If NULL, function proceeds as normal. If points to something, it ignores the invisibility timer since a spell is doing things. //TODO: Incorporate the spell into isInvisible() instead?
 	spell_t* levitation_hijacked = nullptr; //If NULL, function proceeds as normal. If points to something, it ignore the levitation timer since a spell is doing things.
