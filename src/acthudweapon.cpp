@@ -553,7 +553,32 @@ void actHudWeapon(Entity* my)
 										bowFire = false;
 										players[clientnum]->entity->attack(0, 0, nullptr);
 										Entity* thisEntity = players[clientnum]->entity;
+										/*
 										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
+										{
+											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+										}
+										*/
+
+										if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 80)
+										{
+											projectileTimer = SDL_AddTimer(50, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(100, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(150, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+										}
+										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 60)
+										{
+											projectileTimer = SDL_AddTimer(70, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(140, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+										}
+										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 40)
+										{
+											projectileTimer = SDL_AddTimer(100, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+										}
+										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 20)
 										{
 											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
 										}
