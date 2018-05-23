@@ -555,7 +555,7 @@ void actHudWeapon(Entity* my)
 										Entity* thisEntity = players[clientnum]->entity;
 										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
 										{
-											projectileTimer = SDL_AddTimer(300, fireAnotherProjectile, NULL);
+											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
 										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
