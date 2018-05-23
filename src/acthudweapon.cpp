@@ -27,6 +27,15 @@ Entity* hudarm = NULL;
 bool weaponSwitch = false;
 bool shieldSwitch = false;
 
+SDL_TimerID projectileTimer;
+
+Uint32 fireAnotherProjectile(Uint32 interval, void* params)
+{
+	players[clientnum]->entity->attack(0, 0, nullptr);
+	SDL_RemoveTimer(projectileTimer);
+	return interval;
+}
+
 Sint32 throwGimpTimer = 0; // player cannot throw objects unless zero
 
 /*-------------------------------------------------------------------------------
@@ -544,20 +553,9 @@ void actHudWeapon(Entity* my)
 										bowFire = false;
 										players[clientnum]->entity->attack(0, 0, nullptr);
 										Entity* thisEntity = players[clientnum]->entity;
-										char message[40];
-										sprintf(message, "clientnum: %d\0", clientnum);
-										messagePlayer(clientnum, message);
 										if ((int)(players[clientnum]->entity->getDEX()) >= 3) 
 										{
-											messagePlayer(clientnum, "Fuck you");
-											thisEntity->getStats()->EFFECTS[EFF_FIRING] = true;
-											thisEntity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
-											//players[clientnum]->entity->getStats()->EFFECTS[EFF_FIRING] = true;
-											//players[clientnum]->entity->getStats()->EFFECTS_TIMERS[EFF_FIRING] = 10;
-											//players[clientnum]->entity->effectTimes();
-											//serverUpdateEffectsForEntity(true);
-											//serverUpdateEffects(clientnum);
-											//serverUpdateEffects(players[clientnum]->entity->skill[2]);
+											projectileTimer = SDL_AddTimer(300, fireAnotherProjectile, NULL);
 										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
