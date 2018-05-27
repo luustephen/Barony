@@ -687,3 +687,7 @@ models/items/Firebow.vox
 models/items/Firebow_FP.vox
 models/items/FirebowKnocked_FP.vox
 models/particles/FireArrow.vox
+models/items/Frostbow.vox
+models/items/Frostbow_FP.vox
+models/items/FrostbowKnocked_FP.vox
+models/particles/FrostArrow.vox
