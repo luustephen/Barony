@@ -241,8 +241,9 @@ typedef enum ItemType
 	SCROLL_EQUIPMENT,
 	POTION_STURDY,
 	FIREBOW,
+	FROSTBOW,
 } ItemType;
-const int NUMITEMS = 220;
+const int NUMITEMS = 221;
 
 //NOTE: If you change this, make sure to update NUMCATEGORIES in game.h to reflect the total number of categories. Not doing that will make bad things happen.
 typedef enum Category

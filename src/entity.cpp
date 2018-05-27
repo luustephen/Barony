@@ -210,7 +210,8 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	goldAmount(skill[0]),
 	goldAmbience(skill[1]),
 	goldSokoban(skill[2]),
-	arrowFireTime(skill[6])
+	arrowFireTime(skill[6]),
+	arrowFrostTime(skill[7])
 {
 	int c;
 	// add the entity to the entity list
@@ -4232,7 +4233,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 			}
 
 			// ranged weapons (bows)
-			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW)
+			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW || myStats->weapon->type == FROSTBOW )
 			{
 				// damage weapon if applicable
 				if ( rand() % 50 == 0 && myStats->weapon->type != ARTIFACT_BOW )
@@ -4282,6 +4283,11 @@ void Entity::attack(int pose, int charge, Entity* target)
 				else if (myStats->weapon->type == FIREBOW)
 				{
 					entity = newEntity(688, 1, map.entities, nullptr); // fire arrow
+					playSoundEntity(this, 239 + rand() % 3, 96);
+				}
+				else if (myStats->weapon->type == FROSTBOW)
+				{
+					entity = newEntity(692, 1, map.entities, nullptr); // frost arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else
@@ -7689,7 +7695,7 @@ int getWeaponSkill(Item* weapon)
 	{
 		return PRO_AXE;
 	}
-	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW || weapon->type == FIREBOW)
+	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW || weapon->type == FIREBOW || weapon->type == FROSTBOW )
 	{
 		return PRO_RANGED;
 	}
@@ -8144,7 +8150,11 @@ bool Entity::hasRangedWeapon() const
 	{
 		return true;
 	}
-	else if (myStats->weapon->type == FIREBOW)
+	else if ( myStats->weapon->type == FIREBOW )
+	{
+		return true;
+	}
+	else if ( myStats->weapon->type == FROSTBOW )
 	{
 		return true;
 	}
@@ -8837,6 +8847,13 @@ void Entity::handleHumanoidWeaponLimb(Entity* weaponLimb, Entity* weaponArmLimb)
 			weaponLimb->pitch = weaponArmLimb->pitch;
 		}
 		else if (weaponLimb->sprite == items[FIREBOW].index)
+		{
+			weaponLimb->x = weaponArmLimb->x - 1.5 * cos(weaponArmLimb->yaw);
+			weaponLimb->y = weaponArmLimb->y - 1.5 * sin(weaponArmLimb->yaw);
+			weaponLimb->z = weaponArmLimb->z + 2;
+			weaponLimb->pitch = weaponArmLimb->pitch + .25;
+		}
+		else if (weaponLimb->sprite == items[FROSTBOW].index)
 		{
 			weaponLimb->x = weaponArmLimb->x - 1.5 * cos(weaponArmLimb->yaw);
 			weaponLimb->y = weaponArmLimb->y - 1.5 * sin(weaponArmLimb->yaw);
@@ -10447,10 +10464,16 @@ void Entity::setRangedProjectileAttack(Entity& marksman, Stat& myStats)
 			}
 		}
 
-		if (myStats.weapon->type == FIREBOW)
+		if (myStats.weapon->type == FIREBOW )
 		{
 			// fire arrow
 			this->arrowFireTime = 540;    // 9 seconds of fire
+		}
+
+		if (myStats.weapon->type == FROSTBOW )
+		{
+			// fire arrow
+			this->arrowFrostTime = 540;    // 9 seconds of fire
 		}
 	}
 }

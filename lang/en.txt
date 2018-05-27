@@ -2936,6 +2936,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2301 potion#
 2302 firebow#
 2303 firebow#
+2304 frostbow#
+2305 frostbow#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

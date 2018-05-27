@@ -321,6 +321,10 @@ void actHudWeapon(Entity* my)
 		{
 			rangedweapon = true;
 		}
+		else if (stats[clientnum]->weapon->type == FROSTBOW)
+		{
+			rangedweapon = true;
+		}
 	}
 
 	// select model
@@ -559,7 +563,7 @@ void actHudWeapon(Entity* my)
 					}
 					else if ( rangedweapon )
 					{
-						if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW )
+						if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW || stats[clientnum]->weapon->type == FROSTBOW )
 						{
 							if ( !stats[clientnum]->defending && !throwGimpTimer )
 							{
@@ -768,7 +772,7 @@ void actHudWeapon(Entity* my)
 			{
 				if ( stats[clientnum]->weapon )
 				{
-					if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW)
+					if ( stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW || stats[clientnum]->weapon->type == FROSTBOW )
 					{
 #ifdef SOUND
 						if ( bowDrawingSoundPlaying && bowDrawingSound )
@@ -1071,7 +1075,7 @@ void actHudWeapon(Entity* my)
 		{
 			if (stats[clientnum]->weapon)
 			{
-				if (stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW )
+				if (stats[clientnum]->weapon->type == SLING || stats[clientnum]->weapon->type == SHORTBOW || stats[clientnum]->weapon->type == ARTIFACT_BOW || stats[clientnum]->weapon->type == FIREBOW || stats[clientnum]->weapon->type == FROSTBOW )
 				{
 					if (bowFire)
 					{
@@ -1462,7 +1466,7 @@ void actHudWeapon(Entity* my)
 				my->pitch = HUDWEAPON_PITCH - camera_shakey2 / 200.f;
 				my->roll = HUDWEAPON_ROLL;
 			}
-			else if (item->type == SLING || item->type == SHORTBOW || item->type == ARTIFACT_BOW || item->type == FIREBOW )
+			else if (item->type == SLING || item->type == SHORTBOW || item->type == ARTIFACT_BOW || item->type == FIREBOW || item->type == FROSTBOW)
 			{
 				my->x = 6 + HUDWEAPON_MOVEX;
 				my->y = 3 + HUDWEAPON_MOVEY;

@@ -814,7 +814,7 @@ void initClass(int player)
 			free(item);
 
 			// firebow
-			item = newItem(FIREBOW, EXCELLENT, 0, 1, 0, true, NULL);
+			item = newItem(FROSTBOW, EXCELLENT, 0, 1, 0, true, NULL);
 			item2 = itemPickup(player, item);
 			free(item);
 

@@ -2171,3 +2171,11 @@ WEAPON
 20
 160
 items/images/Firebow.png
+
+689
+690
+1
+WEAPON
+20
+160
+items/images/Frostbow.png

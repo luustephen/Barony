@@ -332,6 +332,18 @@ void actArrow(Entity* my)
 						}
 					}
 
+					if (my->arrowFrostTime > 0 && damage > 0)
+					{
+						hitstats->EFFECTS[EFF_SLOW] = true;
+						hitstats->EFFECTS_TIMERS[EFF_SLOW] = my->arrowFrostTime;
+						if (hit.entity->behavior == &actPlayer)
+						{
+							Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 0);
+							messagePlayerColor(hit.entity->skill[2], color, language[2902]);
+							serverUpdateEffects(hit.entity->skill[2]);
+						}
+					}
+
 					// update enemy bar for attacker
 					if ( !strcmp(hitstats->name, "") )
 					{
