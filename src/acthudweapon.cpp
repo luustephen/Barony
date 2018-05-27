@@ -21,18 +21,36 @@
 #include "player.hpp"
 #include "scores.hpp"
 #include <stdlib.h>
+#include <chrono>
+#include <thread>
 
 Entity* hudweapon = NULL;
 Entity* hudarm = NULL;
 bool weaponSwitch = false;
 bool shieldSwitch = false;
 
-SDL_TimerID projectileTimer;
+SDL_TimerID projectileTimer0;
+SDL_TimerID projectileTimer1;
+SDL_TimerID projectileTimer2;
+SDL_TimerID projectileTimer3;
+SDL_TimerID projectileTimer4;
+
+int numProjectilesFired = 0;
 
 Uint32 fireAnotherProjectile(Uint32 interval, void* params)
 {
-	players[clientnum]->entity->attack(0, 0, nullptr);
-	SDL_RemoveTimer(projectileTimer);
+	//for (int i = 0; i < (int)params; i += 200/(int)params )
+	if (numProjectilesFired >= (int)params)
+	{
+		SDL_RemoveTimer(projectileTimer0);
+		numProjectilesFired = 0;
+	}
+	else
+	{
+		players[clientnum]->entity->attack(0, 0, nullptr);
+		numProjectilesFired++;
+	}
+
 	return interval;
 }
 
@@ -562,25 +580,19 @@ void actHudWeapon(Entity* my)
 
 										if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 80)
 										{
-											projectileTimer = SDL_AddTimer(50, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(100, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(150, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+											projectileTimer0 = SDL_AddTimer(50, fireAnotherProjectile, (void*)4);
 										}
 										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 60)
 										{
-											projectileTimer = SDL_AddTimer(70, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(140, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+											projectileTimer0 = SDL_AddTimer(70, fireAnotherProjectile, (void*)3);
 										}
 										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 40)
 										{
-											projectileTimer = SDL_AddTimer(100, fireAnotherProjectile, NULL);
-											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+											projectileTimer0 = SDL_AddTimer(100, fireAnotherProjectile, (void*)2);
 										}
 										else if ((int)players[clientnum]->entity->getStats()->PROFICIENCIES[PRO_RANGED] >= 20)
 										{
-											projectileTimer = SDL_AddTimer(200, fireAnotherProjectile, NULL);
+											projectileTimer0 = SDL_AddTimer(200, fireAnotherProjectile, (void*)1);
 										}
 										HUDWEAPON_MOVEX = 3;
 										throwGimpTimer = TICKS_PER_SECOND / 4;
