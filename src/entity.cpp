@@ -10473,7 +10473,7 @@ void Entity::setRangedProjectileAttack(Entity& marksman, Stat& myStats)
 		if (myStats.weapon->type == FROSTBOW )
 		{
 			// fire arrow
-			this->arrowFrostTime = 540;    // 9 seconds of fire
+			this->arrowFrostTime = 120;    // 2 seconds of slow
 		}
 	}
 }
