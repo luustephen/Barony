@@ -339,6 +339,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"potion_sturdy",
 	"firebow",
 	"frostbow",
+	"scroll_war",
 	""
 };
 

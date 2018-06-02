@@ -37,7 +37,8 @@ bool itemIsScroll(Item* item)
 		SCROLL_DESTROYARMOR,
 		SCROLL_TELEPORTATION,
 		SCROLL_SUMMON,
-		SCROLL_EQUIPMENT
+		SCROLL_EQUIPMENT,
+		SCROLL_WAR
 	}; // Purposefully leave out blank scroll
 	for (ItemType i : scrolls)
 	{

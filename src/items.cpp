@@ -2072,6 +2072,13 @@ void useItem(Item* item, int player)
 		case FROSTBOW:
 			equipItem(item, &stats[player]->weapon, player);
 			break;
+		case SCROLL_WAR:
+			item_ScrollWar(item, player);
+			if (!players[player]->entity->isBlind())
+			{
+				consumeItem(item);
+			}
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;

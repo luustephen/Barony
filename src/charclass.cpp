@@ -808,6 +808,11 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
+			// scroll of war
+			item = newItem(SCROLL_WAR, EXCELLENT, 0, 1, 0, true, NULL);
+			item2 = itemPickup(player, item);
+			free(item);
+
 			// potion of sturdiness
 			item = newItem(POTION_STURDY, EXCELLENT, 0, 1, 0, true, NULL);
 			item2 = itemPickup(player, item);

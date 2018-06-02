@@ -2938,6 +2938,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2303 firebow#
 2304 frostbow#
 2305 frostbow#
+2306 scroll of war#
+2307 scroll#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
@@ -3692,5 +3694,6 @@ IDENTICAL MOD LISTS LOADED!#
 3011 You feel your armor harden around you.#
 3012 Your armor feels paper thin.#
 3013 You feel your armor return to normal.#
+3014 An all out war starts!#
 
 3099 end#

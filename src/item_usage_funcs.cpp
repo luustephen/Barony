@@ -2473,6 +2473,94 @@ void item_ScrollSummon(Item* item, int player)
 	}
 }
 
+void item_ScrollWar(Item* item, int player)
+{
+	// server only function
+	if (players[player] == nullptr || players[player]->entity == nullptr)
+	{
+		return;
+	}
+	if (multiplayer == CLIENT)
+	{
+		return;
+	}
+
+	if (players[player]->entity->isBlind())
+	{
+		if (player == clientnum)
+		{
+			messagePlayer(player, language[775]);
+		}
+		return;
+	}
+
+	if (player == clientnum)
+	{
+		conductIlliterate = false;
+	}
+	item->identified = 1;
+	messagePlayer(player, language[848]);
+
+	playSoundEntity(players[player]->entity, 153, 64);
+	Uint32 numCreatures = rand() % 2 + 4;
+	int numMinotaur = 1;
+	Monster creature = HUMAN;
+
+	if (item->beatitude <= -2)
+	{
+		// spawn minotaur
+		numMinotaur = 3;
+	}
+	else if (item->beatitude == -1)
+	{
+		// spawn minotaur
+		numMinotaur = 2;
+	}
+	else if (item->beatitude == 0)
+	{
+		// summon zap brigadiers
+		numCreatures = rand() % 2 + 4;
+	}
+	else if (item->beatitude == 1)
+	{
+		// summon zap brigadiers
+		numCreatures = rand() % 2 + 5;
+	}
+	else if (item->beatitude >= 2)
+	{
+		// summon zap brigadiers
+		numCreatures = rand() % 2 + 6;
+	}
+
+	int i;
+	bool spawnedMonster = false;
+	bool spawnedMinotaur = false;
+	for (i = 0; i < numCreatures; ++i)
+	{
+		Entity* monster = summonMonster(creature, floor(players[player]->entity->x / 16) * 16 + 8, floor(players[player]->entity->y / 16) * 16 + 8);
+		if (monster)
+		{
+			spawnedMonster = true;
+			if (creature == HUMAN)
+			{
+				monster->skill[29] = 1; // zap brigadier
+			}
+		}
+	}
+	for (i = 0; i < numMinotaur; ++i)
+	{
+		Entity* monster = summonMonster(MINOTAUR, floor(players[player]->entity->x / 16) * 16 + 8, floor(players[player]->entity->y / 16) * 16 + 8);
+		if (monster)
+		{
+			spawnedMinotaur = true;
+		}
+	}
+	if (spawnedMonster && spawnedMinotaur)
+	{
+		messagePlayer(player, language[3014]);
+	}
+}
+
 void item_ScrollEquipment(Item* item, int player)
 {
 	Item* target;
