@@ -3698,6 +3698,7 @@ IDENTICAL MOD LISTS LOADED!#
 3013 You feel your armor return to normal.#
 3014 An all out war starts!#
 3015 A wave of chaos passes over you then subsides.#
-3016 An inferno spews forth from your mouth!.#
+3016 An inferno spews forth from your mouth!#
+3017 You can't drink when spitting flames!#
 
 3099 end#

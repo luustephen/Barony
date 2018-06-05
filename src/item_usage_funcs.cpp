@@ -23,6 +23,29 @@
 #include "monster.hpp"
 #include "player.hpp"
 
+SDL_TimerID projectileTimer;
+int numFireball = 0;
+
+Uint32 fireFireball(Uint32 interval, void* params)
+{
+	int numToFire = 5; //Number of fireballs to fire from fire breathing potion
+	//for (int i = 0; i < (int)params; i += 200/(int)params )
+	if (numFireball >= numToFire)
+	{
+		SDL_RemoveTimer(projectileTimer);
+		numFireball = 0;
+	}
+	else
+	{
+		playSoundEntity(players[(int)params]->entity, 153, 128); //Fireball sound
+		playSoundEntity(players[(int)params]->entity, 78, 100); //Throwup sound
+		castSpell(players[(int)params]->entity->getUID(), &spell_fireball, true, false);
+		numFireball++;
+	}
+
+	return interval;
+}
+
 void item_PotionWater(Item*& item, Entity* entity)
 {
 	if ( !entity )
@@ -2841,13 +2864,15 @@ void item_PotionFireBreath(Item*& item, Entity* entity)
 		consumeItem(item);
 		return;
 	}
+	if (numFireball != 0) {
+		messagePlayer(player, language[3017]);
+		return;
+	}
 
 	messagePlayer(player, language[3016]);
-	int mana = stats->MP;
 	playSoundEntity(players[player]->entity, 153, 128); //Fireball sound
 	playSoundEntity(players[player]->entity, 78, 100); //Throwup sound
-	castSpell(players[player]->entity->getUID(), &spell_fireball, true, false);
-	stats->MP = mana;
+	projectileTimer = SDL_AddTimer(200, fireFireball, (void*)player);
 
 	// play drink sound
 	playSoundEntity(entity, 52, 64);
