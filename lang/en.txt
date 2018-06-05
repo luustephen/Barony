@@ -2940,6 +2940,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2305 frostbow#
 2306 scroll of war#
 2307 scroll#
+2308 potion of fire breathing#
+2309 potion#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
@@ -3695,5 +3697,7 @@ IDENTICAL MOD LISTS LOADED!#
 3012 Your armor feels paper thin.#
 3013 You feel your armor return to normal.#
 3014 An all out war starts!#
+3015 A wave of chaos passes over you then subsides.#
+3016 An inferno spews forth from your mouth!.#
 
 3099 end#

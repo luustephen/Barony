@@ -243,8 +243,9 @@ typedef enum ItemType
 	FIREBOW,
 	FROSTBOW,
 	SCROLL_WAR,
+	POTION_FIREBREATH,
 } ItemType;
-const int NUMITEMS = 222;
+const int NUMITEMS = 223;
 
 //NOTE: If you change this, make sure to update NUMCATEGORIES in game.h to reflect the total number of categories. Not doing that will make bad things happen.
 typedef enum Category
@@ -430,6 +431,7 @@ void item_FoodTin(Item*& item, int player);
 void item_Gem(Item* item, int player);
 void item_Spellbook(Item*& item, int player);
 void item_PotionSturdy(Item*& item, Entity* entity);
+void item_PotionFireBreath(Item*& item, Entity* entity);
 
 //General functions.
 Item* newItem(ItemType type, Status status, Sint16 beatitude, Sint16 count, Uint32 appearance, bool identified, list_t* inventory);

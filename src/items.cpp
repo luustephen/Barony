@@ -2079,6 +2079,9 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
+		case POTION_FIREBREATH:
+			item_PotionFireBreath(item, players[player]->entity);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;

@@ -2187,3 +2187,15 @@ SCROLL
 5
 150
 items/images/Scroll.png
+
+50
+50
+5
+POTION
+10
+200
+items/images/PotionBlue.png
+items/images/PotionYellow.png
+items/images/PotionOrange.png
+items/images/PotionRed.png
+items/images/PotionWhite.png

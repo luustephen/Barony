@@ -2559,6 +2559,9 @@ void item_ScrollWar(Item* item, int player)
 	{
 		messagePlayer(player, language[3014]);
 	}
+	else {
+		messagePlayer(player, language[3015]);
+	}
 }
 
 void item_ScrollEquipment(Item* item, int player)
@@ -2792,6 +2795,63 @@ void item_ScrollEquipment(Item* item, int player)
 	{
 		messagePlayer(player, language[3006]);
 	}
+}
+
+void item_PotionFireBreath(Item*& item, Entity* entity)
+{
+	if (!entity)
+	{
+		return;
+	}
+
+	int player = -1;
+	Stat* stats;
+
+	if (entity->behavior == &actPlayer)
+	{
+		player = entity->skill[2];
+	}
+	stats = entity->getStats();
+	if (!stats)
+	{
+		return;
+	}
+
+	if (stats->amulet != NULL)
+	{
+		if (stats->amulet->type == AMULET_STRANGULATION)
+		{
+			if (player == clientnum)
+			{
+				messagePlayer(player, language[750]);
+			}
+			return;
+		}
+	}
+	if (stats->EFFECTS[EFF_VOMITING])
+	{
+		if (player == clientnum)
+		{
+			messagePlayer(player, language[751]);
+		}
+		return;
+	}
+	if (multiplayer == CLIENT)
+	{
+		consumeItem(item);
+		return;
+	}
+
+	messagePlayer(player, language[3016]);
+	int mana = stats->MP;
+	playSoundEntity(players[player]->entity, 153, 128); //Fireball sound
+	playSoundEntity(players[player]->entity, 78, 100); //Throwup sound
+	castSpell(players[player]->entity->getUID(), &spell_fireball, true, false);
+	stats->MP = mana;
+
+	// play drink sound
+	playSoundEntity(entity, 52, 64);
+	consumeItem(item);
 }
 
 void item_ToolTowel(Item*& item, int player)

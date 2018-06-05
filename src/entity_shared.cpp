@@ -340,6 +340,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"firebow",
 	"frostbow",
 	"scroll_war",
+	"potion_firebreath",
 	""
 };
 
@@ -455,7 +456,8 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"artifact_orb_purple",
 		"artifact_orb_green",
 		"firebow",
-		"frostbow"
+		"frostbow",
+		"potion_firebreath"
 		""
 	},
 	{
