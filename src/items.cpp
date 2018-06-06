@@ -2082,6 +2082,13 @@ void useItem(Item* item, int player)
 		case POTION_FIREBREATH:
 			item_PotionFireBreath(item, players[player]->entity);
 			break;
+		case SCROLL_LULLABY:
+			item_ScrollLullaby(item, player);
+			if (!players[player]->entity->isBlind())
+			{
+				consumeItem(item);
+			}
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;

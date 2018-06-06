@@ -2879,6 +2879,68 @@ void item_PotionFireBreath(Item*& item, Entity* entity)
 	consumeItem(item);
 }
 
+void item_ScrollLullaby(Item* item, int player)
+{
+	// server only function
+	if (players[player] == nullptr || players[player]->entity == nullptr)
+	{
+		return;
+	}
+	if (multiplayer == CLIENT)
+	{
+		return;
+	}
+
+	if (players[player]->entity->isBlind())
+	{
+		if (player == clientnum)
+		{
+			messagePlayer(player, language[775]);
+		}
+		return;
+	}
+
+	if (player == clientnum)
+	{
+		conductIlliterate = false;
+	}
+	item->identified = 1;
+	messagePlayer(player, language[848]);
+	if (item->beatitude < 0)
+	{
+		messagePlayer(player, language[396]);
+		players[player]->entity->getStats()->EFFECTS[EFF_ASLEEP] = true;
+		players[player]->entity->getStats()->EFFECTS_TIMERS[EFF_ASLEEP] = 500;
+		serverUpdateEffects(player);
+		return;
+	}
+	if (item->beatitude >= 0)
+	{
+		bool sleptSomething = false;
+		node_t* currentNode;
+		Entity* currentEntity;
+		for (currentNode = map.creatures->first; currentNode != nullptr; currentNode = currentNode->next)
+		{
+			currentEntity = (Entity*)currentNode->element;
+			if ( currentEntity->x - players[player]->entity->x < 50 && currentEntity->x - players[player]->entity->x > -50 && currentEntity->y - players[player]->entity->y < 50 && currentEntity->y - players[player]->entity->y > -50 && currentEntity->checkEnemy(players[player]->entity))
+			{
+				currentEntity->getStats()->EFFECTS[EFF_ASLEEP] = true;
+				currentEntity->getStats()->EFFECTS_TIMERS[EFF_ASLEEP] = 500;
+				sleptSomething = true;
+			}
+		}
+
+		if (sleptSomething)
+		{
+			messagePlayer(player, language[3018]);
+		}
+		else
+		{
+			messagePlayer(player, language[3019]);
+		}
+	}
+}
+
 void item_ToolTowel(Item*& item, int player)
 {
 	if ( player == clientnum )

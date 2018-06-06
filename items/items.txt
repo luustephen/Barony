@@ -2199,3 +2199,11 @@ items/images/PotionYellow.png
 items/images/PotionOrange.png
 items/images/PotionRed.png
 items/images/PotionWhite.png
+
+58
+58
+1
+SCROLL
+5
+150
+items/images/Scroll.png
