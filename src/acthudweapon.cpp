@@ -47,8 +47,16 @@ Uint32 fireAnotherProjectile(Uint32 interval, void* params)
 	}
 	else
 	{
-		players[clientnum]->entity->attack(0, 0, nullptr);
-		numProjectilesFired++;
+		if (players[clientnum]->entity->hasRangedWeapon())
+		{
+			players[clientnum]->entity->attack(0, 0, nullptr);
+			numProjectilesFired++;
+		}
+		else
+		{
+			SDL_RemoveTimer(projectileTimer0);
+			numProjectilesFired = 0;
+		}
 	}
 
 	return interval;
