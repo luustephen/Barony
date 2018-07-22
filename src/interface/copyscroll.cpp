@@ -228,7 +228,7 @@ void updateCopyScrollGUI(int player)
 		{
 			//Print the window label signifying this as the remove curse GUI.
 			char* window_name;
-			window_name = language[3008];
+			window_name = language[4104];
 			ttfPrintText(ttf8, (COPYSCROLL_GUI_X + 2 + ((identifyGUI_img->w / 2) - ((TTF8_WIDTH * longestline(window_name)) / 2))), COPYSCROLL_GUI_Y + 4, window_name);
 
 			//Remove Curse GUI up button.
@@ -378,7 +378,7 @@ void copyscrollGUICopyScroll(Item* item, int player)
 			break;
 		}
 	}
-	messagePlayer(clientnum, language[3009]);
+	messagePlayer(clientnum, language[4105]);
 	closeCopyScrollGUI();
 }
 
