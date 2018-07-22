@@ -1231,14 +1231,14 @@ void item_PotionSturdy(Item*& item, Entity* entity)
 	{
 		//Cursed effect inebriates you.
 		messagePlayer(player, language[2900]);
-		messagePlayer(player, language[3012]);
+		messagePlayer(player, language[4108]);
 		stats->EFFECTS[EFF_VULNERABLE] = true;
 		stats->EFFECTS_TIMERS[EFF_VULNERABLE] = 1300;
 		serverUpdateEffects(player);
 	}
 	else
 	{
-		messagePlayer(player, language[3011]);
+		messagePlayer(player, language[4107]);
 		stats->EFFECTS[EFF_STURDY] = true;
 		stats->EFFECTS_TIMERS[EFF_STURDY] = 1300;
 		serverUpdateEffects(player);
@@ -1465,7 +1465,7 @@ void item_ScrollBlank(Item* item, int player)
 	if (item->beatitude >= 0)
 	{
 		if (players[player]->entity->getINT() < 4) {
-			messagePlayer(player, language[3010]);
+			messagePlayer(player, language[4106]);
 			return;
 		}
 		// Uncurse an item
@@ -2580,10 +2580,10 @@ void item_ScrollWar(Item* item, int player)
 	}
 	if (spawnedMonster && spawnedMinotaur)
 	{
-		messagePlayer(player, language[3014]);
+		messagePlayer(player, language[4110]);
 	}
 	else {
-		messagePlayer(player, language[3015]);
+		messagePlayer(player, language[4111]);
 	}
 }
 
@@ -2620,14 +2620,14 @@ void item_ScrollEquipment(Item* item, int player)
 	//Small possibility to luckily roll artifact 
 	if (rand() & 100 == 1) 
 	{
-		messagePlayer(player, language[3007]);
+		messagePlayer(player, language[4103]);
 		item->beatitude = 4;
 	}
 
 	//Spawn Wood/Bronze equipment
 	if ( item->beatitude == 0 )
 	{
-		messagePlayer(player, language[3004]);
+		messagePlayer(player, language[4100]);
 		int numItems = 6;						//Number of items that can possibly spawn	
 		int maxPossible = rand() % numItems + 1;//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
@@ -2663,7 +2663,7 @@ void item_ScrollEquipment(Item* item, int player)
 	//Spawn Iron equipment
 	else if (item->beatitude == 1)
 	{
-		messagePlayer(player, language[3004]);
+		messagePlayer(player, language[4100]);
 		int numItems = 5;						//Number of items that can possibly spawn
 		int maxPossible = rand() % 5 + 1;//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
@@ -2696,7 +2696,7 @@ void item_ScrollEquipment(Item* item, int player)
 	//Spawn Steel equipment
 	else if (item->beatitude == 2)
 	{
-		messagePlayer(player, language[3004]);
+		messagePlayer(player, language[4100]);
 		int numItems = 6;						//Number of items that can possibly spawn
 		int maxPossible = rand() % 4 + 1;//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
@@ -2731,7 +2731,7 @@ void item_ScrollEquipment(Item* item, int player)
 	//Spawn Crystal equipment
 	else if (item->beatitude == 3)
 	{
-		messagePlayer(player, language[3004]);
+		messagePlayer(player, language[4100]);
 		int numItems = 6;						//Number of items that can possibly spawn
 		int maxPossible = rand() % 3 + 1;//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
@@ -2765,7 +2765,7 @@ void item_ScrollEquipment(Item* item, int player)
 	//Spawn artifact equipment
 	else if (item->beatitude >= 4)
 	{
-		messagePlayer(player, language[3004]);
+		messagePlayer(player, language[4100]);
 		int numItems = 5;						//Number of items that can possibly spawn
 		int maxPossible = rand() % 2 + 1;		//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
@@ -2812,11 +2812,11 @@ void item_ScrollEquipment(Item* item, int player)
 	}
 	if ( foundequip == 0 )
 	{
-		messagePlayer(player, language[3005]);
+		messagePlayer(player, language[4101]);
 	}
 	else
 	{
-		messagePlayer(player, language[3006]);
+		messagePlayer(player, language[4102]);
 	}
 }
 
@@ -2865,11 +2865,11 @@ void item_PotionFireBreath(Item*& item, Entity* entity)
 		return;
 	}
 	if (numFireball != 0) {
-		messagePlayer(player, language[3017]);
+		messagePlayer(player, language[4113]);
 		return;
 	}
 
-	messagePlayer(player, language[3016]);
+	messagePlayer(player, language[4112]);
 	playSoundEntity(players[player]->entity, 153, 128); //Fireball sound
 	playSoundEntity(players[player]->entity, 78, 100); //Throwup sound
 	projectileTimer = SDL_AddTimer(200, fireFireball, (void*)player);
@@ -2932,11 +2932,11 @@ void item_ScrollLullaby(Item* item, int player)
 
 		if (sleptSomething)
 		{
-			messagePlayer(player, language[3018]);
+			messagePlayer(player, language[4114]);
 		}
 		else
 		{
-			messagePlayer(player, language[3019]);
+			messagePlayer(player, language[4115]);
 		}
 	}
 }

@@ -1119,10 +1119,10 @@ void Entity::effectTimes()
 						messagePlayer(player, language[604]); // "You return to your normal speed."
 						break;
 					case EFF_STURDY:
-						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
+						messagePlayer(player, language[4109]); // "You feel your armor return to normal."
 						break;
 					case EFF_VULNERABLE:
-						messagePlayer(player, language[3013]); // "You feel your armor return to normal."
+						messagePlayer(player, language[4109]); // "You feel your armor return to normal."
 						break;
 					case EFF_FIRING:
 						char message[40];
