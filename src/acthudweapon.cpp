@@ -333,6 +333,10 @@ void actHudWeapon(Entity* my)
 		{
 			rangedweapon = true;
 		}
+		else if (stats[clientnum]->weapon->type == NOISY_CRICKET)
+		{
+			rangedweapon = true;
+		}
 		else if ( stats[clientnum]->weapon->type == ARTIFACT_BOW )
 		{
 			rangedweapon = true;
@@ -411,7 +415,7 @@ void actHudWeapon(Entity* my)
 				{
 					if ( rangedweapon )
 					{
-						if ( stats[clientnum]->weapon && stats[clientnum]->weapon->type != CROSSBOW )
+						if ( stats[clientnum]->weapon && stats[clientnum]->weapon->type != CROSSBOW && stats[clientnum]->weapon->type != NOISY_CRICKET)
 						{
 							my->sprite++;
 						}
@@ -427,7 +431,7 @@ void actHudWeapon(Entity* my)
 				{
 					if ( rangedweapon )
 					{
-						if ( stats[clientnum]->weapon && stats[clientnum]->weapon->type != CROSSBOW )
+						if ( stats[clientnum]->weapon && stats[clientnum]->weapon->type != CROSSBOW && stats[clientnum]->weapon->type != NOISY_CRICKET)
 						{
 							my->sprite++;
 						}
@@ -1031,6 +1035,11 @@ void actHudWeapon(Entity* my)
 					{
 						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
 					}
+					if (stats[clientnum]->weapon
+						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
+					{
+						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+					}
 					if ( stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == TOOL_PICKAXE )
 					{
@@ -1250,6 +1259,11 @@ void actHudWeapon(Entity* my)
 					{
 						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
 					}
+					if (stats[clientnum]->weapon
+						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
+					{
+						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+					}
 					HUDWEAPON_CHARGE = 0;
 					HUDWEAPON_OVERCHARGE = 0;
 					if (players[clientnum]->entity->skill[3] == 0)   // debug cam OFF
@@ -1363,6 +1377,11 @@ void actHudWeapon(Entity* my)
 					players[clientnum]->entity->attack(3, HUDWEAPON_CHARGE, nullptr);
 					if ( stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == CROSSBOW )
+					{
+						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+					}
+					if (stats[clientnum]->weapon
+						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
 					{
 						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
 					}
@@ -1493,7 +1512,7 @@ void actHudWeapon(Entity* my)
 			{
 				defaultpitch = -PI / 8.f;
 			}
-			if (item->type == CROSSBOW)
+			if (item->type == CROSSBOW || item->type == NOISY_CRICKET)
 			{
 				my->x = 6 + HUDWEAPON_MOVEX;
 				my->y = 1.5 + HUDWEAPON_MOVEY;

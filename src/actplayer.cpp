@@ -2890,6 +2890,13 @@ void actPlayer(Entity* my)
 						entity->z = weaponarm->z + 1;
 						entity->pitch = weaponarm->pitch;
 					}
+					else if (entity->sprite == items[NOISY_CRICKET].index)
+					{
+						entity->x = weaponarm->x;
+						entity->y = weaponarm->y;
+						entity->z = weaponarm->z + 1;
+						entity->pitch = weaponarm->pitch;
+					}
 					else if ( entity->sprite == items[ARTIFACT_BOW].index )
 					{
 						entity->x = weaponarm->x - .5 * cos(weaponarm->yaw);
@@ -2934,7 +2941,7 @@ void actPlayer(Entity* my)
 					if ( !PLAYER_ARMBENDED )
 					{
 						entity->focalx = limbs[HUMAN][6][0]; // 1.5
-						if ( entity->sprite == items[CROSSBOW].index )
+						if ( entity->sprite == items[CROSSBOW].index || entity->sprite == items[NOISY_CRICKET].index)
 						{
 							entity->focalx += 2;
 						}

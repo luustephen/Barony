@@ -2094,6 +2094,9 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
+		case NOISY_CRICKET:
+			equipItem(item, &stats[player]->weapon, player);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;
@@ -2601,6 +2604,10 @@ Sint32 Item::weaponGetAttack() const
 	else if (type == FROSTBOW )
 	{
 		attack += 8;
+	}
+	else if (type == NOISY_CRICKET)
+	{
+		attack += 15;
 	}
 	// old formula
 	//attack *= (double)(status / 5.0);
@@ -3207,6 +3214,7 @@ bool isRangedWeapon(const Item& item)
 		case ARTIFACT_BOW:
 		case FIREBOW:
 		case FROSTBOW:
+		case NOISY_CRICKET:
 			return true;
 		default:
 			return false;

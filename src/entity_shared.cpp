@@ -342,6 +342,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"scroll_war",
 	"potion_firebreath",
 	"scroll_lullaby",
+	"noisy_cricket",
 	""
 };
 
@@ -458,7 +459,8 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"artifact_orb_green",
 		"firebow",
 		"frostbow",
-		"potion_firebreath"
+		"potion_firebreath",
+		"noisy_cricket"
 		""
 	},
 	{
