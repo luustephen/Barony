@@ -685,6 +685,18 @@ void actHudWeapon(Entity* my)
 								}
 							}
 						}
+						else if ( stats[clientnum]->weapon->type == NOISY_CRICKET )
+						{
+							// Cricket
+							if (throwGimpTimer == 0)
+							{
+								players[clientnum]->entity->attack(0, 0, nullptr);
+								HUDWEAPON_MOVEX = -4;
+								HUDWEAPON_CHOP = 3;
+								// set delay before crossbow can fire again
+								throwGimpTimer = 80;
+							}
+						}
 						else
 						{
 							// crossbows
@@ -1038,7 +1050,7 @@ void actHudWeapon(Entity* my)
 					if (stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
 					{
-						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+						throwGimpTimer = 100; // fix for swapping weapon to crossbow while charging.
 					}
 					if ( stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == TOOL_PICKAXE )
@@ -1262,7 +1274,7 @@ void actHudWeapon(Entity* my)
 					if (stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
 					{
-						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+						throwGimpTimer = 100; // fix for swapping weapon to crossbow while charging.
 					}
 					HUDWEAPON_CHARGE = 0;
 					HUDWEAPON_OVERCHARGE = 0;
@@ -1383,7 +1395,7 @@ void actHudWeapon(Entity* my)
 					if (stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
 					{
-						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+						throwGimpTimer = 100; // fix for swapping weapon to crossbow while charging.
 					}
 					HUDWEAPON_CHARGE = 0;
 					HUDWEAPON_OVERCHARGE = 0;
