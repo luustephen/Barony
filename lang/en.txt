@@ -2952,6 +2952,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2309 potion#
 2310 scroll of lullaby#
 2311 scroll#
+2312 Noisy Cricket#
+2313 magic crossbow#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

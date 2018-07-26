@@ -692,3 +692,5 @@ models/items/Frostbow_FP.vox
 models/items/FrostbowKnocked_FP.vox
 models/particles/FrostArrow.vox
 models/particles/PoisonArrow.vox
+models/items/NoisyCricket.vox
+models/items/NoisyCricket_FP.vox
