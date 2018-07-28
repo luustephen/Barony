@@ -365,9 +365,9 @@ void actArrow(Entity* my)
 				}
 				list_RemoveNode(my->mynode);
 			}
-			else if ( my->sprite == 78 )
+			else if ( my->sprite == 78 || my->sprite == 696)
 			{
-				list_RemoveNode(my->mynode); // rocks don't stick to walls...
+				list_RemoveNode(my->mynode); // rocks and Cricket bolts don't stick to walls...
 			}
 			else
 			{

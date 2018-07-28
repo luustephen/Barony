@@ -2207,3 +2207,11 @@ SCROLL
 5
 150
 items/images/Scroll.png
+
+694
+695
+1
+WEAPON
+30
+500
+items/images/NoisyCricket.png

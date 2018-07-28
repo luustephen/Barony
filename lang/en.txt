@@ -2952,8 +2952,10 @@ dungeon level %d, client (player %d) (direct ip)#
 2309 potion#
 2310 scroll of lullaby#
 2311 scroll#
-2312 dodge roll#
-2313 dodge roll#
+2312 Noisy Cricket#
+2313 magic crossbow#
+2314 dodge roll#
+2315 dodge roll#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

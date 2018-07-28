@@ -4234,7 +4234,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 			}
 
 			// ranged weapons (bows)
-			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW || myStats->weapon->type == FROSTBOW )
+			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW || myStats->weapon->type == FROSTBOW || myStats->weapon->type == NOISY_CRICKET)
 			{
 				// damage weapon if applicable
 				if ( rand() % 50 == 0 && myStats->weapon->type != ARTIFACT_BOW )
@@ -4281,6 +4281,16 @@ void Entity::attack(int pose, int charge, Entity* target)
 					entity = newEntity(167, 1, map.entities, nullptr); // bolt
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
+				else if ( myStats->weapon->type == NOISY_CRICKET )
+				{
+					entity = newEntity(696, 1, map.entities, nullptr); // bolt
+					playSoundEntity(this, 239 + rand() % 3, 96);
+					camera_shakex += .2;
+					camera_shakey += 20;
+					castSpell(uid, &spell_fireball, true, false);
+					castSpell(uid, &spell_lightning, true, false);
+					castSpell(uid, &spell_dig, true, false);
+				}
 				else if (myStats->weapon->type == FIREBOW)
 				{
 					entity = newEntity(688, 1, map.entities, nullptr); // fire arrow
@@ -4289,6 +4299,11 @@ void Entity::attack(int pose, int charge, Entity* target)
 				else if (myStats->weapon->type == FROSTBOW)
 				{
 					entity = newEntity(692, 1, map.entities, nullptr); // frost arrow
+					playSoundEntity(this, 239 + rand() % 3, 96);
+				}
+				else if (myStats->weapon->type == ARTIFACT_BOW)
+				{
+					entity = newEntity(693, 1, map.entities, nullptr); // poison arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else
@@ -5093,11 +5108,11 @@ void Entity::attack(int pose, int charge, Entity* target)
 					if ( myStats->weapon != NULL )
 					{
 						weaponType = myStats->weapon->type;
-						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD )
+						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW )
 						{
 							artifactWeapon = true;
 						}
-						else if ( weaponType == CRYSTAL_BATTLEAXE || weaponType == CRYSTAL_MACE || weaponType == CRYSTAL_SWORD || weaponType == CRYSTAL_SPEAR )
+						else if ( weaponType == CRYSTAL_BATTLEAXE || weaponType == CRYSTAL_MACE || weaponType == CRYSTAL_SWORD || weaponType == CRYSTAL_SPEAR || weaponType == NOISY_CRICKET)
 						{
 							// crystal weapons degrade faster.
 							isWeakWeapon = true;
@@ -7760,7 +7775,7 @@ int getWeaponSkill(Item* weapon)
 	{
 		return PRO_AXE;
 	}
-	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW || weapon->type == FIREBOW || weapon->type == FROSTBOW )
+	if ( weapon->type == SLING || weapon->type == SHORTBOW || weapon->type == CROSSBOW || weapon->type == ARTIFACT_BOW || weapon->type == FIREBOW || weapon->type == FROSTBOW || weapon->type == NOISY_CRICKET)
 	{
 		return PRO_RANGED;
 	}
@@ -8063,7 +8078,7 @@ int Entity::getAttackPose() const
 				|| myStats->type == SUCCUBUS || myStats->type == SHOPKEEPER
 				|| myStats->type == SHADOW )
 			{
-				if ( myStats->weapon->type == CROSSBOW )
+				if ( myStats->weapon->type == CROSSBOW || myStats->weapon->type == NOISY_CRICKET)
 				{
 					pose = MONSTER_POSE_RANGED_WINDUP1;
 				}
@@ -8188,6 +8203,10 @@ bool Entity::hasRangedWeapon() const
 		return true;
 	}
 	else if ( myStats->weapon->type == CROSSBOW )
+	{
+		return true;
+	}
+	else if (myStats->weapon->type == NOISY_CRICKET)
 	{
 		return true;
 	}
@@ -8911,6 +8930,13 @@ void Entity::handleHumanoidWeaponLimb(Entity* weaponLimb, Entity* weaponArmLimb)
 			weaponLimb->z = weaponArmLimb->z + 1;
 			weaponLimb->pitch = weaponArmLimb->pitch;
 		}
+		else if (weaponLimb->sprite == items[NOISY_CRICKET].index)
+		{
+			weaponLimb->x = weaponArmLimb->x;
+			weaponLimb->y = weaponArmLimb->y;
+			weaponLimb->z = weaponArmLimb->z + 1;
+			weaponLimb->pitch = weaponArmLimb->pitch;
+		}
 		else if (weaponLimb->sprite == items[FIREBOW].index)
 		{
 			weaponLimb->x = weaponArmLimb->x - 1.5 * cos(weaponArmLimb->yaw);
@@ -9004,7 +9030,7 @@ void Entity::handleHumanoidWeaponLimb(Entity* weaponLimb, Entity* weaponArmLimb)
 	if ( !this->monsterArmbended )
 	{
 		weaponLimb->focalx = limbs[monsterType][6][0]; // 2.5
-		if ( weaponLimb->sprite == items[CROSSBOW].index )
+		if ( weaponLimb->sprite == items[CROSSBOW].index || weaponLimb->sprite == items[NOISY_CRICKET].index)
 		{
 			weaponLimb->focalx += 2;
 		}

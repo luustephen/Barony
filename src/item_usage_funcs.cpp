@@ -2628,8 +2628,18 @@ void item_ScrollEquipment(Item* item, int player)
 	item->identified = 1;
 	messagePlayer(player, language[848]);
 
+	if (currentlevel >= 5 && currentlevel < 10 && item->beatitude >= 0) {
+		item->beatitude = 1;
+	}
+	else if (currentlevel >= 10 && currentlevel < 20 && item->beatitude >= 0) {
+		item->beatitude = 2;
+	}
+	else if (currentlevel >= 20 && currentlevel < 25 && item->beatitude >= 0) {
+		item->beatitude = 3;
+	}
+
 	//Small possibility to luckily roll artifact 
-	if (rand() & 100 == 1) 
+	if (rand() % 100 == 1)
 	{
 		messagePlayer(player, language[4103]);
 		item->beatitude = 4;
@@ -2757,17 +2767,17 @@ void item_ScrollEquipment(Item* item, int player)
 		{
 			int k = 0;
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(CRYSTAL_SHIELD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(CRYSTAL_SHIELD, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(CRYSTAL_SPEAR, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(CRYSTAL_SPEAR, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(CRYSTAL_SWORD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(CRYSTAL_SWORD, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(CRYSTAL_MACE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(CRYSTAL_MACE, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(CRYSTAL_BATTLEAXE, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(CRYSTAL_BATTLEAXE, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(MIRROR_SHIELD, EXCELLENT, item->beatitude-1, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(MIRROR_SHIELD, EXCELLENT, item->beatitude-2, 1, rand(), true, &stats[player]->inventory), player);
 		}
 		delete[] whichItem;
 		whichItem = NULL;
@@ -2791,15 +2801,15 @@ void item_ScrollEquipment(Item* item, int player)
 		{
 			int k = 0;
 			if ( whichItem[i] == k++ )
-				dropItem(newItem(ARTIFACT_SPEAR, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(ARTIFACT_SPEAR, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 			else if ( whichItem[i] == k++ )
-				dropItem(newItem(ARTIFACT_AXE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(ARTIFACT_AXE, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 			else if ( whichItem[i] == k++ )
-				dropItem(newItem(ARTIFACT_SWORD, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(ARTIFACT_SWORD, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 			else if ( whichItem[i] == k++ )
-				dropItem(newItem(ARTIFACT_MACE, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(ARTIFACT_MACE, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 			else if ( whichItem[i] == k++ )
-				dropItem(newItem(ARTIFACT_BOW, EXCELLENT, item->beatitude, 1, rand(), true, &stats[player]->inventory), player);
+				dropItem(newItem(ARTIFACT_BOW, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 		}
 		delete[] whichItem;
 		whichItem = NULL;
@@ -2943,6 +2953,7 @@ void item_ScrollLullaby(Item* item, int player)
 
 		if (sleptSomething)
 		{
+			//playSoundEntity(players[player]->entity, 76, 64);
 			messagePlayer(player, language[4114]);
 		}
 		else
