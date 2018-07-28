@@ -2215,3 +2215,12 @@ WEAPON
 30
 500
 items/images/NoisyCricket.png
+
+610
+610
+2
+TOOL
+1
+1
+items/images/OrbBlue.png
+items/images/OrbBlue.png
