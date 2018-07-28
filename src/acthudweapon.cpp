@@ -694,7 +694,7 @@ void actHudWeapon(Entity* my)
 								HUDWEAPON_MOVEX = -4;
 								HUDWEAPON_CHOP = 3;
 								// set delay before crossbow can fire again
-								throwGimpTimer = 80;
+								throwGimpTimer = 60;
 							}
 						}
 						else
@@ -1050,7 +1050,7 @@ void actHudWeapon(Entity* my)
 					if (stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
 					{
-						throwGimpTimer = 100; // fix for swapping weapon to crossbow while charging.
+						throwGimpTimer = 80; // fix for swapping weapon to crossbow while charging.
 					}
 					if ( stats[clientnum]->weapon
 						&& stats[clientnum]->weapon->type == TOOL_PICKAXE )

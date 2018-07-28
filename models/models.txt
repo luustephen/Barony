@@ -694,3 +694,4 @@ models/particles/FrostArrow.vox
 models/particles/PoisonArrow.vox
 models/items/NoisyCricket.vox
 models/items/NoisyCricket_FP.vox
+models/particles/Empty.vox

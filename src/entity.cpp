@@ -4281,12 +4281,15 @@ void Entity::attack(int pose, int charge, Entity* target)
 					entity = newEntity(167, 1, map.entities, nullptr); // bolt
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
-				else if (myStats->weapon->type == NOISY_CRICKET)
+				else if ( myStats->weapon->type == NOISY_CRICKET )
 				{
-					entity = newEntity(167, 1, map.entities, nullptr); // bolt
+					entity = newEntity(696, 1, map.entities, nullptr); // bolt
 					playSoundEntity(this, 239 + rand() % 3, 96);
 					camera_shakex += .2;
 					camera_shakey += 20;
+					castSpell(uid, &spell_fireball, true, false);
+					castSpell(uid, &spell_lightning, true, false);
+					castSpell(uid, &spell_dig, true, false);
 				}
 				else if (myStats->weapon->type == FIREBOW)
 				{
@@ -5105,11 +5108,11 @@ void Entity::attack(int pose, int charge, Entity* target)
 					if ( myStats->weapon != NULL )
 					{
 						weaponType = myStats->weapon->type;
-						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW || weaponType == NOISY_CRICKET)
+						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW )
 						{
 							artifactWeapon = true;
 						}
-						else if ( weaponType == CRYSTAL_BATTLEAXE || weaponType == CRYSTAL_MACE || weaponType == CRYSTAL_SWORD || weaponType == CRYSTAL_SPEAR )
+						else if ( weaponType == CRYSTAL_BATTLEAXE || weaponType == CRYSTAL_MACE || weaponType == CRYSTAL_SWORD || weaponType == CRYSTAL_SPEAR || weaponType == NOISY_CRICKET)
 						{
 							// crystal weapons degrade faster.
 							isWeakWeapon = true;
