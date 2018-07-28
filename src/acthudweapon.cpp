@@ -24,6 +24,9 @@
 #include <chrono>
 #include <thread>
 
+double roll_get_x(real_t yaw);
+double roll_get_y(real_t yaw);
+
 Entity* hudweapon = NULL;
 Entity* hudarm = NULL;
 bool weaponSwitch = false;
@@ -66,6 +69,12 @@ Sint32 throwGimpTimer = 0; // player cannot throw objects unless zero
 Sint32 pickaxeGimpTimer = 0; // player cannot swap weapons immediately after using pickaxe 
 							 // due to multiplayer weapon degrade lag... equipping new weapon before degrade
 							// message hits can degrade the wrong weapon.
+Sint32 rollTimer = 0; // used to time speed of dodge roll
+Sint32 rollTimerAnim = 0; // used to time camera animation of dodge roll
+Sint32 rollCDTimer = 0; // used to time the cooldown between dodge rolls
+real_t rollSpeedX = 0; // used to save the speed of player at the time of the roll
+real_t rollSpeedY = 0; // used to save the speed of player at the time of the roll
+real_t rollDirMod = 0; // used to determine the direction of the camera roll
 
 /*-------------------------------------------------------------------------------
 
@@ -282,6 +291,26 @@ void actHudWeapon(Entity* my)
 	{
 		//messagePlayer(clientnum, "%d", pickaxeGimpTimer);
 		--pickaxeGimpTimer;
+	}
+	if (rollTimer)
+	{
+		players[clientnum]->entity->vel_x = rollSpeedX;
+		players[clientnum]->entity->vel_y = rollSpeedY;
+		
+		--rollTimer;
+		if (rollTimerAnim)
+		{
+			camera.vang += (((2 * PI) / ((TICKS_PER_SECOND * .45) * 0.85)) * (((TICKS_PER_SECOND * .45) * 0.85) - rollTimerAnim)) * rollDirMod;
+			--rollTimerAnim;
+		}
+		if (!rollTimer)
+		{
+			rollCDTimer = TICKS_PER_SECOND; // 1 second cooldown
+		}
+	}
+	if (rollCDTimer)
+	{
+		--rollCDTimer;
 	}
 
 	// check levitating value
@@ -1573,21 +1602,21 @@ void actHudShield(Entity* my)
 
 	// select model
 	bool wearingring = false;
-	if ( stats[clientnum]->ring != nullptr )
+	if (stats[clientnum]->ring != nullptr)
 	{
-		if ( stats[clientnum]->ring->type == RING_INVISIBILITY )
+		if (stats[clientnum]->ring->type == RING_INVISIBILITY)
 		{
 			wearingring = true;
 		}
 	}
-	if ( stats[clientnum]->cloak != nullptr )
+	if (stats[clientnum]->cloak != nullptr)
 	{
-		if ( stats[clientnum]->cloak->type == CLOAK_INVISIBILITY )
+		if (stats[clientnum]->cloak->type == CLOAK_INVISIBILITY)
 		{
 			wearingring = true;
 		}
 	}
-	if ( players[clientnum]->entity->skill[3] == 1 || players[clientnum]->entity->isInvisible() )   // debug cam or player invisible
+	if (players[clientnum]->entity->skill[3] == 1 || players[clientnum]->entity->isInvisible())   // debug cam or player invisible
 	{
 		my->flags[INVISIBLE] = true;
 	}
@@ -1627,7 +1656,7 @@ void actHudShield(Entity* my)
 		{
 			int x = std::min<int>(std::max<int>(0, floor(players[clientnum]->entity->x / 16)), map.width - 1);
 			int y = std::min<int>(std::max<int>(0, floor(players[clientnum]->entity->y / 16)), map.height - 1);
-			if ( swimmingtiles[map.tiles[y * MAPLAYERS + x * MAPLAYERS * map.height]] || lavatiles[map.tiles[y * MAPLAYERS + x * MAPLAYERS * map.height]] )
+			if (swimmingtiles[map.tiles[y * MAPLAYERS + x * MAPLAYERS * map.height]] || lavatiles[map.tiles[y * MAPLAYERS + x * MAPLAYERS * map.height]])
 			{
 				my->flags[INVISIBLE] = true;
 				Entity* parent = uidToEntity(my->parent);
@@ -1649,14 +1678,44 @@ void actHudShield(Entity* my)
 	bool sneaking = false;
 	if (!command && !swimming)
 	{
-		if (players[clientnum] && players[clientnum]->entity 
-			&& (*inputPressed(impulses[IN_DEFEND]) || (shootmode && *inputPressed(joyimpulses[INJOY_GAME_DEFEND]))) 
-			&& players[clientnum]->entity->isMobile() 
-			&& !gamePaused 
+		if (players[clientnum] && players[clientnum]->entity
+			&& (*inputPressed(impulses[IN_DEFEND]) || (shootmode && *inputPressed(joyimpulses[INJOY_GAME_DEFEND])))
+			&& players[clientnum]->entity->isMobile()
+			&& !gamePaused
 			&& !cast_animation.active)
 		{
-			if ( stats[clientnum]->shield && (hudweapon->skill[0] % 3 == 0) )
+			if (stats[clientnum]->shield && (hudweapon->skill[0] % 3 == 0))
 			{
+				if (rollTimer || rollCDTimer)
+				{
+					return;
+				}
+				///////////////////////////
+				if (stats[clientnum]->shield->type == DODGE_ROLL)
+				{
+					float x_force = (*inputPressed(impulses[IN_RIGHT]) - *inputPressed(impulses[IN_LEFT]));
+					float y_force = (*inputPressed(impulses[IN_FORWARD]) - (double)* inputPressed(impulses[IN_BACK]));
+					real_t speedFactor = std::min((players[clientnum]->entity->getDEX() * 0.1 + 15.5), 25 * 0.5 + 10) / 2;
+
+					rollTimer = TICKS_PER_SECOND * .45;
+					rollTimerAnim = rollTimer * 0.85;
+					rollSpeedX = players[clientnum]->entity->vel_x + (y_force * cos(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+					rollSpeedY = players[clientnum]->entity->vel_y + (y_force * sin(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+					rollSpeedX += players[clientnum]->entity->vel_x + (x_force * cos(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+					rollSpeedY += players[clientnum]->entity->vel_y + (x_force * sin(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+
+					if (y_force < 0)
+					{
+						rollDirMod = -1;
+						rollSpeedX *= 2;
+						rollSpeedY *= 2;
+					}
+					else
+					{
+						rollDirMod = 1;
+					}
+					return;
+				}
 				defending = true;
 			}
 			sneaking = true;
@@ -1671,7 +1730,7 @@ void actHudShield(Entity* my)
 	{
 		stats[clientnum]->defending = false;
 	}
-	if ( sneaking )
+	if (sneaking)
 	{
 		stats[clientnum]->sneaking = true;
 	}
@@ -1692,7 +1751,7 @@ void actHudShield(Entity* my)
 			net_packet->len = 6;
 			sendPacketSafe(net_sock, -1, net_packet, 0);
 		}
-		if ( HUDSHIELD_SNEAKING != sneaking || ticks % 120 == 0 )
+		if (HUDSHIELD_SNEAKING != sneaking || ticks % 120 == 0)
 		{
 			strcpy((char*)net_packet->data, "SNEK");
 			net_packet->data[4] = clientnum;
@@ -1707,10 +1766,10 @@ void actHudShield(Entity* my)
 	HUDSHIELD_SNEAKING = sneaking;
 
 	// shield switching animation
-	if ( shieldSwitch )
+	if (shieldSwitch)
 	{
 		shieldSwitch = false;
-		if ( !defending )
+		if (!defending)
 		{
 			HUDSHIELD_MOVEY = -6;
 			HUDSHIELD_MOVEZ = 2;
@@ -1719,48 +1778,48 @@ void actHudShield(Entity* my)
 	}
 
 	// main animation
-	if ( defending )
+	if (defending)
 	{
-		if ( HUDSHIELD_MOVEY < 3 )
+		if (HUDSHIELD_MOVEY < 3)
 		{
 			HUDSHIELD_MOVEY += .5;
-			if ( HUDSHIELD_MOVEY > 3 )
+			if (HUDSHIELD_MOVEY > 3)
 			{
 				HUDSHIELD_MOVEY = 3;
 			}
 		}
-		if ( HUDSHIELD_MOVEZ > -1 )
+		if (HUDSHIELD_MOVEZ > -1)
 		{
 			HUDSHIELD_MOVEZ -= .2;
-			if ( HUDSHIELD_MOVEZ < -1 )
+			if (HUDSHIELD_MOVEZ < -1)
 			{
 				HUDSHIELD_MOVEZ = -1;
 			}
 		}
-		if ( HUDSHIELD_YAW < PI / 3 )
+		if (HUDSHIELD_YAW < PI / 3)
 		{
 			HUDSHIELD_YAW += .15;
-			if ( HUDSHIELD_YAW > PI / 3 )
+			if (HUDSHIELD_YAW > PI / 3)
 			{
 				HUDSHIELD_YAW = PI / 3;
 			}
 		}
-		if ( stats[clientnum]->shield )
+		if (stats[clientnum]->shield)
 		{
-			if ( stats[clientnum]->shield->type == TOOL_TORCH || stats[clientnum]->shield->type == TOOL_CRYSTALSHARD )
+			if (stats[clientnum]->shield->type == TOOL_TORCH || stats[clientnum]->shield->type == TOOL_CRYSTALSHARD)
 			{
-				if ( HUDSHIELD_MOVEX < 1.5 )
+				if (HUDSHIELD_MOVEX < 1.5)
 				{
 					HUDSHIELD_MOVEX += .5;
-					if ( HUDSHIELD_MOVEX > 1.5 )
+					if (HUDSHIELD_MOVEX > 1.5)
 					{
 						HUDSHIELD_MOVEX = 1.5;
 					}
 				}
-				if ( HUDSHIELD_ROLL < PI / 5 )
+				if (HUDSHIELD_ROLL < PI / 5)
 				{
 					HUDSHIELD_ROLL += .15;
-					if ( HUDSHIELD_ROLL > PI / 5 )
+					if (HUDSHIELD_ROLL > PI / 5)
 					{
 						HUDSHIELD_ROLL = PI / 5;
 					}
@@ -1770,51 +1829,51 @@ void actHudShield(Entity* my)
 	}
 	else
 	{
-		if ( HUDSHIELD_MOVEX > 0 )
+		if (HUDSHIELD_MOVEX > 0)
 		{
 			HUDSHIELD_MOVEX = std::max<real_t>(HUDSHIELD_MOVEX - .5, 0.0);
 		}
-		else if ( HUDSHIELD_MOVEX < 0 )
+		else if (HUDSHIELD_MOVEX < 0)
 		{
 			HUDSHIELD_MOVEX = std::min<real_t>(HUDSHIELD_MOVEX + .5, 0.0);
 		}
-		if ( HUDSHIELD_MOVEY > 0 )
+		if (HUDSHIELD_MOVEY > 0)
 		{
 			HUDSHIELD_MOVEY = std::max<real_t>(HUDSHIELD_MOVEY - .5, 0.0);
 		}
-		else if ( HUDSHIELD_MOVEY < 0 )
+		else if (HUDSHIELD_MOVEY < 0)
 		{
 			HUDSHIELD_MOVEY = std::min<real_t>(HUDSHIELD_MOVEY + .5, 0.0);
 		}
-		if ( HUDSHIELD_MOVEZ > 0 )
+		if (HUDSHIELD_MOVEZ > 0)
 		{
 			HUDSHIELD_MOVEZ = std::max<real_t>(HUDSHIELD_MOVEZ - .2, 0.0);
 		}
-		else if ( HUDSHIELD_MOVEZ < 0 )
+		else if (HUDSHIELD_MOVEZ < 0)
 		{
 			HUDSHIELD_MOVEZ = std::min<real_t>(HUDSHIELD_MOVEZ + .2, 0.0);
 		}
-		if ( HUDSHIELD_YAW > 0 )
+		if (HUDSHIELD_YAW > 0)
 		{
 			HUDSHIELD_YAW = std::max<real_t>(HUDSHIELD_YAW - .15, 0.0);
 		}
-		else if ( HUDSHIELD_YAW < 0 )
+		else if (HUDSHIELD_YAW < 0)
 		{
 			HUDSHIELD_YAW = std::min<real_t>(HUDSHIELD_YAW + .15, 0.0);
 		}
-		if ( HUDSHIELD_PITCH > 0 )
+		if (HUDSHIELD_PITCH > 0)
 		{
 			HUDSHIELD_PITCH = std::max<real_t>(HUDSHIELD_PITCH - .15, 0.0);
 		}
-		else if ( HUDSHIELD_PITCH < 0 )
+		else if (HUDSHIELD_PITCH < 0)
 		{
 			HUDSHIELD_PITCH = std::min<real_t>(HUDSHIELD_PITCH + .15, 0.0);
 		}
-		if ( HUDSHIELD_ROLL > 0 )
+		if (HUDSHIELD_ROLL > 0)
 		{
 			HUDSHIELD_ROLL = std::max<real_t>(HUDSHIELD_ROLL - .15, 0);
 		}
-		else if ( HUDSHIELD_ROLL < 0 )
+		else if (HUDSHIELD_ROLL < 0)
 		{
 			HUDSHIELD_ROLL = std::min<real_t>(HUDSHIELD_ROLL + .15, 0);
 		}
@@ -1842,7 +1901,7 @@ void actHudShield(Entity* my)
 				entity->y += 2.5 * sin(HUDSHIELD_ROLL);
 				my->flags[BRIGHT] = true;
 			}
-			if ( stats[clientnum]->shield->type == TOOL_CRYSTALSHARD )
+			if (stats[clientnum]->shield->type == TOOL_CRYSTALSHARD)
 			{
 				Entity* entity = spawnFlame(my, SPRITE_CRYSTALFLAME);
 				entity->flags[OVERDRAW] = true;
@@ -1859,4 +1918,56 @@ void actHudShield(Entity* my)
 			}
 		}
 	}
+	
+}
+
+double roll_get_x(real_t yaw)
+{
+	double sign;
+	double result = yaw / (PI / 2);
+	if (result >= 0 && result <= 1)
+	{
+		sign = 1.f;
+	}
+	else if (result >= 1 && result <= 2)
+	{
+		sign = -1.f;
+	}
+	else if (result >= 2 && result <= 3)
+	{
+		sign = -1.f;
+	}
+	else
+	{
+		sign = 1.f;
+	}
+	double tmp = abs(1 - (yaw / (PI / 2)));
+	if (tmp == 1.f)
+	{
+		return tmp;
+	}
+	return (fmod(tmp, 1.f)) * sign;
+}
+
+double roll_get_y(real_t yaw)
+{
+	double sign;
+	double result = yaw / (PI / 2);
+	if (result >= 0 && result <= 1)
+	{
+		sign = 1.f;
+	}
+	else if (result >= 1 && result <= 2)
+	{
+		sign = 1.f;
+	}
+	else if (result >= 2 && result <= 3)
+	{
+		sign = -1.f;
+	}
+	else
+	{
+		sign = -1.f;
+	}
+	return (fmod(yaw, PI) / (PI / 2)) * sign;
 }

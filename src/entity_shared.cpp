@@ -342,6 +342,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"scroll_war",
 	"potion_firebreath",
 	"scroll_lullaby",
+	"dodge_roll",
 	""
 };
 

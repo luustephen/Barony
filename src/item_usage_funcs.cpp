@@ -54,6 +54,11 @@ void item_PotionWater(Item*& item, Entity* entity)
 		return;
 	}
 
+	char val[20];
+	val[19] = '\0';
+	itoa(stats[clientnum]->shield->type, val, 10);
+	messagePlayer(clientnum, val);
+
 	node_t* node;
 	int player = -1;
 	Stat* stats;

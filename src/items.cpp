@@ -2094,6 +2094,9 @@ void useItem(Item* item, int player)
 				consumeItem(item);
 			}
 			break;
+		case DODGE_ROLL:
+			equipItem(item, &stats[player]->shield, player);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;
