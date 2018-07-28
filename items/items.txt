@@ -2219,7 +2219,7 @@ items/images/NoisyCricket.png
 610
 610
 2
-TOOL
+ARMOR
 1
 1
 items/images/OrbBlue.png
