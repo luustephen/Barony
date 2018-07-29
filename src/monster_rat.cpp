@@ -65,6 +65,7 @@ void initRat(Entity* my, Stat* myStats)
 				myStats->CHR = 5;
 				myStats->LVL = 10;
 				newItem(GEM_EMERALD, static_cast<Status>(1 + rand() % 4), 0, 1, rand(), true, &myStats->inventory);
+				newItem(NOISY_CRICKET, DECREPIT, 0, 1, rand(), true, &myStats->inventory);
 				customItemsToGenerate = customItemsToGenerate - 1;
 				int c;
 				for ( c = 0; c < 6; c++ )
