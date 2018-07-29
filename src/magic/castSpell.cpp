@@ -1220,21 +1220,30 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 				{
 					if ( rand() % 6 == 0 ) //16.67%
 					{
-						caster->increaseSkill(PRO_SPELLCASTING);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_SPELLCASTING);
+						}
 					}
 				}
 				else if ( stat->PROFICIENCIES[PRO_SPELLCASTING] < 80 )
 				{
 					if ( rand() % 9 == 0 ) //11.11%
 					{
-						caster->increaseSkill(PRO_SPELLCASTING);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_SPELLCASTING);
+						}
 					}
 				}
 				else // greater than 80
 				{
 					if ( rand() % 12 == 0 ) //8.33%
 					{
-						caster->increaseSkill(PRO_SPELLCASTING);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_SPELLCASTING);
+						}
 					}
 				}
 
@@ -1243,21 +1252,30 @@ Entity* castSpell(Uint32 caster_uid, spell_t* spell, bool using_magicstaff, bool
 				{
 					if ( rand() % 7 == 0 ) //14.2%
 					{
-						caster->increaseSkill(PRO_MAGIC);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_MAGIC);
+						}
 					}
 				}
 				else if ( stat->PROFICIENCIES[PRO_MAGIC] < 80 )
 				{
 					if ( rand() % 10 == 0 ) //10.00%
 					{
-						caster->increaseSkill(PRO_MAGIC);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_MAGIC);
+						}
 					}
 				}
 				else // greater than 80
 				{
 					if ( rand() % 13 == 0 ) //7.69%
 					{
-						caster->increaseSkill(PRO_MAGIC);
+						if ( caster->getStats()->weapon->type != NOISY_CRICKET && caster->getStats()->weapon->type != POTION_FIREBREATH )
+						{
+							caster->increaseSkill(PRO_MAGIC);
+						}
 					}
 				}
 			}
