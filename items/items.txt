@@ -2227,3 +2227,11 @@ ARMOR
 1
 items/images/OrbBlue.png
 items/images/OrbBlue.png
+
+697
+698
+1
+WEAPON
+30
+80
+items/images/IronSword.png

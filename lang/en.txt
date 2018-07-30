@@ -2956,6 +2956,8 @@ dungeon level %d, client (player %d) (direct ip)#
 2313 magic crossbow#
 2314 dodge roll#
 2315 dodge roll#
+2316 iron warhammer#
+2317 iron warhammer#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#

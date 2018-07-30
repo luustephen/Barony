@@ -7763,7 +7763,7 @@ int getWeaponSkill(Item* weapon)
 	{
 		return PRO_POLEARM;
 	}
-	if ( weapon->type == BRONZE_SWORD || weapon->type == IRON_SWORD || weapon->type == STEEL_SWORD || weapon->type == ARTIFACT_SWORD || weapon->type == CRYSTAL_SWORD )
+	if ( weapon->type == BRONZE_SWORD || weapon->type == IRON_SWORD || weapon->type == STEEL_SWORD || weapon->type == ARTIFACT_SWORD || weapon->type == CRYSTAL_SWORD || weapon->type == IRON_WARHAMMER)
 	{
 		return PRO_SWORD;
 	}

@@ -695,3 +695,5 @@ models/particles/PoisonArrow.vox
 models/items/NoisyCricket.vox
 models/items/NoisyCricket_FP.vox
 models/particles/Empty.vox
+models/items/IronWarhammer.vox
+models/items/IronWarhammer_FP.vox

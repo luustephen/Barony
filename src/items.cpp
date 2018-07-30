@@ -2100,6 +2100,9 @@ void useItem(Item* item, int player)
 		case DODGE_ROLL:
 			equipItem(item, &stats[player]->shield, player);
 			break;
+		case IRON_WARHAMMER:
+			equipItem(item, &stats[player]->weapon, player);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;
@@ -2523,6 +2526,10 @@ Sint32 Item::weaponGetAttack() const
 	else if ( type == IRON_AXE )
 	{
 		attack += 5;
+	}
+	else if (type == IRON_WARHAMMER)
+	{
+		attack += 7;
 	}
 	else if ( type == SHORTBOW )
 	{
