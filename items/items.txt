@@ -2234,4 +2234,4 @@ items/images/OrbBlue.png
 WEAPON
 30
 80
-items/images/IronSword.png
+items/images/IronWarhammer.png

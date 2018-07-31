@@ -1329,9 +1329,25 @@ void equipItem(Item* item, Item** slot, int player)
 
 	if ( itemCompare(*slot, item, true) )
 	{
+		//printlog("Item: %d\n", item->type);
+		//printlog("Slot: %d\n", *slot);
+		//printlog("Weapon: %d\n", stats[player]->weapon);
+		//printlog("Shield: %d\n", stats[player]->shield);
 		// if items are different... (excluding the quantity of both item nodes)
 		if ( *slot != NULL )
 		{
+			//printlog("Shield != NULL: %d\n", stats[player]->shield != NULL);
+			if ( item->type == IRON_WARHAMMER && stats[player]->shield != NULL ) //Can't use iron warhammer with offhand
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+			else if ( slot == &stats[player]->shield & stats[player]->weapon != NULL && stats[player]->weapon->type == IRON_WARHAMMER )
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+
 			if (!(*slot)->canUnequip())
 			{
 				if ( player == clientnum )
@@ -1344,6 +1360,21 @@ void equipItem(Item* item, Item** slot, int player)
 		}
 		if ( multiplayer != CLIENT && !intro && !fadeout )
 		{
+			printlog("A");
+			printlog("Slot: %d\n", slot);
+			printlog("Shield: %d\n", &stats[player]->shield);
+			printlog("Weapon: %d\n", stats[player]->shield);
+			if (item->type == IRON_WARHAMMER && stats[player]->shield != NULL) //Can't use iron warhammer with offhand
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+			else if (slot == &stats[player]->shield & stats[player]->weapon != NULL && stats[player]->weapon->type == IRON_WARHAMMER )
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+			printlog("B");
 			if ( players[player] != nullptr && players[player]->entity != nullptr)
 			{
 				if (players[player]->entity->ticks > 60)
@@ -1383,6 +1414,18 @@ void equipItem(Item* item, Item** slot, int player)
 		}
 		else
 		{
+			printlog("C");
+			if (item->type == IRON_WARHAMMER && stats[player]->shield != NULL) //Can't use iron warhammer with offhand
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+			else if (slot == &stats[player]->shield & stats[player]->weapon != NULL && stats[player]->weapon->type == IRON_WARHAMMER)
+			{
+				messagePlayer(player, language[4116]);
+				return;
+			}
+			printlog("D");
 			oldcount = item->count;
 			item->count = 1;
 			if ( intro == false )
@@ -1406,6 +1449,9 @@ void equipItem(Item* item, Item** slot, int player)
 	}
 	else
 	{
+		//printlog("UNEQUIP");
+		//printlog("Item: %d\n", item->type);
+		//printlog("Slot: %d\n", *slot);
 		// if items are the same... (excluding the quantity of both item nodes)
 		if ( *slot != NULL )
 		{

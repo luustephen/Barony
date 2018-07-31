@@ -3771,5 +3771,6 @@ IDENTICAL MOD LISTS LOADED!#
 4113 You can't drink when spitting flames!#
 4114 You sing a soothing melody for those around you.#
 4115 You feel tired for a moment then it passes.#
+4116 You can't equip an off-hand item with this weapon.#
 
 4200 end#
