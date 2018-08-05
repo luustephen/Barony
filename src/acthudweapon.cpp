@@ -1436,7 +1436,7 @@ void actHudWeapon(Entity* my)
 			HUDWEAPON_YAW = -.1;
 		}
 		if (stats[clientnum]->weapon->type == IRON_WARHAMMER){
-			HUDWEAPON_ROLL += .05;
+			HUDWEAPON_ROLL += .2;
 			if (HUDWEAPON_ROLL > 0)
 			{
 				HUDWEAPON_ROLL = 0;
