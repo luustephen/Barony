@@ -2571,7 +2571,7 @@ Sint32 Item::weaponGetAttack() const
 	}
 	else if (type == IRON_WARHAMMER)
 	{
-		attack += 7;
+		attack += 8;
 	}
 	else if ( type == SHORTBOW )
 	{
