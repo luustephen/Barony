@@ -1066,7 +1066,7 @@ void actHudWeapon(Entity* my)
 			}
 		}
 		HUDWEAPON_MOVEX -= .35;
-		if ( HUDWEAPON_MOVEX < -1 )
+		if (HUDWEAPON_MOVEX < -1)
 		{
 			HUDWEAPON_MOVEX = -1;
 		}
@@ -1079,7 +1079,14 @@ void actHudWeapon(Entity* my)
 		{
 			HUDWEAPON_MOVEY = -2;
 		}
-		HUDWEAPON_MOVEZ -= .65;
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER)
+		{
+			HUDWEAPON_MOVEZ -= .2;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER)
+		{
+			HUDWEAPON_MOVEZ -= .65;
+		}
 		if (HUDWEAPON_MOVEZ < -6)
 		{
 			HUDWEAPON_MOVEZ = -6;
@@ -1295,12 +1302,18 @@ void actHudWeapon(Entity* my)
 		}
 		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_MOVEZ > -2)
 		{
-			HUDWEAPON_MOVEZ -= .25;
-			HUDWEAPON_MOVEZ = -2;
+			HUDWEAPON_MOVEZ -= .07;
 		}
 		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_MOVEZ > -4)
 		{
 			HUDWEAPON_MOVEZ -= .75;
+		}
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_MOVEZ < -2)
+		{
+			HUDWEAPON_MOVEZ = -2;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_MOVEZ < -4)
+		{
 			HUDWEAPON_MOVEZ = -4;
 		}
 		HUDWEAPON_MOVEY -= .75;
@@ -1312,7 +1325,7 @@ void actHudWeapon(Entity* my)
 		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_ROLL > -3*PI/4)
 		{
 			printlog("Enter 1");
-			HUDWEAPON_ROLL -= .1;
+			HUDWEAPON_ROLL -= .05;
 		}
 		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_ROLL > -PI/2) {
 			HUDWEAPON_ROLL -= .25;
