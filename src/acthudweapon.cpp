@@ -69,12 +69,10 @@ Sint32 throwGimpTimer = 0; // player cannot throw objects unless zero
 Sint32 pickaxeGimpTimer = 0; // player cannot swap weapons immediately after using pickaxe 
 							 // due to multiplayer weapon degrade lag... equipping new weapon before degrade
 							// message hits can degrade the wrong weapon.
-Sint32 rollTimer = 0; // used to time speed of dodge roll
-Sint32 rollTimerAnim = 0; // used to time camera animation of dodge roll
+Sint32 rollTimer = 0; // used to time animation of dodge roll
 Sint32 rollCDTimer = 0; // used to time the cooldown between dodge rolls
 real_t rollSpeedX = 0; // used to save the speed of player at the time of the roll
 real_t rollSpeedY = 0; // used to save the speed of player at the time of the roll
-real_t rollDirMod = 0; // used to determine the direction of the camera roll
 
 /*-------------------------------------------------------------------------------
 
@@ -297,15 +295,12 @@ void actHudWeapon(Entity* my)
 		players[clientnum]->entity->vel_x = rollSpeedX;
 		players[clientnum]->entity->vel_y = rollSpeedY;
 		
+		camera.z += (8.5 * (1 - (fabs(rollTimer - (TICKS_PER_SECOND * .5 * .5)) / (TICKS_PER_SECOND * .5 * .5))));
+
 		--rollTimer;
-		if (rollTimerAnim)
-		{
-			camera.vang += (((2 * PI) / ((TICKS_PER_SECOND * .45) * 0.85)) * (((TICKS_PER_SECOND * .45) * 0.85) - rollTimerAnim)) * rollDirMod;
-			--rollTimerAnim;
-		}
 		if (!rollTimer)
 		{
-			rollCDTimer = TICKS_PER_SECOND; // 1 second cooldown
+			rollCDTimer = TICKS_PER_SECOND * .9; // .9 second cooldown
 		}
 	}
 	if (rollCDTimer)
@@ -1728,22 +1723,36 @@ void actHudShield(Entity* my)
 					float y_force = (*inputPressed(impulses[IN_FORWARD]) - (double)* inputPressed(impulses[IN_BACK]));
 					real_t speedFactor = std::min((players[clientnum]->entity->getDEX() * 0.1 + 15.5), 25 * 0.5 + 10) / 2;
 
-					rollTimer = TICKS_PER_SECOND * .45;
-					rollTimerAnim = rollTimer * 0.85;
-					rollSpeedX = players[clientnum]->entity->vel_x + (y_force * cos(players[clientnum]->entity->yaw) * speedFactor * 0.1);
-					rollSpeedY = players[clientnum]->entity->vel_y + (y_force * sin(players[clientnum]->entity->yaw) * speedFactor * 0.1);
-					rollSpeedX += players[clientnum]->entity->vel_x + (x_force * cos(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
-					rollSpeedY += players[clientnum]->entity->vel_y + (x_force * sin(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+					char buffer[20];
+					sprintf(buffer, "%f", players[clientnum]->entity->vel_y);
 
-					if (y_force < 0)
+					messagePlayer(clientnum, buffer);
+					if (x_force == 0 && y_force == 0)
 					{
-						rollDirMod = -1;
-						rollSpeedX *= 2;
-						rollSpeedY *= 2;
+						y_force = 1;
+						//rollSpeedX = y_force * cos(players[clientnum]->entity->yaw) + (y_force * cos(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+						//rollSpeedY = sin(players[clientnum]->entity->yaw) + (y_force * sin(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+						//rollSpeedX += players[clientnum]->entity->vel_x + (x_force * cos(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+						//rollSpeedY += players[clientnum]->entity->vel_y + (x_force * sin(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+						rollSpeedX = y_force * cos(players[clientnum]->entity->yaw) * .045 * speedFactor;
+						rollSpeedY = y_force * sin(players[clientnum]->entity->yaw) * .045 * speedFactor;
+						rollSpeedX += x_force * cos(players[clientnum]->entity->yaw + PI / 2) * .0225 * speedFactor;
+						rollSpeedY += x_force * sin(players[clientnum]->entity->yaw + PI / 2) * .0225 * speedFactor;
 					}
 					else
 					{
-						rollDirMod = 1;
+						rollSpeedX = players[clientnum]->entity->vel_x + (y_force * cos(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+						rollSpeedY = players[clientnum]->entity->vel_y + (y_force * sin(players[clientnum]->entity->yaw) * speedFactor * 0.1);
+						rollSpeedX += players[clientnum]->entity->vel_x + (x_force * cos(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+						rollSpeedY += players[clientnum]->entity->vel_y + (x_force * sin(players[clientnum]->entity->yaw + PI / 2) * speedFactor * 0.1);
+					}
+					rollTimer = TICKS_PER_SECOND * .5;
+					
+
+					if (y_force < 0)
+					{
+						rollSpeedX *= 2;
+						rollSpeedY *= 2;
 					}
 					return;
 				}
