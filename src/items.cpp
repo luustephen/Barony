@@ -1360,10 +1360,9 @@ void equipItem(Item* item, Item** slot, int player)
 		}
 		if ( multiplayer != CLIENT && !intro && !fadeout )
 		{
-			printlog("A");
-			printlog("Slot: %d\n", slot);
-			printlog("Shield: %d\n", &stats[player]->shield);
-			printlog("Weapon: %d\n", stats[player]->shield);
+			//printlog("Slot: %d\n", slot);
+			//printlog("Shield: %d\n", &stats[player]->shield);
+			//printlog("Weapon: %d\n", stats[player]->shield);
 			if (item->type == IRON_WARHAMMER && stats[player]->shield != NULL) //Can't use iron warhammer with offhand
 			{
 				messagePlayer(player, language[4116]);
@@ -1374,7 +1373,6 @@ void equipItem(Item* item, Item** slot, int player)
 				messagePlayer(player, language[4116]);
 				return;
 			}
-			printlog("B");
 			if ( players[player] != nullptr && players[player]->entity != nullptr)
 			{
 				if (players[player]->entity->ticks > 60)
@@ -1414,7 +1412,6 @@ void equipItem(Item* item, Item** slot, int player)
 		}
 		else
 		{
-			printlog("C");
 			if (item->type == IRON_WARHAMMER && stats[player]->shield != NULL) //Can't use iron warhammer with offhand
 			{
 				messagePlayer(player, language[4116]);
@@ -1425,7 +1422,6 @@ void equipItem(Item* item, Item** slot, int player)
 				messagePlayer(player, language[4116]);
 				return;
 			}
-			printlog("D");
 			oldcount = item->count;
 			item->count = 1;
 			if ( intro == false )
@@ -2575,7 +2571,7 @@ Sint32 Item::weaponGetAttack() const
 	}
 	else if (type == IRON_WARHAMMER)
 	{
-		attack += 7;
+		attack += 8;
 	}
 	else if ( type == SHORTBOW )
 	{

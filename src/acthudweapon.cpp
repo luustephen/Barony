@@ -233,6 +233,7 @@ bool bowFire = false;
 Uint32 hudweaponuid = 0;
 void actHudWeapon(Entity* my)
 {
+	printlog("Roll Before: %f", HUDWEAPON_ROLL);
 	double result = 0;
 	ItemType type;
 	bool wearingring = false;
@@ -263,6 +264,8 @@ void actHudWeapon(Entity* my)
 		hudweaponuid = my->getUID();
 		entity = newEntity(109, 1, map.entities, nullptr); // malearmright.vox
 		entity->focalz = -1.5;
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER)
+			entity->focalz = -4;
 		entity->parent = my->getUID();
 		my->parent = entity->getUID(); // just an easy way to refer to eachother, doesn't mean much
 		hudarm = entity;
@@ -1028,39 +1031,61 @@ void actHudWeapon(Entity* my)
 			}
 		}
 	}
-	else if ( HUDWEAPON_CHOP == 1 )     // prepare for first swing
+	else if (HUDWEAPON_CHOP == 1)     // prepare for first swing
 	{
 		HUDWEAPON_YAW -= .25;
-		if ( HUDWEAPON_YAW < 0 )
+		if (HUDWEAPON_YAW < 0)
 		{
 			HUDWEAPON_YAW = 0;
 		}
 		HUDWEAPON_PITCH -= .1;
-		if ( HUDWEAPON_PITCH < -PI / 4)
+		if (HUDWEAPON_PITCH < -PI / 4)
 		{
 			result = -PI / 4;
 			HUDWEAPON_PITCH = result;
 		}
-		HUDWEAPON_ROLL += .25;
-		if ( HUDWEAPON_ROLL > 0 )
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_ROLL > -PI / 4)
 		{
-			HUDWEAPON_ROLL = 0;
+			HUDWEAPON_ROLL = std::max<real_t>(HUDWEAPON_ROLL - .05, -PI / 4);
+		}
+		else if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_ROLL < -PI / 4)
+		{
+			HUDWEAPON_ROLL = std::min<real_t>(HUDWEAPON_ROLL + .15, -PI / 4);
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER)
+		{
+			HUDWEAPON_ROLL += .25;
+			if (HUDWEAPON_ROLL > 0)
+			{
+				HUDWEAPON_ROLL = 0;
+			}
 		}
 		HUDWEAPON_MOVEX -= .35;
-		if ( HUDWEAPON_MOVEX < -1 )
+		if (HUDWEAPON_MOVEX < -1)
 		{
 			HUDWEAPON_MOVEX = -1;
 		}
 		HUDWEAPON_MOVEY -= .45;
-		if ( HUDWEAPON_MOVEY < -2 )
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_MOVEY < 2)
+		{
+			HUDWEAPON_MOVEY = 2;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_MOVEY < -2)
 		{
 			HUDWEAPON_MOVEY = -2;
 		}
-		HUDWEAPON_MOVEZ -= .65;
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER)
+		{
+			HUDWEAPON_MOVEZ -= .2;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER)
+		{
+			HUDWEAPON_MOVEZ -= .65;
+		}
 		if (HUDWEAPON_MOVEZ < -6)
 		{
 			HUDWEAPON_MOVEZ = -6;
-			if (HUDWEAPON_PITCH == result && HUDWEAPON_ROLL == 0 && HUDWEAPON_YAW == 0 && HUDWEAPON_MOVEX == -1 && HUDWEAPON_MOVEY == -2)
+			if (HUDWEAPON_PITCH == result && HUDWEAPON_ROLL == 0 && HUDWEAPON_YAW == 0 && HUDWEAPON_MOVEX == -1 && HUDWEAPON_MOVEY == -2 || HUDWEAPON_MOVEY == 2 && HUDWEAPON_ROLL == -PI/4 && stats[clientnum]->weapon->type == IRON_WARHAMMER)
 			{
 				if ( !swingweapon )
 				{
@@ -1257,32 +1282,87 @@ void actHudWeapon(Entity* my)
 			}
 		}
 	}
-	else if ( HUDWEAPON_CHOP == 4 )     // prepare for second swing
+	else if (HUDWEAPON_CHOP == 4)     // prepare for second swing
 	{
 		HUDWEAPON_YAW = 0;
 		HUDWEAPON_PITCH -= .25;
-		if ( HUDWEAPON_PITCH < 0 )
+		if (HUDWEAPON_PITCH < 0)
 		{
 			HUDWEAPON_PITCH = 0;
 		}
 		HUDWEAPON_MOVEX -= .35;
-		if ( HUDWEAPON_MOVEX < 0 )
+		if (HUDWEAPON_MOVEX < 0)
 		{
 			HUDWEAPON_MOVEX = 0;
 		}
-		HUDWEAPON_MOVEZ -= .75;
-		if ( HUDWEAPON_MOVEZ < -4 )
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_MOVEZ > -2)
+		{
+			HUDWEAPON_MOVEZ -= .07;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_MOVEZ > -4)
+		{
+			HUDWEAPON_MOVEZ -= .75;
+		}
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_MOVEZ < -2)
+		{
+			HUDWEAPON_MOVEZ = -2;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_MOVEZ < -4)
 		{
 			HUDWEAPON_MOVEZ = -4;
 		}
 		HUDWEAPON_MOVEY -= .75;
-		if ( HUDWEAPON_MOVEY < -6 )
+		if (HUDWEAPON_MOVEY < -6)
 		{
 			HUDWEAPON_MOVEY = -6;
 		}
-		HUDWEAPON_ROLL -= .25;
-		if (HUDWEAPON_ROLL < -PI / 2)
+		printlog("Warhammer Rolling1: %f", HUDWEAPON_ROLL);
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_ROLL > -3*PI/4)
 		{
+			printlog("Enter 1");
+			HUDWEAPON_ROLL -= .05;
+		}
+		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_ROLL > -PI/2) {
+			HUDWEAPON_ROLL -= .25;
+		}
+		printlog("Warhammer Rolling2: %f",HUDWEAPON_ROLL);
+		printlog("MoveZ: %f", HUDWEAPON_MOVEZ);
+		if (HUDWEAPON_ROLL <= -3*PI / 4 && stats[clientnum]->weapon->type == IRON_WARHAMMER) //FOR WARHAMMER
+		{
+			printlog("Enter 2");
+			HUDWEAPON_ROLL = -3*PI / 4;
+			if (HUDWEAPON_PITCH == 0 && HUDWEAPON_MOVEX == 0 && HUDWEAPON_MOVEY == -6 && HUDWEAPON_MOVEZ == -2)
+			{
+				if (!swingweapon)
+				{
+					HUDWEAPON_CHOP++;
+					players[clientnum]->entity->attack(2, HUDWEAPON_CHARGE, nullptr);
+					if (stats[clientnum]->weapon
+						&& stats[clientnum]->weapon->type == CROSSBOW)
+					{
+						throwGimpTimer = 40; // fix for swapping weapon to crossbow while charging.
+					}
+					if (stats[clientnum]->weapon
+						&& stats[clientnum]->weapon->type == NOISY_CRICKET)
+					{
+						throwGimpTimer = 60; // fix for swapping weapon to crossbow while charging.
+					}
+					HUDWEAPON_CHARGE = 0;
+					HUDWEAPON_OVERCHARGE = 0;
+					if (players[clientnum]->entity->skill[3] == 0)   // debug cam OFF
+					{
+						camera_shakex += .07;
+					}
+				}
+				else
+				{
+					HUDWEAPON_CHARGE = std::min<real_t>(HUDWEAPON_CHARGE + 1, MAXCHARGE);
+				}
+			}
+		}
+		if (HUDWEAPON_ROLL <= -PI / 2 && stats[clientnum]->weapon->type != IRON_WARHAMMER)
+		{
+			printlog("Enter 3");
 			HUDWEAPON_ROLL = -PI / 2;
 			if (HUDWEAPON_PITCH == 0 && HUDWEAPON_MOVEX == 0 && HUDWEAPON_MOVEY == -6 && HUDWEAPON_MOVEZ == -4)
 			{
@@ -1363,13 +1443,26 @@ void actHudWeapon(Entity* my)
 		{
 			HUDWEAPON_YAW = -.1;
 		}
-		HUDWEAPON_ROLL += .25;
-		if ( HUDWEAPON_ROLL > 0 )
-		{
-			HUDWEAPON_ROLL = 0;
-			if ( HUDWEAPON_YAW == -.1 && HUDWEAPON_MOVEZ == 0 && HUDWEAPON_MOVEY == 0 && HUDWEAPON_MOVEX == 0 )
+		if (stats[clientnum]->weapon->type == IRON_WARHAMMER){
+			HUDWEAPON_ROLL += .2;
+			if (HUDWEAPON_ROLL > 0)
 			{
-				HUDWEAPON_CHOP = 0;
+				HUDWEAPON_ROLL = 0;
+				if (HUDWEAPON_YAW == -.1 && HUDWEAPON_MOVEZ == 0 && HUDWEAPON_MOVEY == 0 && HUDWEAPON_MOVEX == 0)
+				{
+					HUDWEAPON_CHOP = 0;
+				}
+			}
+		}
+		else {
+			HUDWEAPON_ROLL += .25;
+			if (HUDWEAPON_ROLL > 0)
+			{
+				HUDWEAPON_ROLL = 0;
+				if (HUDWEAPON_YAW == -.1 && HUDWEAPON_MOVEZ == 0 && HUDWEAPON_MOVEY == 0 && HUDWEAPON_MOVEX == 0)
+				{
+					HUDWEAPON_CHOP = 0;
+				}
 			}
 		}
 	}
@@ -1565,6 +1658,15 @@ void actHudWeapon(Entity* my)
 				my->yaw = HUDWEAPON_YAW - camera_shakex2;
 				my->pitch = HUDWEAPON_PITCH - camera_shakey2 / 200.f;
 				my->roll = HUDWEAPON_ROLL;
+			}
+			else if (item->type == IRON_WARHAMMER)
+			{
+				my->x = 8 + HUDWEAPON_MOVEX;
+				my->y = 1 + HUDWEAPON_MOVEY;
+				my->z = (camera.z * .5 - players[clientnum]->entity->z) + 7 + HUDWEAPON_MOVEZ;
+				my->yaw = HUDWEAPON_YAW - camera_shakex2;
+				my->pitch = HUDWEAPON_PITCH - camera_shakey2 / 200.f;
+				my->roll = HUDWEAPON_ROLL + PI/4;
 			}
 			else
 			{
