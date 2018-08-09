@@ -4285,8 +4285,24 @@ void Entity::attack(int pose, int charge, Entity* target)
 				{
 					entity = newEntity(696, 1, map.entities, nullptr); // bolt
 					playSoundEntity(this, 239 + rand() % 3, 96);
-					camera_shakex += .2;
-					camera_shakey += 20;
+
+					if (player == clientnum)
+					{
+						camera_shakex += .2;
+						camera_shakey += 20;
+					}
+					else if (player > 0 && multiplayer == SERVER)
+					{
+						// Shake the Client's screen
+						strcpy((char*)net_packet->data, "SHAK");
+						net_packet->data[4] = 20; // turns into .1
+						net_packet->data[5] = 20;
+						net_packet->address.host = net_clients[player - 1].host;
+						net_packet->address.port = net_clients[player - 1].port;
+						net_packet->len = 6;
+						sendPacketSafe(net_sock, -1, net_packet, player - 1);
+					}
+
 					castSpell(uid, &spell_fireball, true, false);
 					castSpell(uid, &spell_lightning, true, false);
 					castSpell(uid, &spell_dig, true, false);

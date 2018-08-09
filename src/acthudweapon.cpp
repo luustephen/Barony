@@ -233,7 +233,6 @@ bool bowFire = false;
 Uint32 hudweaponuid = 0;
 void actHudWeapon(Entity* my)
 {
-	printlog("Roll Before: %f", HUDWEAPON_ROLL);
 	double result = 0;
 	ItemType type;
 	bool wearingring = false;
@@ -1316,20 +1315,15 @@ void actHudWeapon(Entity* my)
 		{
 			HUDWEAPON_MOVEY = -6;
 		}
-		printlog("Warhammer Rolling1: %f", HUDWEAPON_ROLL);
 		if (stats[clientnum]->weapon->type == IRON_WARHAMMER && HUDWEAPON_ROLL > -3*PI/4)
 		{
-			printlog("Enter 1");
 			HUDWEAPON_ROLL -= .05;
 		}
 		else if (stats[clientnum]->weapon->type != IRON_WARHAMMER && HUDWEAPON_ROLL > -PI/2) {
 			HUDWEAPON_ROLL -= .25;
 		}
-		printlog("Warhammer Rolling2: %f",HUDWEAPON_ROLL);
-		printlog("MoveZ: %f", HUDWEAPON_MOVEZ);
 		if (HUDWEAPON_ROLL <= -3*PI / 4 && stats[clientnum]->weapon->type == IRON_WARHAMMER) //FOR WARHAMMER
 		{
-			printlog("Enter 2");
 			HUDWEAPON_ROLL = -3*PI / 4;
 			if (HUDWEAPON_PITCH == 0 && HUDWEAPON_MOVEX == 0 && HUDWEAPON_MOVEY == -6 && HUDWEAPON_MOVEZ == -2)
 			{
@@ -1362,7 +1356,6 @@ void actHudWeapon(Entity* my)
 		}
 		if (HUDWEAPON_ROLL <= -PI / 2 && stats[clientnum]->weapon->type != IRON_WARHAMMER)
 		{
-			printlog("Enter 3");
 			HUDWEAPON_ROLL = -PI / 2;
 			if (HUDWEAPON_PITCH == 0 && HUDWEAPON_MOVEX == 0 && HUDWEAPON_MOVEY == -6 && HUDWEAPON_MOVEZ == -4)
 			{
