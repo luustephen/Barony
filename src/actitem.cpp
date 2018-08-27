@@ -129,6 +129,27 @@ void actItem(Entity* my)
 	// pick up item
 	if (multiplayer != CLIENT)
 	{
+		if ( my->isInteractWithMonster() )
+		{
+			Entity* monsterInteracting = uidToEntity(my->interactedByMonster);
+			if ( monsterInteracting )
+			{
+				if ( my->skill[10] >= 0 && my->skill[10] < NUMITEMS )
+				{
+					if ( items[my->skill[10]].category == Category::FOOD && monsterInteracting->getMonsterTypeFromSprite() != SLIME )
+					{
+						monsterInteracting->monsterConsumeFoodEntity(my, monsterInteracting->getStats());
+					}
+					else
+					{
+						monsterInteracting->monsterAddNearbyItemToInventory(monsterInteracting->getStats(), 24, 9, my);
+					}
+				}
+				my->clearMonsterInteract();
+				return;
+			}
+			my->clearMonsterInteract();
+		}
 		for ( i = 0; i < MAXPLAYERS; i++)
 		{
 			if ((i == 0 && selectedEntity == my) || (client_selected[i] == my))

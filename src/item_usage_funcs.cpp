@@ -960,11 +960,21 @@ void item_PotionHealing(Item*& item, Entity* entity, bool shouldConsumeItem)
 	if ( stats->HP == stats->MAXHP )
 	{
 		playSoundEntity(entity, 52, 64);
-		messagePlayer(player, language[772]);
-		// stop bleeding
-		if ( stats->EFFECTS[EFF_BLEEDING] )
+		if ( item->beatitude < 0 )
 		{
-			entity->setEffect(EFF_BLEEDING, false, 0, false);
+			messagePlayer(player, language[2900]);
+			messagePlayer(player, language[2903]);
+			stats->EFFECTS[EFF_POISONED] = true;
+			stats->EFFECTS_TIMERS[EFF_POISONED] = std::max(200, 300 - entity->getCON() * 20);
+		}
+		else
+		{
+			messagePlayer(player, language[772]);
+			// stop bleeding
+			if ( stats->EFFECTS[EFF_BLEEDING] )
+			{
+				entity->setEffect(EFF_BLEEDING, false, 0, false);
+			}
 		}
 		if ( shouldConsumeItem )
 		{
@@ -990,6 +1000,11 @@ void item_PotionHealing(Item*& item, Entity* entity, bool shouldConsumeItem)
 		amount += 2 * stats->CON;
 	}
 
+	if ( item->beatitude < 0 )
+	{
+		amount /= (std::abs(item->beatitude) * 2);
+	}
+
 	int oldHP = entity->getHP();
 
 	entity->modHP(amount);
@@ -1003,13 +1018,24 @@ void item_PotionHealing(Item*& item, Entity* entity, bool shouldConsumeItem)
 	// play drink sound
 	playSoundEntity(entity, 52, 64);
 	Uint32 color = SDL_MapRGB(mainsurface->format, 0, 255, 0);
-	messagePlayerColor(player, color, language[773]);
 
-	// stop bleeding
-	if ( stats->EFFECTS[EFF_BLEEDING] )
+	if ( item->beatitude < 0 )
 	{
-		entity->setEffect(EFF_BLEEDING, false, 0, false);
+		messagePlayer(player, language[2900]);
+		messagePlayer(player, language[2903]);
+		stats->EFFECTS[EFF_POISONED] = true;
+		stats->EFFECTS_TIMERS[EFF_POISONED] = std::max(200, 300 - entity->getCON() * 20);
 	}
+	else
+	{
+		messagePlayerColor(player, color, language[773]);
+		// stop bleeding
+		if ( stats->EFFECTS[EFF_BLEEDING] )
+		{
+			entity->setEffect(EFF_BLEEDING, false, 0, false);
+		}
+	}
+
 	if ( shouldConsumeItem )
 	{
 		consumeItem(item);
@@ -1063,11 +1089,21 @@ void item_PotionExtraHealing(Item*& item, Entity* entity, bool shouldConsumeItem
 	if ( stats->HP == stats->MAXHP )
 	{
 		playSoundEntity(entity, 52, 64);
-		messagePlayer(player, language[772]);
-		// stop bleeding
-		if ( stats->EFFECTS[EFF_BLEEDING] )
+		if ( item->beatitude < 0 )
 		{
-			entity->setEffect(EFF_BLEEDING, false, 0, false);
+			messagePlayer(player, language[2900]);
+			messagePlayer(player, language[2903]);
+			stats->EFFECTS[EFF_POISONED] = true;
+			stats->EFFECTS_TIMERS[EFF_POISONED] = std::max(200, 300 - entity->getCON() * 20);
+		}
+		else
+		{
+			messagePlayer(player, language[772]);
+			// stop bleeding
+			if ( stats->EFFECTS[EFF_BLEEDING] )
+			{
+				entity->setEffect(EFF_BLEEDING, false, 0, false);
+			}
 		}
 		if ( shouldConsumeItem )
 		{
@@ -1093,6 +1129,11 @@ void item_PotionExtraHealing(Item*& item, Entity* entity, bool shouldConsumeItem
 		amount += 4 * stats->CON;
 	}
 
+	if ( item->beatitude < 0 )
+	{
+		amount /= (std::abs(item->beatitude) * 2);
+	}
+
 	int oldHP = entity->getHP();
 
 	entity->modHP(amount);
@@ -1106,13 +1147,23 @@ void item_PotionExtraHealing(Item*& item, Entity* entity, bool shouldConsumeItem
 	// play drink sound
 	playSoundEntity(entity, 52, 64);
 	Uint32 color = SDL_MapRGB(mainsurface->format, 0, 255, 0);
-	messagePlayerColor(player, color, language[773]);
-
-	// stop bleeding
-	if ( stats->EFFECTS[EFF_BLEEDING] )
+	if ( item->beatitude < 0 )
 	{
-		entity->setEffect(EFF_BLEEDING, false, 0, false);
+		messagePlayer(player, language[2900]);
+		messagePlayer(player, language[2903]);
+		stats->EFFECTS[EFF_POISONED] = true;
+		stats->EFFECTS_TIMERS[EFF_POISONED] = std::max(300, 600 - entity->getCON() * 20);
 	}
+	else
+	{
+		messagePlayerColor(player, color, language[773]);
+		// stop bleeding
+		if ( stats->EFFECTS[EFF_BLEEDING] )
+		{
+			entity->setEffect(EFF_BLEEDING, false, 0, false);
+		}
+	}
+
 	if ( shouldConsumeItem )
 	{
 		consumeItem(item);
@@ -1170,7 +1221,17 @@ void item_PotionRestoreMagic(Item*& item, Entity* entity)
 	if ( stats->MP == stats->MAXMP )
 	{
 		playSoundEntity(entity, 52, 64);
-		messagePlayer(player, language[772]);
+		if ( item->beatitude < 0 )
+		{
+			messagePlayer(player, language[774]);
+			messagePlayer(player, language[2902]);
+			stats->EFFECTS[EFF_SLOW] = true;
+			stats->EFFECTS_TIMERS[EFF_SLOW] = 600;
+		}
+		else
+		{
+			messagePlayer(player, language[772]);
+		}
 		consumeItem(item);
 		return;
 	}
@@ -1179,11 +1240,28 @@ void item_PotionRestoreMagic(Item*& item, Entity* entity)
 	int multiplier = std::max(5, item->beatitude + 5);
 
 	amount *= multiplier;
+
+	if ( stats->INT > 0 )
+	{
+		amount += std::min(30, 2 * stats->INT); // extra mana scaling from 1 to 15 INT, capped at +30 MP
+	}
+
+	if ( item->beatitude < 0 )
+	{
+		amount /= (std::abs(item->beatitude) * 2);
+		messagePlayer(player, language[774]);
+		messagePlayer(player, language[2902]);
+		stats->EFFECTS[EFF_SLOW] = true;
+		stats->EFFECTS_TIMERS[EFF_SLOW] = 600;
+	}
+	else
+	{
+		messagePlayer(player, language[774]);
+	}
 	entity->modMP(amount);
 
 	// play drink sound
 	playSoundEntity(entity, 52, 64);
-	messagePlayer(player, language[774]);
 
 	consumeItem(item);
 }
@@ -2414,10 +2492,10 @@ void item_ScrollSummon(Item* item, int player)
 				{
 					monster->flags[USERFLAG2] = true;
 				}
-				monster->monsterPlayerAllyIndex = player;
+				monster->monsterAllyIndex = player;
 				if ( multiplayer == SERVER )
 				{
-					serverUpdateEntitySkill(monster, 42); // update monsterPlayerAllyIndex for clients.
+					serverUpdateEntitySkill(monster, 42); // update monsterAllyIndex for clients.
 				}
 
 				// update followers for this player
@@ -2432,10 +2510,19 @@ void item_ScrollSummon(Item* item, int player)
 				{
 					strcpy((char*)net_packet->data, "LEAD");
 					SDLNet_Write32((Uint32)monster->getUID(), &net_packet->data[4]);
+					strcpy((char*)(&net_packet->data[8]), monsterStats->name);
+					net_packet->data[8 + strlen(monsterStats->name)] = 0;
 					net_packet->address.host = net_clients[player - 1].host;
 					net_packet->address.port = net_clients[player - 1].port;
-					net_packet->len = 8;
+					net_packet->len = 8 + strlen(monsterStats->name) + 1;
 					sendPacketSafe(net_sock, -1, net_packet, player - 1);
+
+					serverUpdateAllyStat(player, monster->getUID(), monsterStats->LVL, monsterStats->HP, monsterStats->MAXHP, monsterStats->type);
+				}
+
+				if ( !FollowerMenu.recentEntity && player == clientnum )
+				{
+					FollowerMenu.recentEntity = monster;
 				}
 			}
 		}
@@ -3787,8 +3874,8 @@ void item_Spellbook(Item*& item, int player)
 			case SPELLBOOK_VAMPIRIC_AURA:
 				learned = addSpell(SPELL_VAMPIRIC_AURA, player);
 				break;
-			case SPELLBOOK_BLANK_5:
-				messagePlayer(player, "Nope. Spell doesn't exist yet.");
+			case SPELLBOOK_CHARM_MONSTER:
+				learned = addSpell(SPELL_CHARM_MONSTER, player);
 				break;
 			default:
 				learned = addSpell(SPELL_FORCEBOLT, player);

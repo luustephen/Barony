@@ -85,7 +85,14 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	monsterStoreType(skill[18]),
 	monsterStrafeDirection(skill[39]),
 	monsterPathCount(skill[38]),
-	monsterPlayerAllyIndex(skill[42]),
+	monsterAllyIndex(skill[42]),
+	monsterAllyState(skill[43]),
+	monsterAllyPickupItems(skill[44]),
+	monsterAllyInteractTarget(skill[45]),
+	monsterAllyClass(skill[46]),
+	monsterDefend(skill[47]),
+	monsterAllySpecial(skill[48]),
+	monsterAllySpecialCooldown(skill[49]),
 	particleDuration(skill[0]),
 	particleShrink(skill[1]),
 	monsterHitTime(skill[7]),
@@ -108,6 +115,7 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	boulderTrapFired(skill[0]),
 	boulderTrapRefireCounter(skill[4]),
 	boulderTrapPreDelay(skill[5]),
+	boulderTrapRocksToSpawn(skill[7]),
 	doorDir(skill[0]),
 	doorInit(skill[1]),
 	doorStatus(skill[3]),
@@ -180,11 +188,38 @@ Entity::Entity(Sint32 in_sprite, Uint32 pos, list_t* entlist, list_t* creatureli
 	actmagicOrbitLifetime(skill[10]),
 	actmagicMirrorReflected(skill[11]),
 	actmagicMirrorReflectedCaster(skill[12]),
+	actmagicCastByMagicstaff(skill[13]),
 	actmagicOrbitVerticalSpeed(fskill[2]),
 	actmagicOrbitStartZ(fskill[3]),
 	goldAmount(skill[0]),
 	goldAmbience(skill[1]),
-	goldSokoban(skill[2])
+	goldSokoban(skill[2]),
+	interactedByMonster(skill[47]),
+	soundSourceFired(skill[0]),
+	soundSourceToPlay(skill[1]),
+	soundSourceVolume(skill[2]),
+	soundSourceLatchOn(skill[3]),
+	soundSourceDelay(skill[4]),
+	soundSourceDelayCounter(skill[5]),
+	soundSourceOrigin(skill[6]),
+	lightSourceBrightness(skill[0]),
+	lightSourceAlwaysOn(skill[1]),
+	lightSourceInvertPower(skill[2]),
+	lightSourceLatchOn(skill[3]),
+	lightSourceRadius(skill[4]),
+	lightSourceFlicker(skill[5]),
+	lightSourceDelay(skill[6]),
+	lightSourceDelayCounter(skill[7]),
+	textSourceColorRGB(skill[0]),
+	textSourceVariables4W(skill[1]),
+	textSourceDelay(skill[2]),
+	textSource3(skill[3]),
+	textSourceBegin(skill[4]),
+	signalActivateDelay(skill[1]),
+	signalTimerInterval(skill[2]),
+	signalTimerRepeatCount(skill[3]),
+	signalTimerLatchInput(skill[4]),
+	signalInputDirection(skill[5])
 {
 	int c;
 	// add the entity to the entity list
@@ -316,4 +351,15 @@ void actMonster(Entity* my)
 void actPlayer(Entity* my)
 {
 	return;
+}
+
+void actSpriteNametag(Entity* my)
+{
+	// dummy function
+	return;
+}
+
+int playerEntityMatchesUid(Uint32 uid)
+{
+	return -1;
 }

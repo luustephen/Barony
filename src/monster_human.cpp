@@ -46,6 +46,9 @@ void initHuman(Entity* my, Stat* myStats)
 
 			my->createPathBoundariesNPC();
 
+			Stat baseStats(HUMAN);
+			bool isDefaultStats = isMonsterStatsDefault(*myStats);
+
 			// apply random stat increases if set in stat_shared.cpp or editor
 			setRandomMonsterStats(myStats);
 
@@ -340,6 +343,11 @@ void initHuman(Entity* my, Stat* myStats)
 
 			// count any inventory items set to default in edtior
 			int defaultItems = countDefaultItems(myStats);
+
+			if ( specialMonsterVariant == 0 && my->monsterStoreType > 0 && isDefaultStats )
+			{
+				myStats->EXP += 100 * my->monsterStoreType; // apply experience to level up the humans with floor depth.
+			}
 
 			// generate the default inventory items for the monster, provided the editor sprite allowed enough default slots
 			switch ( defaultItems )
@@ -894,6 +902,8 @@ void humanMoveBodyparts(Entity* my, Stat* myStats, double dist)
 		}
 	}
 
+	Entity* shieldarm = nullptr;
+
 	// move bodyparts
 	for (bodypart = 0, node = my->children.first; node != nullptr; node = node->next, bodypart++)
 	{
@@ -1187,6 +1197,7 @@ void humanMoveBodyparts(Entity* my, Stat* myStats, double dist)
 			// left arm
 			case LIMB_HUMANOID_LEFTARM:
 			{
+				shieldarm = entity;
 				if ( multiplayer != CLIENT )
 				{
 					if ( myStats->gloves == nullptr )
@@ -1279,6 +1290,15 @@ void humanMoveBodyparts(Entity* my, Stat* myStats, double dist)
 				{
 					entity->pitch = 0;
 				}
+				if ( my->monsterDefend && my->monsterAttack == 0 )
+				{
+					MONSTER_SHIELDYAW = PI / 5;
+				}
+				else
+				{
+					MONSTER_SHIELDYAW = 0;
+				}
+				entity->yaw += MONSTER_SHIELDYAW;
 				break;
 			}
 			// weapon
@@ -1379,27 +1399,49 @@ void humanMoveBodyparts(Entity* my, Stat* myStats, double dist)
 				entity->x -= 2.5 * cos(my->yaw + PI / 2) + .20 * cos(my->yaw);
 				entity->y -= 2.5 * sin(my->yaw + PI / 2) + .20 * sin(my->yaw);
 				entity->z += 2.5;
+				entity->yaw = shieldarm->yaw;
+				entity->roll = 0;
+				entity->pitch = 0;
 				if ( entity->sprite == items[TOOL_TORCH].index )
 				{
 					entity2 = spawnFlame(entity, SPRITE_FLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z -= 2;
 				}
 				else if ( entity->sprite == items[TOOL_CRYSTALSHARD].index )
 				{
 					entity2 = spawnFlame(entity, SPRITE_CRYSTALFLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z -= 2;
 				}
 				else if ( entity->sprite == items[TOOL_LANTERN].index )
 				{
 					entity->z += 2;
 					entity2 = spawnFlame(entity, SPRITE_FLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z += 1;
+				}
+				if ( MONSTER_SHIELDYAW > PI / 32 )
+				{
+					if ( entity->sprite != items[TOOL_TORCH].index && entity->sprite != items[TOOL_LANTERN].index && entity->sprite != items[TOOL_CRYSTALSHARD].index )
+					{
+						// shield, so rotate a little.
+						entity->roll += PI / 64;
+					}
+					else
+					{
+						entity->x += 0.25 * cos(my->yaw);
+						entity->y += 0.25 * sin(my->yaw);
+						entity->pitch += PI / 16;
+						if ( entity2 )
+						{
+							entity2->x += 0.75 * cos(shieldarm->yaw);
+							entity2->y += 0.75 * sin(shieldarm->yaw);
+						}
+					}
 				}
 				break;
 			// cloak
@@ -1591,6 +1633,11 @@ bool Entity::humanCanWieldItem(const Item& item) const
 	if ( !myStats )
 	{
 		return false;
+	}
+
+	if ( monsterAllyIndex >= 0 && (monsterAllyClass != ALLY_CLASS_MIXED || item.interactNPCUid == getUID()) )
+	{
+		return monsterAllyEquipmentInClass(item);
 	}
 
 	switch ( itemCategory(&item) )

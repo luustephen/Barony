@@ -19,7 +19,7 @@
 #endif
 
 // REMEMBER TO CHANGE THIS WITH EVERY NEW OFFICIAL VERSION!!!
-#define VERSION "v3.1.7"
+#define VERSION "v3.2.1"
 #define GAME_CODE
 
 //#define MAX_FPS_LIMIT 60 //TODO: Make this configurable.
@@ -122,6 +122,27 @@ enum ESteamStatTypes
 	STEAM_STAT_AVGRATE = 2,
 };
 
+enum ESteamLeaderboardTitles : int
+{
+	LEADERBOARD_NONE,
+	LEADERBOARD_NORMAL_TIME,
+	LEADERBOARD_NORMAL_SCORE,
+	LEADERBOARD_MULTIPLAYER_TIME,
+	LEADERBOARD_MULTIPLAYER_SCORE,
+	LEADERBOARD_HELL_TIME,
+	LEADERBOARD_HELL_SCORE,
+	LEADERBOARD_HARDCORE_TIME,
+	LEADERBOARD_HARDCORE_SCORE,
+	LEADERBOARD_CLASSIC_TIME,
+	LEADERBOARD_CLASSIC_SCORE,
+	LEADERBOARD_CLASSIC_HARDCORE_TIME,
+	LEADERBOARD_CLASSIC_HARDCORE_SCORE,
+	LEADERBOARD_MULTIPLAYER_CLASSIC_TIME,
+	LEADERBOARD_MULTIPLAYER_CLASSIC_SCORE,
+	LEADERBOARD_MULTIPLAYER_HELL_TIME,
+	LEADERBOARD_MULTIPLAYER_HELL_SCORE
+};
+
 bool achievementUnlocked(const char* achName);
 void steamAchievement(const char* achName);
 void steamAchievementClient(int player, const char* achName);
@@ -168,6 +189,7 @@ Entity* spawnFlame(Entity* parentent, Sint32 sprite);
 void actMagic(Entity* my);
 Entity* castMagic(Entity* parentent);
 void actSprite(Entity* my);
+void actSpriteNametag(Entity* my);
 void actSleepZ(Entity* my);
 Entity* spawnBang(Sint16 x, Sint16 y, Sint16 z);
 Entity* spawnExplosion(Sint16 x, Sint16 y, Sint16 z);
@@ -195,6 +217,9 @@ void actMidGamePortal(Entity* my);
 void actTeleporter(Entity* my);
 void actMagicTrapCeiling(Entity* my);
 void actExpansionEndGamePortal(Entity* my);
+void actSoundSource(Entity* my);
+void actLightSource(Entity* my);
+void actSignalTimer(Entity* my);
 
 void startMessages();
 

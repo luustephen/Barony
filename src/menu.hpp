@@ -111,6 +111,7 @@ void openFailedConnectionWindow(int mode);
 void openGameoverWindow();
 void openSteamLobbyBrowserWindow(button_t* my);
 void openLoadGameWindow(button_t* my);
+void openNewLoadGameWindow(button_t* my);
 void doSlider(int x, int y, int dots, int minvalue, int maxvalue, int increment, int* var, SDL_Surface* slider_font = SLIDERFONT, int slider_font_char_width = 16);
 void doSliderF(int x, int y, int dots, real_t minvalue, real_t maxvalue, real_t increment, real_t* var);
 
@@ -144,7 +145,9 @@ extern bool gamemods_disableSteamAchievements;
 extern std::vector<std::pair<std::string, std::string>> gamemods_mountedFilepaths;
 extern bool gamemods_modelsListRequiresReload;
 extern bool gamemods_soundListRequiresReload;
+extern bool gamemods_modPreload;
 #ifdef STEAMWORKS
+void gamemodsWorkshopPreloadMod(int fileID, std::string modTitle);
 void gamemodsWindowUploadInit(bool creatingNewItem);
 void gamemodsSubscribedItemsInit();
 void gamemodsDrawWorkshopItemTagToggle(std::string tagname, int x, int y);
@@ -153,7 +156,7 @@ bool gamemodsCheckFileIDInLoadedPaths(uint64 fileID);
 bool gamemodsIsClientLoadOrderMatchingHost(std::vector<std::string> serverModList);
 extern std::vector<std::pair<std::string, uint64>> gamemods_workshopLoadedFileIDMap;
 #endif // STEAMWORKS
-
+bool savegameDrawClickableButton(int padx, int pady, int padw, int padh, Uint32 btnColor);
 extern bool scoreDisplayMultiplayer;
 
 extern Sint32 slidery, slidersize, oslidery;
@@ -206,6 +209,7 @@ extern real_t settings_uiscale_playerbars;
 extern real_t settings_uiscale_chatlog;
 extern real_t settings_uiscale_inventory;
 extern bool settings_hide_statusbar;
+extern bool settings_hide_playertags;
 
 static const int NUM_SETTINGS_TABS = 7;
 

@@ -15,6 +15,7 @@
 #include "net.hpp"
 #include "collision.hpp"
 #include "entity.hpp"
+#include "interface/interface.hpp"
 
 /*-------------------------------------------------------------------------------
 
@@ -58,6 +59,29 @@ void actSprite(Entity* my)
 				return;
 			}
 		}
+	}
+}
+
+void actSpriteNametag(Entity* my)
+{
+	Entity* parent = uidToEntity(my->parent);
+	if ( parent )
+	{
+		if ( !hide_playertags )
+		{
+			my->flags[INVISIBLE] = false;
+			my->x = parent->x;
+			my->y = parent->y;
+		}
+		else
+		{
+			my->flags[INVISIBLE] = true;
+		}
+	}
+	else
+	{
+		my->flags[INVISIBLE] = true;
+		list_RemoveNode(my->mynode);
 	}
 }
 

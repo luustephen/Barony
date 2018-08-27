@@ -1135,7 +1135,8 @@ Entity* dropItemMonster(Item* item, Entity* monster, Stat* monsterStats, Sint16 
 				|| monsterStats->type == COCKATRICE
 				|| monsterStats->type == INSECTOID
 				|| monsterStats->type == INCUBUS
-				|| monsterStats->type == VAMPIRE)
+				|| monsterStats->type == VAMPIRE
+				|| monsterStats->type == SUCCUBUS)
 				&& (itemCategory(item) == SPELLBOOK || itemCategory(item) == MAGICSTAFF) )
 			{
 				// monsters with special spell attacks won't drop their book.
@@ -1220,6 +1221,7 @@ Entity* dropItemMonster(Item* item, Entity* monster, Stat* monsterStats, Sint16 
 		entity->skill[15] = item->identified;
 		entity->itemOriginalOwner = item->ownerUid;
 		entity->parent = monster->getUID();
+
 		if ( monsterStats && (monsterStats->type == INCUBUS || monsterStats->type == SUCCUBUS) )
 		{
 			// check if item was stolen.
@@ -1938,6 +1940,7 @@ void useItem(Item* item, int player)
 		case MAGICSTAFF_STONEBLOOD:
 		case MAGICSTAFF_BLEED:
 		case MAGICSTAFF_SUMMON:
+		case MAGICSTAFF_CHARM:
 			equipItem(item, &stats[player]->weapon, player);
 			break;
 		case RING_ADORNMENT:
@@ -1983,7 +1986,7 @@ void useItem(Item* item, int player)
 		case SPELLBOOK_STEAL_WEAPON:
 		case SPELLBOOK_DRAIN_SOUL:
 		case SPELLBOOK_VAMPIRIC_AURA:
-		case SPELLBOOK_BLANK_5:
+		case SPELLBOOK_CHARM_MONSTER:
 			item_Spellbook(item, player);
 			break;
 		case GEM_ROCK:
@@ -2403,6 +2406,7 @@ Item* newItemFromEntity(Entity* entity)
 	}
 	Item* item = newItem(static_cast<ItemType>(entity->skill[10]), static_cast<Status>(entity->skill[11]), entity->skill[12], entity->skill[13], entity->skill[14], entity->skill[15], nullptr);
 	item->ownerUid = static_cast<Uint32>(entity->itemOriginalOwner);
+	item->interactNPCUid = static_cast<Uint32>(entity->interactedByMonster);
 	return item;
 }
 
@@ -3534,6 +3538,19 @@ bool Item::isThisABetterArmor(const Item& newArmor, const Item* armorAlreadyHave
 	{
 		//Some thing is better than no thing!
 		return true;
+	}
+
+	if ( FollowerMenu.entityToInteractWith )
+	{
+		if ( newArmor.interactNPCUid == FollowerMenu.entityToInteractWith->interactedByMonster )
+		{
+			return true;
+		}
+	}
+
+	if ( armorAlreadyHave->forcedPickupByPlayer == true )
+	{
+		return false;
 	}
 
 	//If the new weapon defends better than the current armor, it's better. Even if it's cursed, eh?

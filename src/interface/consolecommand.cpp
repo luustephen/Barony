@@ -515,17 +515,47 @@ void consoleCommand(char* command_str)
 		else if ( strstr(command_str, "IN_TURNL") )
 		{
 			impulses[IN_TURNL] = atoi(&command_str[6]);
-			printlog("Bound IN_TURNL: %d\n", atoi(&command_str[6]));
+			if ( impulses[IN_FOLLOWERMENU_LASTCMD] == impulses[IN_TURNL] )
+			{
+				// reset to default arrow key to avoid overlapping keybinds on first launch.
+				// due to legacy keybind, now we have useful things to assign to q,e,z,c
+				impulses[IN_TURNL] = 80;
+				printlog("Legacy keys detected, conflict with IN_FOLLOWERMENU_LASTCMD. Automatically rebound IN_TURNL: %d (Left arrow key)\n", impulses[IN_TURNL]);
+			}
+			else
+			{
+				printlog("Bound IN_TURNL: %d\n", atoi(&command_str[6]));
+			}
 		}
 		else if ( strstr(command_str, "IN_TURNR") )
 		{
 			impulses[IN_TURNR] = atoi(&command_str[6]);
-			printlog("Bound IN_TURNR: %d\n", atoi(&command_str[6]));
+			if ( impulses[IN_FOLLOWERMENU_CYCLENEXT] == impulses[IN_TURNR] )
+			{
+				// reset to default arrow key to avoid overlapping keybinds on first launch.
+				// due to legacy keybind, now we have useful things to assign to q,e,z,c
+				impulses[IN_TURNR] = 79;
+				printlog("Legacy keys detected, conflict with IN_FOLLOWERMENU_CYCLENEXT. Automatically rebound IN_TURNR: %d (Right arrow key)\n", impulses[IN_TURNR]);
+			}
+			else
+			{
+				printlog("Bound IN_TURNR: %d\n", atoi(&command_str[6]));
+			}
 		}
 		else if ( strstr(command_str, "IN_UP") )
 		{
 			impulses[IN_UP] = atoi(&command_str[6]);
-			printlog("Bound IN_UP: %d\n", atoi(&command_str[6]));
+			if ( impulses[IN_FOLLOWERMENU] == impulses[IN_UP] )
+			{
+				// reset to default arrow key to avoid overlapping keybinds on first launch.
+				// due to legacy keybind, now we have useful things to assign to q,e,z,c
+				impulses[IN_UP] = 82;
+				printlog("Legacy keys detected, conflict with IN_FOLLOWERMENU. Automatically rebound IN_UP: %d (Up arrow key)\n", impulses[IN_UP]);
+			}
+			else
+			{
+				printlog("Bound IN_UP: %d\n", atoi(&command_str[6]));
+			}
 		}
 		else if ( strstr(command_str, "IN_DOWN") )
 		{
@@ -586,6 +616,21 @@ void consoleCommand(char* command_str)
 		{
 			impulses[IN_TOGGLECHATLOG] = atoi(&command_str[6]);
 			printlog("Bound IN_TOGGLECHATLOG: %d\n", atoi(&command_str[6]));
+		}
+		else if ( strstr(command_str, "IN_FOLLOWERMENU_OPEN") )
+		{
+			impulses[IN_FOLLOWERMENU] = atoi(&command_str[6]);
+			printlog("Bound IN_FOLLOWERMENU_OPEN: %d\n", impulses[IN_FOLLOWERMENU]);
+		}
+		else if ( strstr(command_str, "IN_FOLLOWERMENU_LASTCMD") )
+		{
+			impulses[IN_FOLLOWERMENU_LASTCMD] = atoi(&command_str[6]);
+			printlog("Bound IN_FOLLOWERMENU_LASTCMD: %d\n", impulses[IN_FOLLOWERMENU_LASTCMD]);
+		}
+		else if ( strstr(command_str, "IN_FOLLOWERMENU_CYCLENEXT") )
+		{
+			impulses[IN_FOLLOWERMENU_CYCLENEXT] = atoi(&command_str[6]);
+			printlog("Bound IN_FOLLOWERMENU_CYCLENEXT: %d\n", impulses[IN_FOLLOWERMENU_CYCLENEXT]);
 		}
 		else
 		{
@@ -678,6 +723,36 @@ void consoleCommand(char* command_str)
 		{
 			joyimpulses[INJOY_GAME_HOTBAR_ACTIVATE] = atoi(&command_str[9]);
 			printlog("[GAMEPAD] Bound INJOY_GAME_HOTBAR_ACTIVATE: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_HOTBAR_ACTIVATE") )
+		{
+			joyimpulses[INJOY_GAME_HOTBAR_ACTIVATE] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_HOTBAR_ACTIVATE: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_GAME_MINIMAPSCALE") )
+		{
+			joyimpulses[INJOY_GAME_MINIMAPSCALE] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_GAME_MINIMAPSCALE: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_GAME_TOGGLECHATLOG") )
+		{
+			joyimpulses[INJOY_GAME_TOGGLECHATLOG] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_GAME_TOGGLECHATLOG: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_GAME_FOLLOWERMENU_OPEN") )
+		{
+			joyimpulses[INJOY_GAME_FOLLOWERMENU] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_GAME_FOLLOWERMENU_OPEN: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_GAME_FOLLOWERMENU_LASTCMD") )
+		{
+			joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_GAME_FOLLOWERMENU_LASTCMD: %d\n", atoi(&command_str[9]));
+		}
+		else if ( strstr(command_str, "INJOY_GAME_GAME_FOLLOWERMENU_CYCLENEXT") )
+		{
+			joyimpulses[INJOY_GAME_FOLLOWERMENU_CYCLE] = atoi(&command_str[9]);
+			printlog("[GAMEPAD] Bound INJOY_GAME_GAME_FOLLOWERMENU_CYCLENEXT: %d\n", atoi(&command_str[9]));
 		}
 		else if ( strstr(command_str, "INJOY_MENU_CHEST_GRAB_ALL"))
 		{
@@ -1304,9 +1379,15 @@ void consoleCommand(char* command_str)
 	}
 	else if (!strncmp(command_str, "/die", 4))
 	{
-		if (multiplayer != SINGLE)
+		if ( multiplayer == CLIENT )
 		{
-			messagePlayer(clientnum, language[299]);
+			// request sweet release.
+			strcpy((char*)net_packet->data, "IDIE");
+			net_packet->data[4] = clientnum;
+			net_packet->address.host = net_server.host;
+			net_packet->address.port = net_server.port;
+			net_packet->len = 5;
+			sendPacketSafe(net_sock, -1, net_packet, 0);
 		}
 		else
 		{
@@ -2114,6 +2195,47 @@ void consoleCommand(char* command_str)
 		else if ( !strncmp(command_str, "/hidestatusbar", 14) )
 		{
 			hide_statusbar = !hide_statusbar;
+		}
+		else if ( !strncmp(command_str, "/hideplayertags", 15) )
+		{
+			hide_playertags = !hide_playertags;
+		}
+		else if ( !strncmp(command_str, "/togglesecretlevel", 18) )
+		{
+			if ( !(svFlags & SV_FLAG_CHEATS) )
+			{
+				messagePlayer(clientnum, language[277]);
+				return;
+			}
+			if ( multiplayer != SINGLE )
+			{
+				messagePlayer(clientnum, language[299]);
+				return;
+			}
+			secretlevel = (secretlevel == false);
+		}
+		else if ( !strncmp(command_str, "/seteffect ", 11) )
+		{
+			if ( !(svFlags & SV_FLAG_CHEATS) )
+			{
+				messagePlayer(clientnum, language[277]);
+				return;
+			}
+			if ( multiplayer != SINGLE )
+			{
+				messagePlayer(clientnum, language[299]);
+				return;
+			}
+
+			int effect = atoi(&command_str[11]);
+			if ( effect >= NUMEFFECTS || effect < 0 )
+			{
+				return;
+			}
+			else
+			{
+				players[clientnum]->entity->setEffect(effect, true, 500, true);
+			}
 		}
 		else
 		{

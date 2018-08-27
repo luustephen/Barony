@@ -171,7 +171,10 @@ extern bool stop;
 #define IN_AUTOSORT 16
 #define IN_MINIMAPSCALE 17
 #define IN_TOGGLECHATLOG 18
-#define NUMIMPULSES 19
+#define IN_FOLLOWERMENU 19
+#define IN_FOLLOWERMENU_LASTCMD 20
+#define IN_FOLLOWERMENU_CYCLENEXT 21
+#define NUMIMPULSES 22
 
 //Joystick/gamepad impulses
 //TODO: Split bindings into three subcategories: Bifunctional, Game Exclusive, Menu Exclusive.
@@ -219,10 +222,13 @@ static const unsigned INJOY_GAME_HOTBAR_PREV = 31;
 static const unsigned INJOY_GAME_HOTBAR_NEXT = 32;
 static const unsigned INJOY_GAME_MINIMAPSCALE = 33;
 static const unsigned INJOY_GAME_TOGGLECHATLOG = 34;
+static const unsigned INJOY_GAME_FOLLOWERMENU = 35;
+static const unsigned INJOY_GAME_FOLLOWERMENU_LASTCMD = 36;
+static const unsigned INJOY_GAME_FOLLOWERMENU_CYCLE = 37;
 
 static const unsigned INDEX_JOYBINDINGS_START_GAME = 26;
 
-static const unsigned NUM_JOY_IMPULSES = 35;
+static const unsigned NUM_JOY_IMPULSES = 38;
 
 static const unsigned UNBOUND_JOYBINDING = 399;
 
@@ -283,13 +289,12 @@ typedef struct map_t
 	std::unordered_map<Sint32, node_t*> entities_map;
 	list_t* entities;
 	list_t* creatures; //A list of Entity* pointers.
-
-	Entity* getEntityWithUID(Uint32 uid);
 } map_t;
 
 #define MAPLAYERS 3 // number of layers contained in a single map
 #define OBSTACLELAYER 1 // obstacle layer in map
 #define MAPFLAGS 16 // map flags for custom properties
+#define MAPFLAGTEXTS 17 // map flags for custom properties
 // names for the flag indices
 static const int MAP_FLAG_CEILINGTILE = 0;
 static const int MAP_FLAG_DISABLETRAPS = 1;
@@ -314,11 +319,13 @@ static const int MAP_FLAG_DISABLEDIGGING = 12;
 static const int MAP_FLAG_DISABLETELEPORT = 13;
 static const int MAP_FLAG_DISABLELEVITATION = 14;
 static const int MAP_FLAG_GENADJACENTROOMS = 15;
+static const int MAP_FLAG_DISABLEOPENING = 16;
 
 #define MFLAG_DISABLEDIGGING ((map.flags[MAP_FLAG_GENBYTES3] >> 24) & 0xFF) // first leftmost byte
 #define MFLAG_DISABLETELEPORT ((map.flags[MAP_FLAG_GENBYTES3] >> 16) & 0xFF) // second leftmost byte
 #define MFLAG_DISABLELEVITATION ((map.flags[MAP_FLAG_GENBYTES3] >> 8) & 0xFF) // third leftmost byte
 #define MFLAG_GENADJACENTROOMS ((map.flags[MAP_FLAG_GENBYTES3] >> 0) & 0xFF) // fourth leftmost byte
+#define MFLAG_DISABLEOPENING ((map.flags[MAP_FLAG_GENBYTES4] >> 24) & 0xFF) // first leftmost byte
 
 // delete entity structure
 typedef struct deleteent_t
@@ -618,6 +625,7 @@ pathnode_t* newPathnode(list_t* list, Sint32 x, Sint32 y, pathnode_t* parent, Si
 real_t getLightForEntity(real_t x, real_t y);
 void glDrawVoxel(view_t* camera, Entity* entity, int mode);
 void glDrawSprite(view_t* camera, Entity* entity, int mode);
+void glDrawSpriteFromImage(view_t* camera, Entity* entity, std::string text, int mode);
 real_t getLightAt(int x, int y);
 void glDrawWorld(view_t* camera, int mode);
 
@@ -625,7 +633,7 @@ void glDrawWorld(view_t* camera, int mode);
 SDL_Cursor* newCursor(char* image[]);
 
 // function prototypes for maps.c:
-int generateDungeon(char* levelset, Uint32 seed);
+int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int> mapParameters = std::make_tuple(-1, -1, -1)); // secretLevelChance of -1 is default Barony generation.
 void assignActions(map_t* map);
 
 // Cursor bitmap definitions

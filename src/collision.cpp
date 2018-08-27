@@ -141,8 +141,30 @@ Entity* entityClicked()
 		{
 			return NULL;
 		}
-		*inputPressed(impulses[IN_USE]) = 0;
-		*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
+
+		// ui code taken from drawSkillsSheet() and drawPartySheet().
+		if ( proficienciesPage == 0 )
+		{
+			if ( mouseInBounds(interfaceSkillsSheet.x, interfaceSkillsSheet.x + interfaceSkillsSheet.w,
+				interfaceSkillsSheet.y, interfaceSkillsSheet.y + interfaceSkillsSheet.h) )
+			{
+				return NULL;
+			}
+		}
+		else
+		{
+			if ( mouseInBounds(interfacePartySheet.x, interfacePartySheet.x + interfacePartySheet.w,
+				interfacePartySheet.y, interfacePartySheet.y + interfacePartySheet.h) )
+			{
+				return NULL;
+			}
+		}
+
+		if ( mouseInsidePlayerInventory() || mouseInsidePlayerHotbar() )
+		{
+			return NULL;
+		}
+
 		if ( softwaremode )
 		{
 			return clickmap[omousey + omousex * yres];
@@ -154,8 +176,6 @@ Entity* entityClicked()
 	}
 	else
 	{
-		*inputPressed(impulses[IN_USE]) = 0;
-		*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
 		if ( softwaremode )
 		{
 			return clickmap[(yres / 2) + (xres / 2) * yres];

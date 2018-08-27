@@ -28,6 +28,8 @@
 #define BOULDER_DESTX my->skill[6]
 #define BOULDER_DESTY my->skill[7]
 #define BOULDER_PLAYERPUSHED my->skill[8]
+#define BOULDER_SPAWNBLOOD my->skill[9]
+#define BOULDER_BLOODTIME my->skill[10]
 
 /*-------------------------------------------------------------------------------
 
@@ -131,7 +133,7 @@ int boulderCheckAgainstEntity(Entity* my, Entity* entity)
 				}
 				playSoundEntity(my, 181, 128);
 				playSoundEntity(entity, 28, 64);
-				spawnGib(entity);
+				Entity* gib = spawnGib(entity);
 				entity->modHP(-80);
 				entity->setObituary(language[1505]);
 				if ( entity->behavior == &actPlayer )
@@ -145,7 +147,7 @@ int boulderCheckAgainstEntity(Entity* my, Entity* entity)
 						}
 					}
 				}
-				if ( stats->HP > 0 )
+				if ( stats->HP > 0 || (stats->HP <= 0 && stats->amulet && stats->amulet->type == AMULET_LIFESAVING) )
 				{
 					// spawn several rock items
 					int i = 8 + rand() % 4;
@@ -208,6 +210,28 @@ int boulderCheckAgainstEntity(Entity* my, Entity* entity)
 					}
 
 					return 1;
+				}
+				else
+				{
+					if ( gibtype[stats->type] > 0 )
+					{
+						if ( gibtype[stats->type] == 1 )
+						{
+							BOULDER_SPAWNBLOOD = 203; //Blood entity.
+						}
+						else if ( gibtype[stats->type] == 2 )
+						{
+							BOULDER_SPAWNBLOOD = 213; //Blood entity.
+						}
+						else if ( gibtype[stats->type] == 4 )
+						{
+							BOULDER_SPAWNBLOOD = 682; //Blood entity.
+						}
+						if ( BOULDER_SPAWNBLOOD > 0 )
+						{
+							BOULDER_BLOODTIME = TICKS_PER_SECOND * 3;
+						}
+					}
 				}
 			}
 		}
@@ -636,6 +660,48 @@ void actBoulder(Entity* my)
 			playSoundEntity(my, 151, 128);
 		}
 	}
+	if ( (!BOULDER_STOPPED || BOULDER_ROLLING) && (fabs(my->vel_x) > 0 || fabs(my->vel_y) > 0) )
+	{
+		if ( multiplayer != CLIENT && map.tiles[static_cast<int>(my->y / 16) * MAPLAYERS + static_cast<int>(my->x / 16) * MAPLAYERS * map.height] )
+		{
+			// spawn blood only if there's a floor!
+			if ( BOULDER_SPAWNBLOOD != 0 && BOULDER_BLOODTIME > 0 )
+			{
+				int rate = 20;
+				if ( BOULDER_BLOODTIME > 2 * TICKS_PER_SECOND )
+				{
+					rate = 7;
+				}
+				else if ( BOULDER_BLOODTIME > 1 * TICKS_PER_SECOND )
+				{
+					rate = 15;
+				}
+				if ( spawn_blood && my->ticks % (rate + rand() % 3) == 0 )
+				{
+					Entity* blood = newEntity(BOULDER_SPAWNBLOOD, 1, map.entities, nullptr); //Gib entity.;
+					if ( blood != NULL )
+					{
+						blood->x = my->x - 4 + rand() % 9;
+						blood->y = my->y - 4 + rand() % 9;
+						blood->z = 8.0 + (rand() % 20) / 100.0;
+						blood->parent = my->getUID();
+						blood->sizex = 2;
+						blood->sizey = 2;
+						int randomScale = rand() % 10;
+						blood->scalex = (100 - randomScale) / 100.f;
+						blood->scaley = blood->scalex;
+						blood->yaw = (rand() % 360) * PI / 180.0;
+						blood->flags[UPDATENEEDED] = true;
+						blood->flags[PASSABLE] = true;
+					}
+				}
+			}
+		}
+	}
+	if ( BOULDER_BLOODTIME > 0 )
+	{
+		--BOULDER_BLOODTIME;
+	}
 }
 
 #define BOULDERTRAP_FIRED my->skill[0]
@@ -671,54 +737,57 @@ void actBoulderTrap(Entity* my)
 			BOULDERTRAP_FIRED = 1;
 			for ( c = 0; c < 4; c++ )
 			{
-				switch ( c )
+				if ( my->boulderTrapRocksToSpawn & (1 << c) )
 				{
-					case 0:
-						x = 16;
-						y = 0;
-						break;
-					case 1:
-						x = 0;
-						y = 16;
-						break;
-					case 2:
-						x = -16;
-						y = 0;
-						break;
-					case 3:
-						x = 0;
-						y = -16;
-						break;
-				}
-				x = ((int)(x + my->x)) >> 4;
-				y = ((int)(y + my->y)) >> 4;
-				if ( x >= 0 && y >= 0 && x < map.width && y < map.height )
-				{
-					if ( !map.tiles[OBSTACLELAYER + y * MAPLAYERS + x * MAPLAYERS * map.height] )
+					switch ( c )
 					{
-						Entity* entity = newEntity(245, 1, map.entities, nullptr); // boulder
-						entity->parent = my->getUID();
-						entity->x = (x << 4) + 8;
-						entity->y = (y << 4) + 8;
-						entity->z = -64;
-						entity->yaw = c * (PI / 2.f);
-						entity->sizex = 7;
-						entity->sizey = 7;
-						if ( checkObstacle(entity->x + cos(entity->yaw) * 16, entity->y + sin(entity->yaw) * 16, entity, NULL) )
+						case 0:
+							x = 16;
+							y = 0;
+							break;
+						case 1:
+							x = 0;
+							y = 16;
+							break;
+						case 2:
+							x = -16;
+							y = 0;
+							break;
+						case 3:
+							x = 0;
+							y = -16;
+							break;
+					}
+					x = ((int)(x + my->x)) >> 4;
+					y = ((int)(y + my->y)) >> 4;
+					if ( x >= 0 && y >= 0 && x < map.width && y < map.height )
+					{
+						if ( !map.tiles[OBSTACLELAYER + y * MAPLAYERS + x * MAPLAYERS * map.height] )
 						{
-							entity->yaw += PI * (rand() % 2) - PI / 2;
-							if ( entity->yaw >= PI * 2 )
+							Entity* entity = newEntity(245, 1, map.entities, nullptr); // boulder
+							entity->parent = my->getUID();
+							entity->x = (x << 4) + 8;
+							entity->y = (y << 4) + 8;
+							entity->z = -64;
+							entity->yaw = c * (PI / 2.f);
+							entity->sizex = 7;
+							entity->sizey = 7;
+							if ( checkObstacle(entity->x + cos(entity->yaw) * 16, entity->y + sin(entity->yaw) * 16, entity, NULL) )
 							{
-								entity->yaw -= PI * 2;
+								entity->yaw += PI * (rand() % 2) - PI / 2;
+								if ( entity->yaw >= PI * 2 )
+								{
+									entity->yaw -= PI * 2;
+								}
+								else if ( entity->yaw < 0 )
+								{
+									entity->yaw += PI * 2;
+								}
 							}
-							else if ( entity->yaw < 0 )
-							{
-								entity->yaw += PI * 2;
-							}
+							entity->behavior = &actBoulder;
+							entity->flags[UPDATENEEDED] = true;
+							entity->flags[PASSABLE] = true;
 						}
-						entity->behavior = &actBoulder;
-						entity->flags[UPDATENEEDED] = true;
-						entity->flags[PASSABLE] = true;
 					}
 				}
 			}

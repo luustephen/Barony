@@ -144,6 +144,7 @@ public:
 	list_t children;   // every entity has a list of child objects
 	Uint32 parent;     // id of the entity's "parent" entity
 
+
 	//--PUBLIC CHEST SKILLS--
 
 	//skill[4]
@@ -185,7 +186,16 @@ public:
 	Sint32& monsterPathCount; //skill[38]
 	real_t& monsterLookDir; //fskill[4]
 	Sint32& monsterEntityRenderAsTelepath; //skill[41]
-	Sint32& monsterPlayerAllyIndex; //skill[42] If monster is an ally of a player, assign number 0-3 to it for the players to track on the map.
+	Sint32& monsterAllyIndex; //skill[42] If monster is an ally of a player, assign number 0-3 to it for the players to track on the map.
+	Sint32& monsterAllyState; //skill[43]
+	Sint32& monsterAllyPickupItems; //skill[44]
+	Sint32& monsterAllyInteractTarget; //skill[45]
+	Sint32& monsterAllyClass; //skill[46]
+	Sint32& monsterDefend; //skill[47]
+	Sint32& monsterAllySpecial; //skill[48]
+	Sint32& monsterAllySpecialCooldown; //skill[49]
+	//--PUBLIC GENERAL ENTITY STUFF--
+	Sint32& interactedByMonster; //skill[47] for use with monsterAllyInteractTarget
 
 	//--PUBLIC PLAYER SKILLS--
 	Sint32& playerLevelEntrySpeech; //skill[18]
@@ -240,6 +250,7 @@ public:
 	Sint32& boulderTrapFired; //skill[0]
 	Sint32& boulderTrapRefireCounter; //skill[4]
 	Sint32& boulderTrapPreDelay; //skill[5]
+	Sint32& boulderTrapRocksToSpawn; //skill[7] bitwise storage. 
 
 	//--PUBLIC AMBIENT PARTICLE EFFECT SKILLS--
 	Sint32& particleDuration; //skill[0]
@@ -347,6 +358,7 @@ public:
 	Sint32&	actmagicOrbitLifetime; //skill[10]
 	Sint32& actmagicMirrorReflected; //skill[11]
 	Sint32& actmagicMirrorReflectedCaster; //skill[12]
+	Sint32& actmagicCastByMagicstaff; //skill[13]
 	real_t actmagicOrbitVerticalSpeed; //fskill[2]
 	real_t actmagicOrbitStartZ; //fskill[3]
 	
@@ -354,6 +366,39 @@ public:
 	Sint32& goldAmount; //skill[0]
 	Sint32& goldAmbience; //skill[1]
 	Sint32& goldSokoban; //skill[2]
+
+	//--PUBLIC SOUND SOURCE SKILLS--
+	Sint32& soundSourceFired; //skill[0]
+	Sint32& soundSourceToPlay; //skill[1]
+	Sint32& soundSourceVolume; //skill[2]
+	Sint32& soundSourceLatchOn; //skill[3]
+	Sint32& soundSourceDelay; //skill[4]
+	Sint32& soundSourceDelayCounter;//skill[5]
+	Sint32& soundSourceOrigin;//skill[6]
+
+	//--PUBLIC LIGHT SOURCE SKILLS--
+	Sint32& lightSourceBrightness; //skill[0]
+	Sint32& lightSourceAlwaysOn; //skill[1]
+	Sint32& lightSourceInvertPower; //skill[2]
+	Sint32& lightSourceLatchOn; //skill[3]
+	Sint32& lightSourceRadius; //skill[4]
+	Sint32& lightSourceFlicker; //skill[5]
+	Sint32& lightSourceDelay; //skill[6]
+	Sint32& lightSourceDelayCounter;//skill[7]
+
+	//--PUBLIC TEXT SOURCE SKILLS--
+	Sint32& textSourceColorRGB; //skill[0]
+	Sint32& textSourceVariables4W; //skill[1]
+	Sint32& textSourceDelay; //skill[2]
+	Sint32& textSource3; //skill[3]
+	Sint32& textSourceBegin; //skill[4]
+
+	//--PUBLIC SIGNAL SKILLS--
+	Sint32& signalActivateDelay; //skill[1]
+	Sint32& signalTimerInterval; //skill[2]
+	Sint32& signalTimerRepeatCount; //skill[3]
+	Sint32& signalTimerLatchInput; //skill[4]
+	Sint32& signalInputDirection; //skill[5]
 
 	void pedestalOrbInit(); // init orb properties
 
@@ -443,7 +488,7 @@ public:
 
 	bool monsterWantsItem(const Item& item, Item**& shouldEquip, node_t*& replaceInventoryItem) const;
 
-	void createPathBoundariesNPC();
+	void createPathBoundariesNPC(int maxTileDistance = -1);
 	void humanSetLimbsClient(int bodypart);
 
 	/*
@@ -453,6 +498,10 @@ public:
 
 	bool shouldMonsterEquipThisWeapon(const Item& itemToEquip) const;//TODO: Look @ proficiencies.
 	Item** shouldMonsterEquipThisArmor(const Item& item) const;
+	int shouldMonsterDefend(Stat& myStats, const Entity& target, const Stat& targetStats, int targetDist, bool hasrangedweapon);
+	bool monsterConsumeFoodEntity(Entity* food, Stat* myStats);
+	Entity* monsterAllyGetPlayerLeader();
+	bool monsterAllyEquipmentInClass(const Item& item) const;
 
 	void removeLightField(); // Removes light field from entity, sets this->light to nullptr.
 
@@ -505,6 +554,10 @@ public:
 	void actStalagFloor();
 	void actStalagColumn();
 	void actColumn();
+	void actSoundSource();
+	void actLightSource();
+	void actTextSource();
+	void actSignalTimer();
 
 	Monster getRace() const
 	{
@@ -582,7 +635,7 @@ public:
 	void lichIceSummonMonster(Monster creature);
 	void lichFireSummonMonster(Monster creature);
 	// check for nearby items to add to monster's inventory
-	void monsterAddNearbyItemToInventory(Stat* myStats, int rangeToFind, int maxInventoryItems);
+	void monsterAddNearbyItemToInventory(Stat* myStats, int rangeToFind, int maxInventoryItems, Entity* forcePickupItem = nullptr);
 	// degrade chosen armor piece by 1 on entity, update clients.
 	void degradeArmor(Stat& hitstats, Item& armor, int armornum);
 	// check stats if monster should "retreat" in actMonster
@@ -653,6 +706,9 @@ public:
 			case SHADOW:
 				shadowChooseWeapon(target, dist);
 				break;
+			case SUCCUBUS:
+				succubusChooseWeapon(target, dist);
+				break;
 			default:
 				break;
 		}
@@ -662,6 +718,7 @@ public:
 	void incubusChooseWeapon(const Entity* target, double dist);
 	void vampireChooseWeapon(const Entity* target, double dist);
 	void shadowChooseWeapon(const Entity* target, double dist);
+	void succubusChooseWeapon(const Entity* target, double dist);
 
 	bool monsterInMeleeRange(const Entity* target, double dist) const
 	{
@@ -708,9 +765,15 @@ public:
 
 	void monsterMoveBackwardsAndPath(); // monster tries to move backwards in a cross shaped area if stuck against an entity.
 	bool monsterHasLeader(); // return true if monsterstats->leader_uid is not 0.
+	void monsterAllySendCommand(int command, int destX, int destY, Uint32 uid = 0); // update the behavior of allied NPCs.
+	bool monsterAllySetInteract(); // set interact flags for allied NPCs.
+	bool isInteractWithMonster(); // is a monster interacting with me? check interact flags for allied NPCs.
+	void clearMonsterInteract(); // tidy up flags after interaction.
+	bool monsterSetPathToLocation(int destX, int destY, int adjacentTilesToCheck); // monster create path to destination, search adjacent tiles if specified target is inaccessible.
 	int getMagicResistance(); // returns the value of magic resistance of a monster.
 	void playerLevelEntrySpeechSecond(); // handle secondary voice lines for post-herx content
 	void setHardcoreStats(Stat& stats); // set monster stats for hardcore mode.
+	void handleNPCInteractDialogue(Stat& myStats, AllyNPCChatter event); // monster text for interactions.
 };
 
 extern list_t entitiesToDelete[MAXPLAYERS];
@@ -820,11 +883,13 @@ void actMagiclightBall(Entity* my);
 //---Misc act functions---
 void actAmbientParticleEffectIdle(Entity* my);
 
+void actTextSource(Entity* my);
+
 //checks if a sprite falls in certain sprite ranges
 
-static const int NUM_ITEM_STRINGS = 230;
-static const int NUM_ITEM_STRINGS_BY_TYPE = 98;
-static const int NUM_EDITOR_SPRITES = 130;
+static const int NUM_ITEM_STRINGS = 231;
+static const int NUM_ITEM_STRINGS_BY_TYPE = 99;
+static const int NUM_EDITOR_SPRITES = 134;
 static const int NUM_EDITOR_TILES = 300;
 
 // furniture types.
@@ -878,3 +943,6 @@ extern bool flickerLights;
 
 //Boulder functions.
 void boulderSokobanOnDestroy(bool pushedOffLedge);
+
+int playerEntityMatchesUid(Uint32 uid); // Returns >= 0 if player uid matches uid.
+bool monsterNameIsGeneric(Stat& monsterStats); // returns true if a monster's name is a generic decription rather than a miniboss.

@@ -47,9 +47,10 @@ static const int EFF_SHRINE_GREEN_BUFF = 20;
 static const int EFF_SHRINE_BLUE_BUFF = 21;
 static const int EFF_HP_REGEN = 22;
 static const int EFF_MP_REGEN = 23;
-static const int EFF_STURDY = 24;
-static const int EFF_VULNERABLE = 25;
-static const int EFF_FIRING = 26;
+static const int EFF_PACIFY = 24;
+static const int EFF_STURDY = 25;
+static const int EFF_VULNERABLE = 26;
+static const int EFF_FIRING = 27;
 static const int NUMEFFECTS = 32;
 
 // stats
@@ -135,6 +136,9 @@ static const int NUMCATEGORIES = 14;
 
 //--Stat Flag constants--
 static const int STAT_FLAG_NPC = 0;
+static const int STAT_FLAG_SNEAK = 1;
+static const int STAT_FLAG_ALLY_PICKUP = 2;
+static const int STAT_FLAG_ALLY_CLASS = 3;
 
 typedef enum
 {
@@ -176,6 +180,8 @@ public:
 	Sint32 EFFECTS_TIMERS[NUMEFFECTS];
 	bool defending;
 	Sint32& sneaking; // MISC_FLAGS[1]
+	Sint32& allyItemPickup; // MISC_FLAGS[2]
+	Sint32& allyClass; // MISC_FLAGS[3]
 
 	// group think
 	Uint32 leader_uid;
@@ -222,6 +228,7 @@ inline bool skillCapstoneUnlocked(int player, int proficiency)
 }
 
 void setDefaultMonsterStats(Stat* stats, int sprite);
+bool isMonsterStatsDefault(Stat& myStats);
 
 inline char* getSkillName(int skill)
 {

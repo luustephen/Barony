@@ -19,7 +19,9 @@ See LICENSE for details.
 
 // Constructor
 Stat::Stat(Sint32 sprite) :
-	sneaking(MISC_FLAGS[1])
+	sneaking(MISC_FLAGS[1]),
+	allyItemPickup(MISC_FLAGS[2]),
+	allyClass(MISC_FLAGS[3])
 {
 	this->type = NOTHING;
 	strcpy(this->name, "");
@@ -584,6 +586,7 @@ void setDefaultMonsterStats(Stat* stats, int sprite)
 			stats->PROFICIENCIES[PRO_POLEARM] = 60;
 			stats->PROFICIENCIES[PRO_RANGED] = 75;
 			stats->PROFICIENCIES[PRO_MAGIC] = 100;
+			stats->PROFICIENCIES[PRO_LEADERSHIP] = 60;
 
 			stats->EDITOR_ITEMS[ITEM_SLOT_INV_1] = 1;
 			stats->EDITOR_ITEMS[ITEM_SLOT_INV_1 + ITEM_CHANCE] = 33; // booze potion
@@ -1131,6 +1134,11 @@ void setDefaultMonsterStats(Stat* stats, int sprite)
 			stats->GOLD = 0;
 			stats->HUNGER = 900;
 
+			stats->PROFICIENCIES[PRO_MAGIC] = 60;
+			stats->PROFICIENCIES[PRO_LEADERSHIP] = 40;
+
+			stats->EDITOR_ITEMS[ITEM_SLOT_INV_1] = 1;
+			stats->EDITOR_ITEMS[ITEM_SLOT_INV_1 + ITEM_CHANCE] = 10; //Magicstaff of charm monster.
 			break;
 		case 81:
 		case (1000 + RAT):
@@ -1192,4 +1200,43 @@ void setDefaultMonsterStats(Stat* stats, int sprite)
 		default:
 			break;
 	}
+}
+
+bool isMonsterStatsDefault(Stat& myStats)
+{
+	Stat baseStats(myStats.type + 1000);
+	if ( baseStats.HP == myStats.HP
+		&& baseStats.MP == myStats.MP
+		&& baseStats.RANDOM_HP == myStats.RANDOM_HP
+		&& baseStats.RANDOM_MP == myStats.RANDOM_MP
+		&& baseStats.MAXHP == myStats.MAXHP
+		&& baseStats.MAXMP == myStats.MAXMP
+		&& baseStats.RANDOM_MAXHP == myStats.RANDOM_MAXHP
+		&& baseStats.RANDOM_MAXMP == myStats.RANDOM_MAXMP
+		&& baseStats.STR == myStats.STR
+		&& baseStats.DEX == myStats.DEX
+		&& baseStats.CON == myStats.CON
+		&& baseStats.INT == myStats.INT
+		&& baseStats.PER == myStats.PER
+		&& baseStats.CHR == myStats.CHR
+		&& baseStats.LVL == myStats.LVL
+		&& baseStats.RANDOM_LVL == myStats.RANDOM_LVL
+		&& baseStats.RANDOM_STR == myStats.RANDOM_STR
+		&& baseStats.RANDOM_DEX == myStats.RANDOM_DEX
+		&& baseStats.RANDOM_CON == myStats.RANDOM_CON
+		&& baseStats.RANDOM_INT == myStats.RANDOM_INT
+		&& baseStats.RANDOM_PER == myStats.RANDOM_PER
+		&& baseStats.RANDOM_CHR == myStats.RANDOM_CHR )
+	{
+		for ( int i = 0; i < 112; ++i )
+		{
+			if ( baseStats.EDITOR_ITEMS[i] != myStats.EDITOR_ITEMS[i] )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return false;
 }

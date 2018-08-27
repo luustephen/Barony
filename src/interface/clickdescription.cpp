@@ -44,6 +44,10 @@ void clickDescription(int player, Entity* entity)
 		{
 			return;
 		}
+		if ( FollowerMenu.followerMenuIsOpen() )
+		{
+			return;
+		}
 		if (openedChest[clientnum])
 			if (omousex > CHEST_INVENTORY_X && omousex < CHEST_INVENTORY_X + inventoryChest_bmp->w && omousey > CHEST_INVENTORY_Y && omousey < CHEST_INVENTORY_Y + inventoryChest_bmp->h)
 			{
@@ -119,6 +123,29 @@ void clickDescription(int player, Entity* entity)
 		if ( selectedItem || itemMenuOpen )
 		{
 			//Will bugger up GUI item interaction if this function continues to run.
+			return;
+		}
+
+		// ui code taken from drawSkillsSheet() and drawPartySheet().
+		if ( proficienciesPage == 0 )
+		{
+			if ( mouseInBounds(interfaceSkillsSheet.x, interfaceSkillsSheet.x + interfaceSkillsSheet.w,
+				interfaceSkillsSheet.y, interfaceSkillsSheet.y + interfaceSkillsSheet.h) )
+			{
+				return;
+			}
+		}
+		else
+		{
+			if ( mouseInBounds(interfacePartySheet.x, interfacePartySheet.x + interfacePartySheet.w,
+				interfacePartySheet.y, interfacePartySheet.y + interfacePartySheet.h) )
+			{
+				return;
+			}
+		}
+
+		if ( mouseInsidePlayerInventory() || mouseInsidePlayerHotbar() )
+		{
 			return;
 		}
 

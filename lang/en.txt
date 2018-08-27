@@ -1064,7 +1064,7 @@ You should call a plumber!#
 
 652 But wait! Your amulet is glowing!#
 653 But wait! Your amulet feels warm!#
-654 You are brought back to life.#
+654 You are brought back to life and begin to float through the air!#
 655 However, your amulet crumbles to dust.#
 656 Whoops, sorry. Guess it was a dud.#
 657 See you in the next life.#
@@ -2316,15 +2316,15 @@ Connecting to steam lobby...
 1538 Host a multiplayer game without Steamworks, using a direct IP connection.#
 1539 Join a multiplayer game without Steamworks, using a direct IP connection.#
 1540 %s, level %d %s
-dungeon level %d, singleplayer#
+dungeon level %d, singleplayer, %s#
 1541 %s, level %d %s
-dungeon level %d, server#
+dungeon level %d, server, %s#
 1542 %s, level %d %s
-dungeon level %d, client (player %d)#
+dungeon level %d, client (player %d), %s#
 1543 %s, level %d %s
-dungeon level %d, server (direct ip)#
+dungeon level %d, server (direct ip), %s#
 1544 %s, level %d %s
-dungeon level %d, client (player %d) (direct ip)#
+dungeon level %d, client (player %d) (direct ip), %s#
 
 
 # item names
@@ -2765,15 +2765,22 @@ dungeon level %d, client (player %d) (direct ip)#
 1980 Previous Hotbar Slot#
 1981 Minimap Scale Toggle#
 1982 Toggle Chatlog#
+1983 NPC Menu Quick Access#
+1984 Repeat Last Follower Command#
+1985 Cycle Currently Selected Follower#
+
 # Other bindings.
-1983 Autosort Inventory#
-1984 Minimap Scale Toggle#
-1985 Toggle Chatlog#
+1986 Autosort Inventory#
+1987 Minimap Scale Toggle#
+1988 Toggle Chatlog#
+1989 NPC Menu Quick Access#
+1990 Repeat Last NPC Command#
+1991 Cycle Through NPCs#
 
 # More stuff on the gamepad bindings screen.
-1990 Menu exclusive bindings:#
-1991 Game exclusive bindings:#
-1992 Click to unbind. Click an unbound action to assign binding.#
+1994 Menu exclusive bindings:#
+1995 Game exclusive bindings:#
+1996 Click to unbind. Click an unbound action to assign binding.#
 
 
 1997 auto appraise items#
@@ -2922,7 +2929,7 @@ dungeon level %d, client (player %d) (direct ip)#
 2279 spellbook#
 2280 spellbook of vampiric aura#
 2281 spellbook#
-2282 blank spellbook 5#
+2282 spellbook of charm monster#
 2283 spellbook#
 2284 empty bottle#
 2285 empty bottle#
@@ -2938,26 +2945,28 @@ dungeon level %d, client (player %d) (direct ip)#
 2295 tunic#
 2296 fez#
 2297 fez#
-2298 scroll of equipment#
-2299 scroll#
-2300 potion of sturdiness#
-2301 potion#
-2302 firebow#
-2303 firebow#
-2304 frostbow#
-2305 frostbow#
-2306 scroll of war#
-2307 scroll#
-2308 potion of fire breathing#
-2309 potion#
-2310 scroll of lullaby#
-2311 scroll#
-2312 Noisy Cricket#
-2313 magic crossbow#
-2314 dodge roll#
-2315 dodge roll#
-2316 iron warhammer#
-2317 iron warhammer#
+2298 magicstaff of charm monster#
+2299 magicstaff#
+2300 scroll of equipment#
+2301 scroll#
+2302 potion of sturdiness#
+2303 potion#
+2304 firebow#
+2305 firebow#
+2306 frostbow#
+2307 frostbow#
+2308 scroll of war#
+2309 scroll#
+2310 potion of fire breathing#
+2311 potion#
+2312 scroll of lullaby#
+2313 scroll#
+2314 Noisy Cricket#
+2315 magic crossbow#
+2316 dodge roll#
+2317 dodge roll#
+2318 iron warhammer#
+2319 iron warhammer#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
@@ -3014,7 +3023,7 @@ but it retracts beyond your might!#
 2396 Steal Weapon#
 2397 Drain Soul#
 2398 Vampiric Aura#
-2399 blank#
+2399 Charm Monster#
 
 2400 Gamepad#
 
@@ -3658,8 +3667,8 @@ anyone seeking that power again, deep underground. #
 2964 Are you sure you want to delete your multiplayer save file?
 
 #
-2965 WARNING: CONTINUING WILL OVERWRITE YOUR EXISTING SINGLEPLAYER SAVEFILE!#
-2966 WARNING: CONTINUING WILL OVERWRITE YOUR EXISTING MULTIPLAYER SAVEFILE!#
+2965 WARNING: CONTINUING WILL OVERWRITE YOUR OLDEST SINGLEPLAYER SAVEFILE!#
+2966 WARNING: CONTINUING WILL OVERWRITE YOUR OLDEST MULTIPLAYER SAVEFILE!#
 2967 light flicker#
 2968 press %s to drop gold#
 2969 The gods of Sokoban greatly reward your abilities!#
@@ -3700,7 +3709,6 @@ IDENTICAL MOD LISTS LOADED!#
 
 #
 3003 Steam Achievements are disabled#
-
 3004 Loading modded language file...#
 3005 Unloading modded language file...#
 3006 Loading modded item sprites...#
@@ -3753,6 +3761,130 @@ IDENTICAL MOD LISTS LOADED!#
 3033 Hide Chatlog#
 3034 User Interface Options#
 3035 There's no ground beneath your feet to place that!#
+
+# Follower Radial Menu Text
+3036 Follower Options:#
+3037 Wait here#
+3038 Class:#
+3039 Move to...#
+3040 Pickup
+Items:#
+3041 Move aside#
+3042 Drop#
+3043 Interact...#
+3044 Rest#
+# Begin secondary option text.
+3045 Follow#
+3046 #
+3047 #
+3048 #
+3049 #
+3050 #
+3051 Interact /
+ Attack...#
+3052 #
+3053 [Mixed]#
+3054 [Melee]#
+3055 [Ranged]#
+3056 [Unowned]#
+3057 [None]#
+3058 [All]#
+3059 Weapon#
+3060 Equipment#
+3061 All#
+3062 You do not meet the Leadership and Charisma requirements
+for this option. (Required: %s, Current: %s)#
+3063 Cancel#
+3064 delete save file#
+3065 Start a new game, or continue from a save file:#
+3066 scroll with arrow keys or mouse wheel#
+3067 %2d / %2d singleplayer slots used#
+3068 %2d / %2d  multiplayer slots used#
+
+# Follower responses.
+3069 %s I'll stand ground here, %s.#
+3070 %s I'll sit tight.#
+3071 %s My %s cursed!#
+3072 %s This would suit you well, %s!#
+3073 %s I'll try find something better.#
+3074 %s I have no use for this.#
+3075 %s That hit the spot!#
+3076 %s Oof. I'm really full now.#
+3077 %s I cant reach that.#
+3078 %s There's something in the way.#
+3079 %s Advancing to point!#
+3080 %s Cover my retreat, %s!#
+3081 %s These may be due for repairs.#
+3082 %s Nothing's irreplacable here!#
+3083 %s You can really feel the breeze down here.#
+3084 %s I can't betray my allies like that.#
+3085 %s You have to keep what few friends you have down here.#
+3086 %s Hmm.#
+3087 %s Mm.#
+3088 %s That one was a little mouldy.#
+3089 %s I couldn't possibly eat any more.#
+3090 %s I'm not hungry now.#
+3091 %s Blecch! Rotten food!#
+3092 You may only use this command once per floor.#
+3094 No interaction available.#
+# Follower responses end.
+
+# Misc
+3095 view Steam Leaderboards#
+3096 Your spell hits the %s!#
+3097 door#
+3098 gate#
+3099 chest#
+3100 An arcane protection holds the lock firmly in place!#
+3101 An arcane protection holds the door firmly in place!#
+3102 An arcane protection holds the gate firmly in place!#
+
+# Follower responses cont'd.
+3103 Command not available for %s.#
+3104 Attack...#
+3105 The %s waits patiently.#
+3106 %s waits patiently.#
+3107 weapon is#
+3108 helmet is#
+3109 hat is#
+3110 breastpiece is#
+3111 boots are#
+3112 shield is#
+3113 gloves are#
+3114 cloak is#
+3115 ring is#
+3116 amulet is#
+3117 equipment is#
+3118 %s cursed!#
+3119 The %s's #
+3120 %s's #
+3121 The %s #
+3122 %s #
+3123 stares at the %s dismissively.#
+3124 quickly eats the %s.#
+3125 surrenders their weapon.#
+3126 surrenders some of their equipment.#
+3127 surrenders their equipment.#
+3128 %s decides to follow you!#
+3129 The %s grunts.#
+3130 %s grunts.#
+3131 The %s can't reach that from here.#
+3132 %s can't reach that from here.#
+3133 There's something in the way of the %s.#
+3134 There's something in the way of %s.#
+3135 %s Apologies %s, but I won't let go of my keepsakes.#
+
+# Misc
+3136 Hide Player Nametags#
+3137 The %s is charmed into your service!#
+3138 %s is charmed into your service!#
+3139 The charm seizes the %s's will to fight!#
+3140 The charm seizes %s's will to fight!#
+3141 You resist the effects of the charm!#
+3142 The charm had no effect on the %s!#
+3143 The charm had no effect on %s!#
+3144 A magical charm seizes your will to fight!#
+3145 The slime envelops and consumes the %s!#
 
 # Mods
 4100 A bunch of equipment suddenly appears before you!#
