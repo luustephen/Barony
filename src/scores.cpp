@@ -10,6 +10,7 @@
 -------------------------------------------------------------------------------*/
 
 #include "main.hpp"
+#include "files.hpp"
 #include "game.hpp"
 #include "stat.hpp"
 #include "menu.hpp"
@@ -20,6 +21,7 @@
 #include "magic/magic.hpp"
 #include "net.hpp"
 #include "player.hpp"
+#include "sys/stat.h"
 
 // definitions
 list_t topscores;
@@ -42,6 +44,8 @@ list_t booksRead;
 bool usedClass[NUMCLASSES] = {0};
 Uint32 loadingsavegame = 0;
 bool achievementBrawlerMode = false;
+int savegameCurrentFileIndex = 0;
+score_t steamLeaderboardScore;
 
 /*-------------------------------------------------------------------------------
 
@@ -253,6 +257,23 @@ int saveScore()
 		scoresPtr = &topscoresMultiplayer;
 	}
 
+#ifdef STEAMWORKS
+	if ( g_SteamLeaderboards )
+	{
+		if ( steamLeaderboardSetScore(currentscore) )
+		{
+			g_SteamLeaderboards->LeaderboardUpload.score = totalScore(currentscore);
+			g_SteamLeaderboards->LeaderboardUpload.time = currentscore->completionTime / TICKS_PER_SECOND;
+			g_SteamLeaderboards->LeaderboardUpload.status = LEADERBOARD_STATE_FIND_LEADERBOARD_TIME;
+			printlog("[STEAM]: Initialising leaderboard score upload...");
+		}
+		else
+		{
+			printlog("[STEAM]: Did not qualify for leaderboard score upload.");
+		}
+	}
+#endif // STEAMWORKS
+
 	for ( c = 0, node = scoresPtr->first; node != NULL; node = node->next, c++ )
 	{
 		score_t* score = (score_t*)node->element;
@@ -278,6 +299,7 @@ int saveScore()
 	node->element = currentscore;
 	node->deconstructor = &scoreDeconstructor;
 	node->size = sizeof(score_t);
+
 	return c;
 }
 
@@ -517,8 +539,11 @@ void saveAllScores(const std::string& scoresfilename)
 	FILE* fp;
 	int c;
 
+	char path[PATH_MAX] = "";
+	completePath(path, scoresfilename.c_str(), outputdir);
+
 	// open file
-	if ( (fp = fopen(scoresfilename.c_str(), "wb")) == NULL )
+	if ( (fp = fopen(path, "wb")) == NULL )
 	{
 		printlog("error: failed to save '%s!'\n", scoresfilename.c_str());
 		return;
@@ -737,6 +762,8 @@ void loadAllScores(const std::string& scoresfilename)
 {
 	FILE* fp;
 	Uint32 c, i;
+	char path[PATH_MAX] = "";
+	completePath(path, scoresfilename.c_str(), outputdir);
 
 	// clear top scores
 	if ( scoresfilename.compare(SCORESFILE) == 0 )
@@ -749,7 +776,7 @@ void loadAllScores(const std::string& scoresfilename)
 	}
 
 	// open file
-	if ( (fp = fopen(scoresfilename.c_str(), "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
 		return;
 	}
@@ -1117,13 +1144,14 @@ void loadAllScores(const std::string& scoresfilename)
 
 -------------------------------------------------------------------------------*/
 
-int saveGame()
+int saveGame(int saveIndex)
 {
 	int player;
 	node_t* node;
 	FILE* fp;
 	Sint32 c;
-	char savefile[32] = "";
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
 
 	// open file
 	if ( !intro )
@@ -1133,16 +1161,17 @@ int saveGame()
 
 	if ( multiplayer == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, false);
+		strncpy(savefile, setSaveGameFileName(true, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, false);
+		strncpy(savefile, setSaveGameFileName(false, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
+	completePath(path, savefile, outputdir);
 
-	if ( (fp = fopen(savefile, "wb")) == NULL )
+	if ( (fp = fopen(path, "wb")) == NULL )
 	{
-		printlog("warning: failed to save '%s'!\n", savefile);
+		printlog("warning: failed to save '%s'!\n", path);
 		return 1;
 	}
 
@@ -1525,17 +1554,18 @@ int saveGame()
 
 	if ( multiplayer == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, true);
+		strncpy(savefile, setSaveGameFileName(true, true, saveIndex).c_str(), PATH_MAX - 1);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, true);
+		strncpy(savefile, setSaveGameFileName(false, true, saveIndex).c_str(), PATH_MAX - 1);
 	}
+	completePath(path, savefile, outputdir);
 
 	// now we save the follower information
-	if ( (fp = fopen(savefile, "wb")) == NULL )
+	if ( (fp = fopen(path, "wb")) == NULL )
 	{
-		printlog("warning: failed to save '%s'!\n", savefile);
+		printlog("warning: failed to save '%s'!\n", path);
 		return 1;
 	}
 	fprintf(fp, "BARONYSAVEGAMEFOLLOWERS");
@@ -1775,27 +1805,29 @@ int saveGame()
 
 -------------------------------------------------------------------------------*/
 
-int loadGame(int player)
+int loadGame(int player, int saveIndex)
 {
 	Sint32 mul;
 	node_t* node;
 	FILE* fp;
 	int c;
 
-	char savefile[32] = "";
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
 	if ( multiplayer == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, false);
+		strncpy(savefile, setSaveGameFileName(true, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, false);
+		strncpy(savefile, setSaveGameFileName(false, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
+	completePath(path, savefile, outputdir);
 
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to load '%s'!\n", savefile);
+		printlog("error: failed to load '%s'!\n", path);
 		return 1;
 	}
 
@@ -1804,7 +1836,7 @@ int loadGame(int player)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 1;
 	}
@@ -1814,7 +1846,7 @@ int loadGame(int player)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 1;
 	}
@@ -2216,25 +2248,27 @@ int loadGame(int player)
 
 -------------------------------------------------------------------------------*/
 
-list_t* loadGameFollowers()
+list_t* loadGameFollowers(int saveIndex)
 {
 	FILE* fp;
 	int c;
 
-	char savefile[32] = "";
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
 	if ( multiplayer == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, true);
+		strncpy(savefile, setSaveGameFileName(true, true, saveIndex).c_str(), PATH_MAX - 1);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, true);
+		strncpy(savefile, setSaveGameFileName(false, true, saveIndex).c_str(), PATH_MAX - 1);
 	}
+	completePath(path, savefile, outputdir);
 
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to load '%s'!\n", savefile);
+		printlog("error: failed to load '%s'!\n", path);
 		return NULL;
 	}
 
@@ -2243,7 +2277,7 @@ list_t* loadGameFollowers()
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAMEFOLLOWERS"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAMEFOLLOWERS", strlen("BARONYSAVEGAMEFOLLOWERS")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return NULL;
 	}
@@ -2253,7 +2287,7 @@ list_t* loadGameFollowers()
 	if ( versionNumber == -1 )
 	{
 		// if version number returned is invalid, abort
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return nullptr;
 	}
@@ -2415,24 +2449,27 @@ list_t* loadGameFollowers()
 
 -------------------------------------------------------------------------------*/
 
-int deleteSaveGame(int gametype)
+int deleteSaveGame(int gametype, int saveIndex)
 {
-	char savefile[32] = "";
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
 	if ( gametype == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, false);
+		strncpy(savefile, setSaveGameFileName(true, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, false);
+		strncpy(savefile, setSaveGameFileName(false, false, saveIndex).c_str(), PATH_MAX - 1);
 	}
-	if (access(savefile, F_OK) != -1)
+	completePath(path, savefile, outputdir);
+
+	if (access(path, F_OK) != -1)
 	{
-		printlog("deleting savegame in '%s'...\n", savefile);
-		int result = remove(savefile);
+		printlog("deleting savegame in '%s'...\n", path);
+		int result = remove(path);
 		if (result)
 		{
-			printlog("warning: failed to delete savegame in '%s'!\n", savefile);
+			printlog("warning: failed to delete savegame in '%s'!\n", path);
 #ifdef _MSC_VER
 			printlog(strerror(errno));
 #endif
@@ -2441,19 +2478,21 @@ int deleteSaveGame(int gametype)
 
 	if ( gametype == SINGLE )
 	{
-		setSaveGameFileName(true, savefile, true);
+		strncpy(savefile, setSaveGameFileName(true, true, saveIndex).c_str(), 63);
 	}
 	else
 	{
-		setSaveGameFileName(false, savefile, true);
+		strncpy(savefile, setSaveGameFileName(false, true, saveIndex).c_str(), 63);
 	}
-	if (access(savefile, F_OK) != -1)
+	completePath(path, savefile, outputdir);
+
+	if (access(path, F_OK) != -1)
 	{
-		printlog("deleting savegame in '%s'...\n", savefile);
-		int result = remove(savefile);
+		printlog("deleting savegame in '%s'...\n", path);
+		int result = remove(path);
 		if (result)
 		{
-			printlog("warning: failed to delete savegame in '%s'!\n", savefile);
+			printlog("warning: failed to delete savegame in '%s'!\n", path);
 #ifdef _MSC_VER
 			printlog(strerror(errno));
 #endif
@@ -2474,18 +2513,21 @@ int deleteSaveGame(int gametype)
 
 -------------------------------------------------------------------------------*/
 
-bool saveGameExists(bool singleplayer)
+bool saveGameExists(bool singleplayer, int saveIndex)
 {
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
-	if ( access(savefile, F_OK ) == -1 )
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
+	if ( access(path, F_OK ) == -1 )
 	{
 		return false;
 	}
 	else
 	{
 		FILE* fp;
-		if ( (fp = fopen(savefile, "rb")) == NULL )
+		if ( (fp = fopen(path, "rb")) == NULL )
 		{
 			return false;
 		}
@@ -2517,7 +2559,7 @@ bool saveGameExists(bool singleplayer)
 
 -------------------------------------------------------------------------------*/
 
-char* getSaveGameName(bool singleplayer)
+char* getSaveGameName(bool singleplayer, int saveIndex)
 {
 	char name[128];
 	FILE* fp;
@@ -2527,12 +2569,15 @@ char* getSaveGameName(bool singleplayer)
 	int mul, plnum, dungeonlevel;
 
 	char* tempstr = (char*) calloc(1024, sizeof(char));
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to check name in '%s'!\n", savefile);
+		printlog("error: failed to check name in '%s'!\n", path);
 		free(tempstr);
 		return NULL;
 	}
@@ -2542,7 +2587,7 @@ char* getSaveGameName(bool singleplayer)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		free(tempstr);
 		return NULL;
@@ -2553,7 +2598,7 @@ char* getSaveGameName(bool singleplayer)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		free(tempstr);
 		return nullptr;
@@ -2646,8 +2691,37 @@ char* getSaveGameName(bool singleplayer)
 	fread(&level, sizeof(Sint32), 1, fp);
 
 	// assemble string
-	snprintf(tempstr, 1024, language[1540 + mul], name, level, playerClassLangEntry(class_), dungeonlevel, plnum);
-
+	char timestamp[128] = "";
+#ifdef WINDOWS
+	struct _stat result;
+	if ( _stat(path, &result) == 0 )
+	{
+		struct tm *tm = localtime(&result.st_mtime);
+		if ( tm )
+		{
+			errno_t err = strftime(timestamp, 127, "%d %b %Y, %H:%M", tm); //day, month, year, time
+		}
+	}
+#else
+	struct stat result;
+	if ( stat(path, &result) == 0 )
+	{
+		struct tm *tm = localtime(&result.st_mtime);
+		if ( tm )
+		{
+			strftime(timestamp, 127, "%d %b %Y, %H:%M", tm); //day, month, year, time
+		}
+	}
+#endif // WINDOWS
+	if ( mul == DIRECTCLIENT || mul == CLIENT )
+	{
+		// include the player number in the printf.
+		snprintf(tempstr, 1024, language[1540 + mul], name, level, playerClassLangEntry(class_), dungeonlevel, plnum, timestamp);
+	}
+	else
+	{
+		snprintf(tempstr, 1024, language[1540 + mul], name, level, playerClassLangEntry(class_), dungeonlevel, timestamp);
+	}
 	// close file
 	fclose(fp);
 
@@ -2662,16 +2736,19 @@ char* getSaveGameName(bool singleplayer)
 
 -------------------------------------------------------------------------------*/
 
-Uint32 getSaveGameUniqueGameKey(bool singleplayer)
+Uint32 getSaveGameUniqueGameKey(bool singleplayer, int saveIndex)
 {
 	FILE* fp;
 	Uint32 gameKey;
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to get map seed out of '%s'!\n", savefile);
+		printlog("error: failed to get map seed out of '%s'!\n", path);
 		return 0;
 	}
 
@@ -2680,7 +2757,7 @@ Uint32 getSaveGameUniqueGameKey(bool singleplayer)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2689,7 +2766,7 @@ Uint32 getSaveGameUniqueGameKey(bool singleplayer)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2709,16 +2786,19 @@ Uint32 getSaveGameUniqueGameKey(bool singleplayer)
 
 -------------------------------------------------------------------------------*/
 
-int getSaveGameType(bool singleplayer)
+int getSaveGameType(bool singleplayer, int saveIndex)
 {
 	FILE* fp;
 	int mul;
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to get game type out of '%s'!\n", savefile);
+		printlog("error: failed to get game type out of '%s'!\n", path);
 		return 0;
 	}
 
@@ -2727,7 +2807,7 @@ int getSaveGameType(bool singleplayer)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2736,7 +2816,7 @@ int getSaveGameType(bool singleplayer)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2757,16 +2837,19 @@ int getSaveGameType(bool singleplayer)
 
 -------------------------------------------------------------------------------*/
 
-int getSaveGameClientnum(bool singleplayer)
+int getSaveGameClientnum(bool singleplayer, int saveIndex)
 {
 	FILE* fp;
 	int clientnum;
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to get clientnum out of '%s'!\n", savefile);
+		printlog("error: failed to get clientnum out of '%s'!\n", path);
 		return 0;
 	}
 
@@ -2775,7 +2858,7 @@ int getSaveGameClientnum(bool singleplayer)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2784,7 +2867,7 @@ int getSaveGameClientnum(bool singleplayer)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2806,16 +2889,19 @@ int getSaveGameClientnum(bool singleplayer)
 
 -------------------------------------------------------------------------------*/
 
-Uint32 getSaveGameMapSeed(bool singleplayer)
+Uint32 getSaveGameMapSeed(bool singleplayer, int saveIndex)
 {
 	FILE* fp;
 	Uint32 seed;
-	char savefile[32] = "";
-	setSaveGameFileName(singleplayer, savefile, false);
+	char savefile[PATH_MAX] = "";
+	char path[PATH_MAX] = "";
+	strncpy(savefile, setSaveGameFileName(singleplayer, false, saveIndex).c_str(), PATH_MAX - 1);
+	completePath(path, savefile, outputdir);
+
 	// open file
-	if ( (fp = fopen(savefile, "rb")) == NULL )
+	if ( (fp = fopen(path, "rb")) == NULL )
 	{
-		printlog("error: failed to get map seed out of '%s'!\n", savefile);
+		printlog("error: failed to get map seed out of '%s'!\n", path);
 		return 0;
 	}
 
@@ -2824,7 +2910,7 @@ Uint32 getSaveGameMapSeed(bool singleplayer)
 	fread(checkstr, sizeof(char), strlen("BARONYSAVEGAME"), fp);
 	if ( strncmp(checkstr, "BARONYSAVEGAME", strlen("BARONYSAVEGAME")) )
 	{
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2833,7 +2919,7 @@ Uint32 getSaveGameMapSeed(bool singleplayer)
 	if ( versionNumber == -1 )
 	{
 		// if getSavegameVersion returned -1, abort.
-		printlog("error: '%s' is corrupt!\n", savefile);
+		printlog("error: '%s' is corrupt!\n", path);
 		fclose(fp);
 		return 0;
 	}
@@ -2997,30 +3083,42 @@ void updateGameplayStatisticsInMainLoop()
 	}
 }
 
-void setSaveGameFileName(bool singleplayer, char* nameToSet, bool followersFile)
+std::string setSaveGameFileName(bool singleplayer, bool followersFile, int saveIndex)
 {
+	std::string filename = "savegames/savegame" + std::to_string(saveIndex);
+
+	//OLD FORMAT
+	//#define SAVEGAMEFILE "savegame.dat"
+	//#define SAVEGAMEFILE2 "savegame2.dat" // saves follower data
+	//#define SAVEGAMEFILE_MULTIPLAYER "savegame_multiplayer.dat"
+	//#define SAVEGAMEFILE2_MULTIPLAYER "savegame2_multiplayer.dat" // saves follower data
+	//#define SAVEGAMEFILE_MODDED "savegame_modded.dat"
+	//#define SAVEGAMEFILE2_MODDED "savegame2_modded.dat"
+	//#define SAVEGAMEFILE_MODDED_MULTIPLAYER "savegame_modded_multiplayer.dat"
+	//#define SAVEGAMEFILE2_MODDED_MULTIPLAYER "savegame2_modded_multiplayer.dat"
+
 	if ( !followersFile )
 	{
 		if ( singleplayer )
 		{
 			if ( gamemods_numCurrentModsLoaded == -1 )
 			{
-				strcpy(nameToSet, SAVEGAMEFILE);
+				filename.append(".dat");
 			}
 			else
 			{
-				strcpy(nameToSet, SAVEGAMEFILE_MODDED);
+				filename.append("_modded.dat");
 			}
 		}
 		else
 		{
 			if ( gamemods_numCurrentModsLoaded == -1 )
 			{
-				strcpy(nameToSet, SAVEGAMEFILE_MULTIPLAYER);
+				filename.append("_mp.dat");
 			}
 			else
 			{
-				strcpy(nameToSet, SAVEGAMEFILE_MODDED_MULTIPLAYER);
+				filename.append("_mp_modded.dat");
 			}
 		}
 	}
@@ -3030,25 +3128,45 @@ void setSaveGameFileName(bool singleplayer, char* nameToSet, bool followersFile)
 		{
 			if ( gamemods_numCurrentModsLoaded == -1 )
 			{
-				strcpy(nameToSet, SAVEGAMEFILE2);
+				filename.append("_npcs.dat");
 			}
 			else
 			{
-				strcpy(nameToSet, SAVEGAMEFILE2_MODDED);
+				filename.append("_npcs_modded.dat");
 			}
 		}
 		else
 		{
 			if ( gamemods_numCurrentModsLoaded == -1 )
 			{
-				strcpy(nameToSet, SAVEGAMEFILE2_MULTIPLAYER);
+				filename.append("_mp_npcs.dat");
 			}
 			else
 			{
-				strcpy(nameToSet, SAVEGAMEFILE2_MODDED_MULTIPLAYER);
+				filename.append("_mp_npcs_modded.dat");
 			}
 		}
 	}
+	return filename;
+}
+
+bool anySaveFileExists()
+{
+	for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+	{
+		if ( saveGameExists(true, fileNumber) )
+		{
+			return true;
+		}
+	}
+	for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+	{
+		if ( saveGameExists(false, fileNumber) )
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void updateAchievementRhythmOfTheKnight(int player, Entity* target, bool playerIsHit)
@@ -3161,3 +3279,444 @@ void updateAchievementThankTheTank(int player, Entity* target, bool targetKilled
 		}
 	}
 }
+
+#ifdef STEAMWORKS
+
+bool steamLeaderboardSetScore(score_t* score)
+{
+	if ( !g_SteamLeaderboards )
+	{
+		return false;
+	}
+
+	if ( score->victory == 0 )
+	{
+		return false;
+	}
+
+	if ( score->conductGameChallenges[CONDUCT_CHEATS_ENABLED] 
+		|| score->conductGameChallenges[CONDUCT_MODDED] )
+	{
+		return false;
+	}
+
+	if ( !score->conductGameChallenges[CONDUCT_MULTIPLAYER] )
+	{
+		// single player
+		if ( !score->conductGameChallenges[CONDUCT_HARDCORE] )
+		{
+			if ( score->victory == 2 )
+			{
+				g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_HELL_TIME;
+			}
+			else if ( score->victory == 3 )
+			{
+				g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_NORMAL_TIME;
+			}
+			else if ( score->victory == 1 )
+			{
+				g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_CLASSIC_TIME;
+			}
+		}
+		else if ( score->conductGameChallenges[CONDUCT_HARDCORE] )
+		{
+			if ( score->victory == 3 )
+			{
+				g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_HARDCORE_TIME;
+			}
+			else
+			{
+				g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_CLASSIC_HARDCORE_TIME;
+			}
+		}
+	}
+	else if ( score->conductGameChallenges[CONDUCT_MULTIPLAYER] )
+	{
+		// multiplayer
+		if ( score->victory == 2 )
+		{
+			g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_MULTIPLAYER_HELL_TIME;
+		}
+		else if ( score->victory == 3 )
+		{
+			g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_MULTIPLAYER_TIME;
+		}
+		else if ( score->victory == 1 )
+		{
+			g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_MULTIPLAYER_CLASSIC_TIME;
+		}
+	}
+	else
+	{
+		g_SteamLeaderboards->LeaderboardUpload.boardIndex = LEADERBOARD_NONE;
+	}
+
+	if ( g_SteamLeaderboards->LeaderboardUpload.boardIndex == LEADERBOARD_NONE )
+	{
+		return false;
+	}
+
+	// assemble the score tags.
+	//int completionTime = score->completionTime;
+	int c = 0;
+	int tag = TAG_MONSTER_KILLS_1;
+	int i = 0;
+	int tagWidth = 8;
+	for ( c = 0; c < NUMMONSTERS; ++c )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[tag] |= (static_cast<Uint8>(score->kills[c]) << (i * tagWidth));
+		++i;
+		if ( i >((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+
+	i = 0;
+	tagWidth = 8;
+	tag = TAG_NAME1;
+	for ( c = 0; c < std::min(32, (int)(strlen(score->stats->name))); ++c )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[tag] |= (Uint8)(score->stats->name[c]) << (i * tagWidth);
+		++i;
+		if ( i > ((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+
+	tagWidth = 8;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_RACESEXAPPEARANCECLASS] |= score->stats->type;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_RACESEXAPPEARANCECLASS] |= (score->stats->sex) << (tagWidth * 1);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_RACESEXAPPEARANCECLASS] |= (score->stats->appearance) << (tagWidth * 2);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_RACESEXAPPEARANCECLASS] |= (score->classnum) << (tagWidth * 3);
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->victory);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->dungeonlevel) << (tagWidth);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->conductPenniless) << (tagWidth * 2);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->conductFoodless) << (tagWidth * 2 + 1);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->conductVegetarian) << (tagWidth * 2 + 2);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] |= (score->conductIlliterate) << (tagWidth * 2 + 3);
+
+	tag = TAG_CONDUCT_2W_1;
+	tagWidth = 16;
+	i = 0;
+	for ( c = 0; c < 32; ++c )
+	{
+		if ( c < 16 )
+		{
+			g_SteamLeaderboards->LeaderboardUpload.tags[tag] |= score->conductGameChallenges[c] << (c * 2);
+		}
+		else
+		{
+			g_SteamLeaderboards->LeaderboardUpload.tags[tag] |= score->conductGameChallenges[c] << ((16 - c) * 2);
+		}
+		if ( c == 15 )
+		{
+			++tag;
+		}
+	}
+	// conducts TAG_CONDUCT_4W_1 to TAG_CONDUCT_4W_4 unused.
+
+	// store new gameplay stats as required. not many to start with.
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_2W_1] |= std::min(3, score->gameStatistics[STATISTICS_FIRE_MAYBE_DIFFERENT]);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_2W_1] |= std::min(3, score->gameStatistics[STATISTICS_SITTING_DUCK]) << 2;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_2W_1] |= std::min(3, score->gameStatistics[STATISTICS_TEMPT_FATE]) << 4;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_8W_1] |= (Uint8)score->gameStatistics[STATISTICS_BOMB_SQUAD];
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_8W_1] |= (Uint8)score->gameStatistics[STATISTICS_HOT_TUB_TIME_MACHINE] << 8;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_8W_1] |= (Uint8)score->gameStatistics[STATISTICS_YES_WE_CAN] << 16;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GAMEPLAY_STATS_16W_1] |= (Uint16)score->gameStatistics[STATISTICS_HEAL_BOT];
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_HEALTH] |= (Uint16)score->stats->MAXHP;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_HEALTH] |= (Uint16)score->stats->HP << 16;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_MANA] |= (Uint16)score->stats->MAXMP;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_MANA] |= (Uint16)score->stats->MP << 16;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_STRDEXCONINT] |= (Uint8)score->stats->STR;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_STRDEXCONINT] |= (Uint8)score->stats->DEX << 8;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_STRDEXCONINT] |= (Uint8)score->stats->CON << 16;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_STRDEXCONINT] |= (Uint8)score->stats->INT << 24;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_PERCHREXPLVL] |= (Uint8)score->stats->PER;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_PERCHREXPLVL] |= (Uint8)score->stats->CHR << 8;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_PERCHREXPLVL] |= (Uint8)score->stats->EXP << 16;
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_PERCHREXPLVL] |= (Uint8)score->stats->LVL << 24;
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_GOLD] |= score->stats->GOLD;
+
+	tagWidth = 8;
+	tag = TAG_PROFICIENCY1;
+	i = 0;
+	for ( c = 0; c < NUMPROFICIENCIES; ++c )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[tag] |= score->stats->PROFICIENCIES[c] << (i * tagWidth);
+		++i;
+		if ( i > ((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+
+	if ( score->stats->helmet )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT1] |= (Uint8)(score->stats->helmet->type);
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE1] |= (Sint16)(score->stats->helmet->beatitude);
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_APPEARANCE] |=
+			(score->stats->helmet->appearance % items[score->stats->helmet->type].variations);
+	}
+	if ( score->stats->breastplate )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT1] |= (Uint8)(score->stats->breastplate->type) << 8;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE1] |= (Sint16)(score->stats->breastplate->beatitude) << 8;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_APPEARANCE] |=
+			(score->stats->breastplate->appearance % items[score->stats->breastplate->type].variations) << 8;
+	}
+	if ( score->stats->gloves )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT1] |= (Uint8)(score->stats->gloves->type) << 16;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE1] |= (Sint16)(score->stats->gloves->beatitude) << 16;
+	}
+	if ( score->stats->shoes )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT1] |= (Uint8)(score->stats->shoes->type) << 24;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE1] |= (Sint16)(score->stats->shoes->beatitude) << 24;
+	}
+
+	if ( score->stats->shield )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT2] |= (Uint8)(score->stats->shield->type);
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE2] |= (Sint16)(score->stats->shield->beatitude);
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_APPEARANCE] |=
+			(score->stats->shield->appearance % items[score->stats->shield->type].variations) << 12;
+	}
+	if ( score->stats->weapon )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT2] |= (Uint8)(score->stats->weapon->type) << 8;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE2] |= (Sint16)(score->stats->weapon->beatitude) << 8;
+	}
+	if ( score->stats->cloak )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT2] |= (Uint8)(score->stats->cloak->type) << 16;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE2] |= (Sint16)(score->stats->cloak->beatitude) << 16;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_APPEARANCE] |= 
+			(score->stats->cloak->appearance % items[score->stats->cloak->type].variations) << 4;
+	}
+	if ( score->stats->amulet )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT2] |= (Uint8)(score->stats->amulet->type) << 24;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE2] |= (Sint16)(score->stats->amulet->beatitude) << 16;
+	}
+
+	if ( score->stats->ring )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT3] |= (Uint8)(score->stats->ring->type);
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE3] |= (Sint16)(score->stats->ring->beatitude);
+	}
+	if ( score->stats->mask )
+	{
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT3] |= (Uint8)(score->stats->mask->type) << 8;
+		g_SteamLeaderboards->LeaderboardUpload.tags[TAG_EQUIPMENT_BEATITUDE3] |= (Sint16)(score->stats->mask->beatitude);
+	}
+
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_TOTAL_SCORE] = totalScore(score);
+	g_SteamLeaderboards->LeaderboardUpload.tags[TAG_COMPLETION_TIME] = score->completionTime / TICKS_PER_SECOND;
+	return true;
+}
+
+bool steamLeaderboardReadScore(int tags[CSteamLeaderboards::k_numLeaderboardTags])
+{
+	stats[0]->clearStats();
+
+	int c = 0;
+	int tag = TAG_MONSTER_KILLS_1;
+	int tagWidth = 8;
+	int i = 0;
+	for ( c = 0; c < NUMMONSTERS; c++ )
+	{
+		kills[c] = ((tags[tag]) >> (i * tagWidth)) & 0xFF;
+		++i;
+		if ( i > ((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+
+	i = 0;
+	tagWidth = 8;
+	tag = TAG_NAME1;
+	char name[33] = "";
+	for ( c = 0; c < 32; ++c )
+	{
+		name[c] = ((tags[tag]) >> (i * tagWidth)) & 0xFF;
+		if ( name[c] == 0 )
+		{
+			break;
+		}
+		++i;
+		if ( i > ((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+	name[c] = '\0';
+	strcpy(stats[0]->name, name);
+
+
+	tagWidth = 8;
+	stats[0]->type = (Monster)(tags[TAG_RACESEXAPPEARANCECLASS] & 0xFF);
+	stats[0]->sex = (sex_t)((tags[TAG_RACESEXAPPEARANCECLASS] >> tagWidth) & 0xFF);
+	stats[0]->appearance = (tags[TAG_RACESEXAPPEARANCECLASS] >> tagWidth * 2) & 0xFF;
+	client_classes[0] = (tags[TAG_RACESEXAPPEARANCECLASS] >> tagWidth * 3) & 0xFF;
+
+	victory = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 0) & 0xFF;
+	currentlevel = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 1) & 0xFF;
+	conductPenniless = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 2) & 1;
+	conductFoodless = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 2 + 1) & 1;
+	conductVegetarian = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 2 + 2) & 1;
+	conductIlliterate = (tags[TAG_VICTORYDUNGEONLEVELCONDUCTORIGINAL] >> tagWidth * 2 + 3) & 1;
+
+	tag = TAG_CONDUCT_2W_1;
+	tagWidth = 2;
+	i = 0;
+	for ( c = 0; c < 32; ++c )
+	{
+		if ( c < 16 )
+		{
+			conductGameChallenges[c] = (tags[tag] >> c * tagWidth) & 0b11;
+		}
+		else
+		{
+			conductGameChallenges[c] = (tags[tag] >> (16 - c) * tagWidth) & 0b11;
+		}
+		if ( c == 15 )
+		{
+			++tag;
+		}
+	}
+	// conducts TAG_CONDUCT_4W_1 to TAG_CONDUCT_4W_4 unused.
+
+	// store new gameplay stats as required. not many to start with.
+	gameStatistics[STATISTICS_FIRE_MAYBE_DIFFERENT] = tags[TAG_GAMEPLAY_STATS_2W_1] & 0b11;
+	gameStatistics[STATISTICS_SITTING_DUCK] = (tags[TAG_GAMEPLAY_STATS_2W_1] >> 2) & 0b11;
+	gameStatistics[STATISTICS_TEMPT_FATE] = (tags[TAG_GAMEPLAY_STATS_2W_1] >> 4) & 0b11;
+
+	gameStatistics[STATISTICS_BOMB_SQUAD] = tags[TAG_GAMEPLAY_STATS_8W_1] & 0xFF;
+	gameStatistics[STATISTICS_HOT_TUB_TIME_MACHINE] = (tags[TAG_GAMEPLAY_STATS_8W_1] >> 8) & 0xFF;
+	gameStatistics[STATISTICS_YES_WE_CAN] = (tags[TAG_GAMEPLAY_STATS_8W_1] >> 16) & 0xFF;
+
+	gameStatistics[STATISTICS_HEAL_BOT] = tags[TAG_GAMEPLAY_STATS_16W_1] & 0xFFFF;
+
+	stats[0]->MAXHP = tags[TAG_HEALTH] & 0xFFFF;
+	stats[0]->HP = (tags[TAG_HEALTH] >> 16) & 0xFFFF;
+	stats[0]->MAXMP = tags[TAG_MANA] & 0xFFFF;
+	stats[0]->MP = (tags[TAG_MANA] >> 16) & 0xFFFF;
+	stats[0]->STR = (tags[TAG_STRDEXCONINT] >> 0) & 0xFF;
+	if ( stats[0]->STR > 240 )
+	{
+		stats[0]->STR = (Sint8)stats[0]->STR;
+	}
+	stats[0]->DEX = (tags[TAG_STRDEXCONINT] >> 8) & 0xFF;
+	if ( stats[0]->DEX > 240 )
+	{
+		stats[0]->DEX = (Sint8)stats[0]->DEX;
+	}
+	stats[0]->CON = (tags[TAG_STRDEXCONINT] >> 16) & 0xFF;
+	if ( stats[0]->CON > 240 )
+	{
+		stats[0]->CON = (Sint8)stats[0]->CON;
+	}
+	stats[0]->INT = (tags[TAG_STRDEXCONINT] >> 24) & 0xFF;
+	if ( stats[0]->INT > 240 )
+	{
+		stats[0]->INT = (Sint8)stats[0]->INT;
+	}
+	stats[0]->PER = (tags[TAG_PERCHREXPLVL] >> 0) & 0xFF;
+	if ( stats[0]->PER > 240 )
+	{
+		stats[0]->PER = (Sint8)stats[0]->PER;
+	}
+	stats[0]->CHR = (tags[TAG_PERCHREXPLVL] >> 8) & 0xFF;
+	if ( stats[0]->CHR > 240 )
+	{
+		stats[0]->CHR = (Sint8)stats[0]->CHR;
+	}
+	stats[0]->EXP = (tags[TAG_PERCHREXPLVL] >> 16) & 0xFF;
+	stats[0]->LVL = (tags[TAG_PERCHREXPLVL] >> 24) & 0xFF;
+	stats[0]->GOLD = tags[TAG_GOLD];
+
+	tagWidth = 8;
+	tag = TAG_PROFICIENCY1;
+	i = 0;
+	for ( c = 0; c < NUMPROFICIENCIES; ++c )
+	{
+		stats[0]->PROFICIENCIES[c] = (tags[tag] >> (i * tagWidth)) & 0xFF;
+		++i;
+		if ( i > ((32 / tagWidth) - 1) )
+		{
+			i = 0;
+			++tag;
+		}
+	}
+
+	list_FreeAll(&stats[0]->inventory);
+	if ( ((tags[TAG_EQUIPMENT1] >> 0) & 0xFF) > 0 )
+	{
+		stats[0]->helmet = newItem(ItemType((tags[TAG_EQUIPMENT1] >> 0) & 0xFF), EXCELLENT, 
+			Sint16((tags[TAG_EQUIPMENT_BEATITUDE1] >> 0) & 0xFF), 1, tags[TAG_EQUIPMENT_APPEARANCE] & 0xF, true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT1] >> 8) & 0xFF) > 0 )
+	{
+		stats[0]->breastplate = newItem(ItemType((tags[TAG_EQUIPMENT1] >> 8) & 0xFF), EXCELLENT,
+			Sint16((tags[TAG_EQUIPMENT_BEATITUDE1] >> 8) & 0xFF), 1, (tags[TAG_EQUIPMENT_APPEARANCE] >> 8) & 0xF, true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT1] >> 16) & 0xFF) > 0 )
+	{
+		stats[0]->gloves = newItem(ItemType((tags[TAG_EQUIPMENT1] >> 16) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE1] >> 16) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT1] >> 24) & 0xFF) > 0 )
+	{
+		stats[0]->shoes = newItem(ItemType((tags[TAG_EQUIPMENT1] >> 24) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE1] >> 24) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+
+	if ( ((tags[TAG_EQUIPMENT2] >> 0) & 0xFF) > 0 )
+	{
+		stats[0]->shield = newItem(ItemType((tags[TAG_EQUIPMENT2] >> 0) & 0xFF), EXCELLENT, 
+			Sint16((tags[TAG_EQUIPMENT_BEATITUDE2] >> 0) & 0xFF), 1, (tags[TAG_EQUIPMENT_APPEARANCE] >> 12) & 0xF, true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT2] >> 8) & 0xFF) > 0 )
+	{
+		stats[0]->weapon = newItem(ItemType((tags[TAG_EQUIPMENT2] >> 8) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE2] >> 8) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT2] >> 16) & 0xFF) > 0 )
+	{
+		stats[0]->cloak = newItem(ItemType((tags[TAG_EQUIPMENT2] >> 16) & 0xFF), EXCELLENT, 
+			Sint16((tags[TAG_EQUIPMENT_BEATITUDE2] >> 16) & 0xFF), 1, (tags[TAG_EQUIPMENT_APPEARANCE] >> 4) & 0xF, true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT2] >> 24) & 0xFF) > 0 )
+	{
+		stats[0]->amulet = newItem(ItemType((tags[TAG_EQUIPMENT2] >> 24) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE2] >> 24) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+
+	if ( ((tags[TAG_EQUIPMENT3] >> 16) & 0xFF) > 0 )
+	{
+		stats[0]->ring = newItem(ItemType((tags[TAG_EQUIPMENT3] >> 16) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE3] >> 0) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+	if ( ((tags[TAG_EQUIPMENT3] >> 24) & 0xFF) > 0 )
+	{
+		stats[0]->mask = newItem(ItemType((tags[TAG_EQUIPMENT3] >> 24) & 0xFF), EXCELLENT, Sint16((tags[TAG_EQUIPMENT_BEATITUDE3] >> 8) & 0xFF), 1, rand(), true, &stats[0]->inventory);
+	}
+
+	completionTime = tags[TAG_COMPLETION_TIME] * TICKS_PER_SECOND;
+	//g_SteamLeaderboards->LeaderboardUpload.tags[TAG_TOTAL_SCORE] = totalScore(score);
+	return true;
+}
+
+#endif // STEAMWORKS

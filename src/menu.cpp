@@ -40,6 +40,8 @@
 #include "player.hpp"
 #include "cppfuncs.hpp"
 #include "colors.hpp"
+#include <ctime>
+#include "sys/stat.h"
 
 #ifdef STEAMWORKS
 //Helper func. //TODO: Bugger.
@@ -67,8 +69,8 @@ bool settings_window = false;
 int connect_window = 0;
 int charcreation_step = 0;
 int loadGameSaveShowRectangle = 0; // stores the current amount of savegames available, to use when drawing load game window boxes.
-bool singleplayerSavegameExists = false; // used on multiplayer/single player select window to store if savefile exists. 
-bool multiplayerSavegameExists = false; // used on multiplayer/single player select window to store if savefile exists. 
+int singleplayerSavegameFreeSlot = -1; // used on multiplayer/single player select window to store if savefile exists. 
+int multiplayerSavegameFreeSlot = -1; // used on multiplayer/single player select window to store if savefile exists. 
 /*
  * settings_tab
  * valid values:
@@ -91,6 +93,11 @@ button_t* button_misc_tab = nullptr;
 
 int score_window = 0;
 int score_window_to_delete = 0;
+int score_leaderboard_window = 0;
+
+int savegames_window = 0;
+int savegames_window_scroll = 0;
+std::vector<std::tuple<int, int, int, std::string>> savegamesList; // tuple - last modified, multiplayer type, file entry, and description of save game.
 
 // gamemods window stuff.
 int gamemods_window = 0;
@@ -123,10 +130,12 @@ bool gamemods_musicRequireReloadUnmodded = false;
 bool gamemods_langRequireReloadUnmodded = false;
 bool gamemods_itemSpritesRequireReloadUnmodded = false;
 bool gamemods_itemsTxtRequireReloadUnmodded = false;
+bool gamemods_itemsGlobalTxtRequireReloadUnmodded = false;
 bool gamemods_monsterLimbsRequireReloadUnmodded = false;
 bool gamemods_systemImagesReloadUnmodded = false;
 bool gamemods_customContentLoadedFirstTime = false;
 bool gamemods_disableSteamAchievements = false;
+bool gamemods_modPreload = false;
 #ifdef STEAMWORKS
 std::vector<SteamUGCDetails_t *> workshopSubscribedItemList;
 std::vector<std::pair<std::string, uint64>> gamemods_workshopLoadedFileIDMap;
@@ -187,6 +196,7 @@ real_t settings_uiscale_playerbars = 1.f;
 real_t settings_uiscale_chatlog = 1.f;
 real_t settings_uiscale_inventory = 1.f;
 bool settings_hide_statusbar = false;
+bool settings_hide_playertags = false;
 Sint32 oslidery = 0;
 
 //Gamepad settings.
@@ -566,15 +576,22 @@ void handleMainMenu(bool mode)
 			int h2 = h;
 			TTF_SizeUTF8(ttf8, VERSION, &w, &h);
 			ttfPrintTextFormatted(ttf8, xres - 8 - w, yres - 8 - h - h2, VERSION);
-			if ( gamemods_numCurrentModsLoaded >= 0 )
+			if ( gamemods_numCurrentModsLoaded >= 0 || conductGameChallenges[CONDUCT_MODDED] )
 			{
-				ttfPrintTextFormatted(ttf8, xres - 8 - TTF8_WIDTH * 16, yres - 12 - h - h2 * 2, "%2d mod(s) loaded", gamemods_numCurrentModsLoaded);
+				if ( gamemods_numCurrentModsLoaded >= 0 )
+				{
+					ttfPrintTextFormatted(ttf8, xres - 8 - TTF8_WIDTH * 16, yres - 12 - h - h2 * 2, "%2d mod(s) loaded", gamemods_numCurrentModsLoaded);
+				}
+				else if ( !mode )
+				{
+					ttfPrintTextFormatted(ttf8, xres - 8 - TTF8_WIDTH * 24, yres - 12 - h - h2 * 2, "Using modified map files");
+				}
 			}
 #ifdef STEAMWORKS
 			if ( gamemods_disableSteamAchievements || (intro == false && conductGameChallenges[CONDUCT_CHEATS_ENABLED]) )
 			{
 				TTF_SizeUTF8(ttf8, language[3003], &w, &h);
-				if ( gamemods_numCurrentModsLoaded < 0 )
+				if ( gamemods_numCurrentModsLoaded < 0 && !conductGameChallenges[CONDUCT_MODDED] )
 				{
 					h = -4;
 				}
@@ -762,12 +779,20 @@ void handleMainMenu(bool mode)
 
 					if ( gamemods_musicRequireReloadUnmodded )
 					{
+						gamemodsUnloadCustomThemeMusic();
 						drawClearBuffers();
 						int w, h;
 						TTF_SizeUTF8(ttf16, language[2994], &w, &h);
 						ttfPrintText(ttf16, (xres - w) / 2, (yres - h) / 2, language[2994]);
 						GO_SwapBuffers(screen);
-						physfsSearchMusicToUpdate();
+						bool reloadIntroMusic = false;
+						physfsReloadMusic(reloadIntroMusic, true);
+						if ( reloadIntroMusic )
+						{
+#ifdef SOUND
+							playmusic(intromusic[rand() % (NUMINTROMUSIC - 1)], false, true, true);
+#endif			
+						}
 						gamemods_musicRequireReloadUnmodded = false;
 					}
 
@@ -804,6 +829,13 @@ void handleMainMenu(bool mode)
 						gamemods_itemSpritesRequireReloadUnmodded = false;
 					}
 
+					if ( gamemods_itemsGlobalTxtRequireReloadUnmodded )
+					{
+						gamemods_itemsGlobalTxtRequireReloadUnmodded = false;
+						printlog("[PhysFS]: Unloaded modified items/items_global.txt file, reloading item spawn levels...");
+						loadItemLists();
+					}
+
 					if ( gamemods_monsterLimbsRequireReloadUnmodded )
 					{
 						drawClearBuffers();
@@ -834,9 +866,10 @@ void handleMainMenu(bool mode)
 
 					gamemods_disableSteamAchievements = false;
 
-					if ( saveGameExists(true) || saveGameExists(false) )
+					if ( anySaveFileExists() )
 					{
-						openLoadGameWindow(NULL);
+						//openLoadGameWindow(NULL);
+						openNewLoadGameWindow(nullptr);
 					}
 					else
 					{
@@ -1854,14 +1887,14 @@ void handleMainMenu(bool mode)
 				}
 				if ( multiplayerselect == 0 )
 				{
-					if ( singleplayerSavegameExists )
+					if ( singleplayerSavegameFreeSlot == -1 )
 					{
 						ttfPrintTextColor(ttf12, subx1 + 8, suby2 - 60, uint32ColorOrange(*mainsurface), true, language[2965]);
 					}
 				}
 				else if ( multiplayerselect > 0 )
 				{
-					if ( multiplayerSavegameExists )
+					if ( multiplayerSavegameFreeSlot == -1 )
 					{
 						ttfPrintTextColor(ttf12, subx1 + 8, suby2 - 60, uint32ColorOrange(*mainsurface), true, language[2966]);
 					}
@@ -2291,6 +2324,14 @@ void handleMainMenu(bool mode)
 			{
 				ttfPrintTextFormatted(ttf12, subx1 + 498, suby1 + 354, "[ ] %s", language[3033]);
 			}
+			if ( settings_hide_playertags )
+			{
+				ttfPrintTextFormatted(ttf12, subx1 + 498, suby1 + 378, "[x] %s", language[3136]);
+			}
+			else
+			{
+				ttfPrintTextFormatted(ttf12, subx1 + 498, suby1 + 378, "[ ] %s", language[3136]);
+			}
 
 			if ( mousestatus[SDL_BUTTON_LEFT] )
 			{
@@ -2310,6 +2351,11 @@ void handleMainMenu(bool mode)
 					{
 						mousestatus[SDL_BUTTON_LEFT] = 0;
 						settings_hide_statusbar = (settings_hide_statusbar == 0);
+					}
+					else if ( omousey >= suby1 + 378 && omousey < suby1 + 378 + 12 )
+					{
+						mousestatus[SDL_BUTTON_LEFT] = 0;
+						settings_hide_playertags = (settings_hide_playertags == 0);
 					}
 				}
 			}
@@ -2357,8 +2403,10 @@ void handleMainMenu(bool mode)
 				if ( omousex >= subx1 + 30 && omousex < subx1 + 54 )
 				{
 					if ( omousey >= suby1 + 168 && omousey < suby1 + 168 + 12 )
-					mousestatus[SDL_BUTTON_LEFT] = 0;
-					settings_minimap_ping_mute = (settings_minimap_ping_mute == false);
+					{
+						mousestatus[SDL_BUTTON_LEFT] = 0;
+						settings_minimap_ping_mute = (settings_minimap_ping_mute == false);
+					}
 				}
 			}
 		}
@@ -2387,7 +2435,7 @@ void handleMainMenu(bool mode)
 				}
 				else
 				{
-					ttfPrintText(ttf12, subx1 + 24, suby1 + 84 + 16 * c, language[1983 + (c - 16)]);
+					ttfPrintText(ttf12, subx1 + 24, suby1 + 84 + 16 * c, language[1986 + (c - 16)]);
 				}
 				if ( mousestatus[SDL_BUTTON_LEFT] && !rebindingkey )
 				{
@@ -2491,7 +2539,7 @@ void handleMainMenu(bool mode)
 			startPos.x = subx1 + 24;
 			startPos.y = suby1 + 60;
 			SDL_Rect currentPos = startPos;
-			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1992]);
+			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1996]);
 			currentPos.y += 24;
 
 			bool rebindingaction = false;
@@ -2509,7 +2557,7 @@ void handleMainMenu(bool mode)
 			//Print out the menu-exclusive bindings.
 			currentPos.y += 12;
 			drawLine(subx1 + 24, currentPos.y - 6, subx2 - 24, currentPos.y - 6, uint32ColorGray(*mainsurface), 255);
-			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1990]);
+			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1994]);
 			currentPos.y += 18;
 			for ( c = INDEX_JOYBINDINGS_START_MENU; c < INDEX_JOYBINDINGS_START_GAME; ++c, currentPos.y += 12 )
 			{
@@ -2519,7 +2567,7 @@ void handleMainMenu(bool mode)
 			//Print out the game-exclusive bindings.
 			currentPos.y += 12;
 			drawLine(subx1 + 24, currentPos.y - 6, subx2 - 24, currentPos.y - 6, uint32ColorGray(*mainsurface), 255);
-			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1991]);
+			ttfPrintText(ttf8, currentPos.x, currentPos.y, language[1995]);
 			currentPos.y += 18;
 			for ( c = INDEX_JOYBINDINGS_START_GAME; c < NUM_JOY_IMPULSES; ++c, currentPos.y += 12 )
 			{
@@ -4552,40 +4600,249 @@ void handleMainMenu(bool mode)
 		}
 	}
 
-	// statistics window
-	if ( score_window )
+	// leaderboards window
+#ifdef STEAMWORKS
+	if ( score_leaderboard_window != 0 && g_SteamLeaderboards )
 	{
+		int numEntriesToShow = 10;
+		int filenameMaxLength = 48;
+		int filename_padx = subx1 + 16;
+		int filename_pady = suby1 + 32;
+		int filename_padx2 = subx2 - 16 - 40;
+		int filename_pady2 = filename_pady + numEntriesToShow * TTF12_HEIGHT + 8;
+		int filename_rowHeight = TTF12_HEIGHT + 4;
+		int numEntriesTotal = 0;
+
+		ttfPrintTextFormattedColor(ttf16, filename_padx, filename_pady, uint32ColorWhite(*mainsurface), "%s", 
+			g_SteamLeaderboards->leaderboardNames[g_SteamLeaderboards->LeaderboardView.boardToDownload].c_str());
+
+		filename_pady += 3 * TTF12_HEIGHT;
+		if ( !g_SteamLeaderboards->b_LeaderboardInit )
+		{
+			// waiting for leaderboard to be found...
+		}
+		else if ( g_SteamLeaderboards->b_LeaderboardInit && !g_SteamLeaderboards->b_ScoresDownloaded )
+		{
+			// wait for leaderboard to be downloaded...
+			if ( score_leaderboard_window == 1 )
+			{
+				g_SteamLeaderboards->DownloadScores(g_SteamLeaderboards->LeaderboardView.requestType, g_SteamLeaderboards->LeaderboardView.rangeStart,
+					g_SteamLeaderboards->LeaderboardView.rangeEnd);
+				score_leaderboard_window = 2;
+			}
+			ttfPrintTextFormattedColor(ttf12, filename_padx, filename_pady, uint32ColorOrange(*mainsurface), "Downloading entries...");
+		}
+		else 
+		{
+
+			if ( g_SteamLeaderboards->b_ScoresDownloaded )
+			{
+				numEntriesTotal = g_SteamLeaderboards->m_nLeaderboardEntries;
+				if ( numEntriesTotal <= 0 )
+				{
+					ttfPrintTextFormattedColor(ttf12, filename_padx, filename_pady, uint32ColorGreen(*mainsurface), "No Leaderboard entries for this category");
+				}
+			}
+
+			SDL_Rect tooltip; // we will draw the tooltip after drawing the other elements of the display window.
+
+			tooltip.x = omousex + 8;
+			tooltip.y = omousey + 8;
+			tooltip.w = 32 + TTF12_WIDTH * 14;
+			tooltip.h = TTF12_HEIGHT + 8;
+
+			filename_pady += 2 * TTF12_HEIGHT;
+
+			// do slider
+			SDL_Rect slider;
+			slider.x = filename_padx2 + 8;
+			slider.y = filename_pady - 8;
+			slider.h = suby2 - (filename_pady + 20);
+			slider.w = 32;
+
+			int entriesToScroll = std::max(static_cast<int>((numEntriesTotal / numEntriesToShow) - 1), 0);
+			entriesToScroll = entriesToScroll * numEntriesToShow + (numEntriesTotal % numEntriesToShow);
+
+			bool drawScrollTooltip = false;
+
+			// handle slider movement.
+			if ( numEntriesTotal > numEntriesToShow )
+			{
+				drawRect(&slider, SDL_MapRGB(mainsurface->format, 64, 64, 64), 255);
+				if ( mouseInBounds(filename_padx, slider.x + slider.w,
+					slider.y, slider.y + slider.h) )
+				{
+					if ( mouseInBounds(slider.x, slider.x + slider.w,
+						slider.y, slider.y + slider.h) )
+					{
+						drawScrollTooltip = true;
+					}
+					if ( mousestatus[SDL_BUTTON_WHEELUP] )
+					{
+						g_SteamLeaderboards->LeaderboardView.scrollIndex = std::max(g_SteamLeaderboards->LeaderboardView.scrollIndex - 1, 0);
+						mousestatus[SDL_BUTTON_WHEELUP] = 0;
+					}
+					if ( mousestatus[SDL_BUTTON_WHEELDOWN] )
+					{
+						g_SteamLeaderboards->LeaderboardView.scrollIndex = std::min(g_SteamLeaderboards->LeaderboardView.scrollIndex + 1, entriesToScroll);
+						mousestatus[SDL_BUTTON_WHEELDOWN] = 0;
+					}
+				}
+
+				if ( keystatus[SDL_SCANCODE_UP] )
+				{
+					g_SteamLeaderboards->LeaderboardView.scrollIndex = std::max(g_SteamLeaderboards->LeaderboardView.scrollIndex - 1, 0);
+					keystatus[SDL_SCANCODE_UP] = 0;
+				}
+				if ( keystatus[SDL_SCANCODE_DOWN] )
+				{
+					g_SteamLeaderboards->LeaderboardView.scrollIndex = std::min(g_SteamLeaderboards->LeaderboardView.scrollIndex + 1, entriesToScroll);
+					keystatus[SDL_SCANCODE_DOWN] = 0;
+				}
+				slider.h *= (1 / static_cast<real_t>(entriesToScroll + 1));
+				slider.y += slider.h * savegames_window_scroll;
+				if ( g_SteamLeaderboards->LeaderboardView.scrollIndex == entriesToScroll ) // reached end.
+				{
+					slider.y += (suby2 - 28) - (slider.y + slider.h); // bottom of slider is (suby2 - 28), so move the y level to imitate hitting the bottom in case of rounding error.
+				}
+				drawWindowFancy(slider.x, slider.y, slider.x + slider.w, slider.y + slider.h); // draw shortened list relative slider.
+			}
+			else
+			{
+				//drawRect(&slider, SDL_MapRGB(mainsurface->format, 64, 64, 64), 255);
+				drawWindowFancy(slider.x, slider.y, slider.x + slider.w, slider.y + slider.h);
+			}
+
+			// draw the content
+			for ( int i = 0; i < numEntriesTotal; ++i )
+			{
+				filename_padx = subx1 + 16;
+				if ( i >= g_SteamLeaderboards->LeaderboardView.scrollIndex && i < numEntriesTotal + g_SteamLeaderboards->LeaderboardView.scrollIndex )
+				{
+					drawWindowFancy(filename_padx, filename_pady - 8, filename_padx2, filename_pady + filename_rowHeight);
+					SDL_Rect highlightEntry;
+					highlightEntry.x = filename_padx;
+					highlightEntry.y = filename_pady - 8;
+					highlightEntry.w = filename_padx2 - filename_padx;
+					highlightEntry.h = filename_rowHeight + 8;
+					drawRect(&highlightEntry, uint32ColorBaronyBlue(*mainsurface), 64);
+
+					char steamID[32] = "";
+					if ( strlen(SteamFriends()->GetFriendPersonaName(g_SteamLeaderboards->m_leaderboardEntries[i].m_steamIDUser)) > 18 )
+					{
+						strncpy(steamID, SteamFriends()->GetFriendPersonaName(g_SteamLeaderboards->m_leaderboardEntries[i].m_steamIDUser), 16);
+						strcat(steamID, "..");
+					}
+					else
+					{
+						strncpy(steamID, SteamFriends()->GetFriendPersonaName(g_SteamLeaderboards->m_leaderboardEntries[i].m_steamIDUser), 18);
+					}
+					if ( g_SteamLeaderboards->LeaderboardView.boardToDownload != LEADERBOARD_NONE
+						&& g_SteamLeaderboards->LeaderboardView.boardToDownload % 2 == 1 )
+					{
+						Uint32 sec = (g_SteamLeaderboards->m_leaderboardEntries[i].m_nScore) % 60;
+						Uint32 min = ((g_SteamLeaderboards->m_leaderboardEntries[i].m_nScore) / 60) % 60;
+						Uint32 hour = ((g_SteamLeaderboards->m_leaderboardEntries[i].m_nScore) / 60) / 60;
+
+						ttfPrintTextFormatted(ttf12, filename_padx + 8, filename_pady, "#%2d [%18s]:   Time: %02d:%02d:%02d  Score: %6d",
+							g_SteamLeaderboards->m_leaderboardEntries[i].m_nGlobalRank,
+							steamID, hour, min, sec, g_SteamLeaderboards->downloadedTags[i][TAG_TOTAL_SCORE]);
+					}
+					else
+					{
+						Uint32 sec = (g_SteamLeaderboards->downloadedTags[i][TAG_COMPLETION_TIME]) % 60;
+						Uint32 min = ((g_SteamLeaderboards->downloadedTags[i][TAG_COMPLETION_TIME]) / 60) % 60;
+						Uint32 hour = ((g_SteamLeaderboards->downloadedTags[i][TAG_COMPLETION_TIME]) / 60) / 60;
+						ttfPrintTextFormatted(ttf12, filename_padx + 8, filename_pady, "#%2d [%18s]:   Score: %6d  Time: %02d:%02d:%02d",
+							g_SteamLeaderboards->m_leaderboardEntries[i].m_nGlobalRank,
+							steamID, g_SteamLeaderboards->m_leaderboardEntries[i].m_nScore, hour, min, sec);
+					}
+
+					filename_padx = filename_padx2 - (15 * TTF12_WIDTH + 16);
+					int text_x = filename_padx;
+					int text_y = filename_pady;
+					if ( savegameDrawClickableButton(filename_padx, filename_pady, 15 * TTF12_WIDTH + 8, TTF12_HEIGHT, 0) && score_leaderboard_window != 3 )
+					{
+						score_leaderboard_window = 3;
+						g_SteamLeaderboards->currentLeaderBoardIndex = i;
+						steamLeaderboardReadScore(g_SteamLeaderboards->downloadedTags[g_SteamLeaderboards->currentLeaderBoardIndex]);
+						for ( node = button_l.first; node != NULL; node = node->next )
+						{
+							button = (button_t*)node->element;
+							button->visible = 0;
+						}
+					}
+					ttfPrintTextFormatted(ttf12, text_x + 8, text_y, "%s", "View character");
+
+					filename_padx = filename_padx2 - (2 * TTF12_WIDTH + 14);
+					text_x = filename_padx;
+
+					filename_pady += 3 * filename_rowHeight / 2;
+				}
+			}
+		}
+	}
+#endif
+	// statistics window
+	if ( score_window || score_leaderboard_window == 3 )
+	{
+		if ( score_leaderboard_window == 3 )
+		{
+			drawWindowFancy(subx1 + 20, suby1 + 20, subx2 - 20, suby2 - 10);
+			if ( savegameDrawClickableButton(subx2 - 10 * TTF12_WIDTH - 8, suby1 + 20 + 8, 8 * TTF12_WIDTH, TTF12_HEIGHT, 0) )
+			{
+				score_leaderboard_window = 2;
+				for ( node = button_l.first; node != NULL; node = node->next )
+				{
+					button = (button_t*)node->element;
+					button->visible = 1;
+				}
+			}
+			ttfPrintTextFormatted(ttf12, subx2 - 10 * TTF12_WIDTH + 4, suby1 + 20 + 8, "close");
+		}
 		// draw button label... shamelessly hacked together from "multiplayer scores toggle button" initialisation...
 		int toggleText_x = subx2 - 44 - strlen("show multiplayer") * 12;
 		int toggleText_y = suby1 + 4 ;
 		int w = 0;
 		int h = 0;
 		list_t* scoresPtr = &topscores;
-		if ( !scoreDisplayMultiplayer )
+
+		if ( !score_leaderboard_window )
 		{
-			TTF_SizeUTF8(ttf12, "show multiplayer", &w, &h);
-			ttfPrintText(ttf12, toggleText_x + (strlen("show multiplayer") * 12 + 8 - w) / 2, toggleText_y + (20 - h) / 2 + 3, "show multiplayer");
+			if ( !scoreDisplayMultiplayer )
+			{
+				TTF_SizeUTF8(ttf12, "show multiplayer", &w, &h);
+				ttfPrintText(ttf12, toggleText_x + (strlen("show multiplayer") * 12 + 8 - w) / 2, toggleText_y + (20 - h) / 2 + 3, "show multiplayer");
+			}
+			else
+			{
+				scoresPtr = &topscoresMultiplayer;
+				TTF_SizeUTF8(ttf12, "show solo", &w, &h);
+				ttfPrintText(ttf12, toggleText_x + (strlen("show multiplayer") * 12 + 8 - w) / 2, toggleText_y + (20 - h) / 2 + 3, "show solo");
+			}
 		}
 		else
 		{
-			scoresPtr = &topscoresMultiplayer;
-			TTF_SizeUTF8(ttf12, "show solo", &w, &h);
-			ttfPrintText(ttf12, toggleText_x + (strlen("show multiplayer") * 12 + 8 - w) / 2, toggleText_y + (20 - h) / 2 + 3, "show solo");
+			scoresPtr = nullptr;
 		}
-		if ( !list_Size(scoresPtr) )
+
+		if ( !list_Size(scoresPtr) && !score_leaderboard_window )
 		{
 #define NOSCORESSTR language[1389]
 			ttfPrintTextFormatted(ttf16, xres / 2 - strlen(NOSCORESSTR) * 9, yres / 2 - 9, NOSCORESSTR);
 		}
 		else
 		{
-			if ( scoreDisplayMultiplayer )
+			if ( !score_leaderboard_window )
 			{
-				ttfPrintTextFormatted(ttf16, subx1 + 8, suby1 + 8, "%s - %d / %d", language[2958], score_window, list_Size(&topscoresMultiplayer));
-			}
-			else
-			{
-				ttfPrintTextFormatted(ttf16, subx1 + 8, suby1 + 8, "%s - %d / %d", language[1390], score_window, list_Size(&topscores));
+				if ( scoreDisplayMultiplayer )
+				{
+					ttfPrintTextFormatted(ttf16, subx1 + 8, suby1 + 8, "%s - %d / %d", language[2958], score_window, list_Size(&topscoresMultiplayer));
+				}
+				else
+				{
+					ttfPrintTextFormatted(ttf16, subx1 + 8, suby1 + 8, "%s - %d / %d", language[1390], score_window, list_Size(&topscores));
+				}
 			}
 
 			// draw character window
@@ -4703,11 +4960,20 @@ void handleMainMenu(bool mode)
 			}
 
 			// print total score
-			node = list_Node(scoresPtr, score_window - 1);
-			if ( node )
+			if ( score_leaderboard_window != 3 )
 			{
-				score_t* score = (score_t*)node->element;
-				ttfPrintTextFormatted(ttf16, subx1 + 448, suby1 + 104, language[1404], totalScore(score));
+				node = list_Node(scoresPtr, score_window - 1);
+				if ( node )
+				{
+					score_t* score = (score_t*)node->element;
+					ttfPrintTextFormatted(ttf16, subx1 + 448, suby1 + 104, language[1404], totalScore(score));
+				}
+			}
+			else
+			{
+#ifdef STEAMWORKS
+				ttfPrintTextFormatted(ttf16, subx1 + 448, suby1 + 104, language[1404], g_SteamLeaderboards->downloadedTags[g_SteamLeaderboards->currentLeaderBoardIndex][TAG_TOTAL_SCORE]);
+#endif // STEAMWORKS
 			}
 
 			// print character stats
@@ -4733,7 +4999,8 @@ void handleMainMenu(bool mode)
 				&& !conductGameChallenges[CONDUCT_MODDED]
 				&& !conductGameChallenges[CONDUCT_BRAWLER]
 				&& !conductGameChallenges[CONDUCT_BLESSED_BOOTS_SPEED]
-				&& !conductGameChallenges[CONDUCT_BOOTS_SPEED] )
+				&& !conductGameChallenges[CONDUCT_BOOTS_SPEED]
+				&& !conductGameChallenges[CONDUCT_MULTIPLAYER])
 			{
 				ttfPrintText(ttf12, subx1 + 32, suby2 - 64, language[1407]);
 			}
@@ -4841,7 +5108,221 @@ void handleMainMenu(bool mode)
 		scoreDisplayMultiplayer = false;
 	}
 
-	if ( gamemods_window != 0 )
+	if ( savegames_window != 0 )
+	{
+		int numSavesToShow = 5;
+		int filenameMaxLength = 48;
+		int filename_padx = subx1 + 16;
+		int filename_pady = suby1 + 32;
+		int filename_padx2 = subx2 - 16 - 40;
+		int filename_pady2 = filename_pady + numSavesToShow * TTF12_HEIGHT + 8;
+		int filename_rowHeight = 2 * TTF12_HEIGHT + 8;
+		filename_pady += 3 * TTF12_HEIGHT;
+		int numSaves = savegamesList.size();
+		if ( numSaves > 0 )
+		{
+			//ttfPrintTextFormattedColor(ttf12, filename_padx, filename_pady, uint32ColorGreen(*mainsurface), language[3066]);
+		}
+
+		SDL_Rect tooltip; // we will draw the tooltip after drawing the other elements of the display window.
+
+		tooltip.x = omousex + 8;
+		tooltip.y = omousey + 8;
+		tooltip.w = 32 + TTF12_WIDTH * 14;
+		tooltip.h = TTF12_HEIGHT + 8;
+
+		filename_pady += 2 * TTF12_HEIGHT;
+
+		// do slider
+		SDL_Rect slider;
+		slider.x = filename_padx2 + 8;
+		slider.y = filename_pady - 8;
+		slider.h = suby2 - (filename_pady + 20);
+		slider.w = 32;
+
+		int entriesToScroll = std::max(static_cast<int>((numSaves / numSavesToShow) - 1), 0);
+		entriesToScroll = entriesToScroll * numSavesToShow + (numSaves % numSavesToShow);
+
+		bool drawScrollTooltip = false;
+
+		// handle slider movement.
+		if ( numSaves > numSavesToShow )
+		{
+			drawRect(&slider, SDL_MapRGB(mainsurface->format, 64, 64, 64), 255);
+			if ( mouseInBounds(filename_padx, slider.x + slider.w,
+				slider.y, slider.y + slider.h) )
+			{
+				if ( mouseInBounds(slider.x, slider.x + slider.w,
+					slider.y, slider.y + slider.h) )
+				{
+					drawScrollTooltip = true;
+				}
+				if ( mousestatus[SDL_BUTTON_WHEELUP] )
+				{
+					savegames_window_scroll = std::max(savegames_window_scroll - 1, 0);
+					mousestatus[SDL_BUTTON_WHEELUP] = 0;
+				}
+				if ( mousestatus[SDL_BUTTON_WHEELDOWN] )
+				{
+					savegames_window_scroll = std::min(savegames_window_scroll + 1, entriesToScroll);
+					mousestatus[SDL_BUTTON_WHEELDOWN] = 0;
+				}
+			}
+
+			if ( keystatus[SDL_SCANCODE_UP] )
+			{
+				savegames_window_scroll = std::max(savegames_window_scroll - 1, 0);
+				keystatus[SDL_SCANCODE_UP] = 0;
+			}
+			if ( keystatus[SDL_SCANCODE_DOWN] )
+			{
+				savegames_window_scroll = std::min(savegames_window_scroll + 1, entriesToScroll);
+				keystatus[SDL_SCANCODE_DOWN] = 0;
+			}
+			slider.h *= (1 / static_cast<real_t>(entriesToScroll + 1));
+			slider.y += slider.h * savegames_window_scroll;
+			if ( savegames_window_scroll == entriesToScroll ) // reached end.
+			{
+				slider.y += (suby2 - 28) - (slider.y + slider.h); // bottom of slider is (suby2 - 28), so move the y level to imitate hitting the bottom in case of rounding error.
+			}
+			drawWindowFancy(slider.x, slider.y, slider.x + slider.w, slider.y + slider.h); // draw shortened list relative slider.
+		}
+		else
+		{
+			//drawRect(&slider, SDL_MapRGB(mainsurface->format, 64, 64, 64), 255);
+			drawWindowFancy(slider.x, slider.y, slider.x + slider.w, slider.y + slider.h);
+		}
+
+		bool drawDeleteTooltip = false;
+		int numSingleplayerSaves = 0;
+		int numMultiplayerSaves = 0;
+
+		// draw the content
+		for ( int i = 0; i < numSaves; ++i )
+		{
+			filename_padx = subx1 + 16;
+
+			std::vector<std::tuple<int, int, int, std::string>>::iterator it = savegamesList.begin();
+			std::advance(it, i);
+			std::tuple<int, int, int, std::string> entry = *it;
+
+			if ( std::get<1>(entry) != SINGLE )
+			{
+				++numMultiplayerSaves;
+			}
+			else
+			{
+				++numSingleplayerSaves;
+			}
+
+			if ( i >= savegames_window_scroll && i < numSavesToShow + savegames_window_scroll )
+			{
+				drawWindowFancy(filename_padx, filename_pady - 8, filename_padx2, filename_pady + filename_rowHeight);
+				SDL_Rect highlightEntry;
+				highlightEntry.x = filename_padx;
+				highlightEntry.y = filename_pady - 8;
+				highlightEntry.w = filename_padx2 - filename_padx;
+				highlightEntry.h = filename_rowHeight + 8;
+				if ( gamemods_numCurrentModsLoaded >= 0 )
+				{
+					if ( std::get<1>(entry) == SINGLE ) // single player.
+					{
+						drawRect(&highlightEntry, uint32ColorGreen(*mainsurface), 64);
+					}
+					else
+					{
+						drawRect(&highlightEntry, uint32ColorGreen(*mainsurface), 32);
+					}
+				}
+				else
+				{
+					if ( std::get<1>(entry) == SINGLE ) // single player.
+					{
+						drawRect(&highlightEntry, SDL_MapRGB(mainsurface->format, 128, 128, 128), 48);
+						//drawRect(&highlightEntry, uint32ColorBaronyBlue(*mainsurface), 16);
+					}
+					else
+					{
+						drawRect(&highlightEntry, uint32ColorBaronyBlue(*mainsurface), 32);
+					}
+				}
+
+				ttfPrintTextFormatted(ttf12, filename_padx + 8, filename_pady, "[%d]: %s", i + 1, std::get<3>(entry).c_str());
+
+				filename_padx = filename_padx2 - (13 * TTF12_WIDTH + 16);
+				int text_x = filename_padx;
+				int text_y = filename_pady + 10;
+				if ( savegameDrawClickableButton(filename_padx, filename_pady, 10 * TTF12_WIDTH + 8, TTF12_HEIGHT * 2 + 4, 0) )
+				{
+					if ( std::get<1>(entry) == SINGLE )
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						buttonLoadSingleplayerGame(nullptr);
+					}
+					else
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						buttonLoadMultiplayerGame(nullptr);
+					}
+				}
+				ttfPrintTextFormatted(ttf12, text_x + 8, text_y, "%s", "Load Game");
+
+				filename_padx = filename_padx2 - (2 * TTF12_WIDTH + 14);
+				text_x = filename_padx;
+				if ( savegameDrawClickableButton(filename_padx, filename_pady, 2 * TTF12_WIDTH + 8, TTF12_HEIGHT * 2 + 4, uint32ColorRed(*mainsurface)) )
+				{
+					if ( std::get<1>(entry) == SINGLE )
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						buttonDeleteSavedSoloGame(nullptr);
+					}
+					else
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						buttonDeleteSavedMultiplayerGame(nullptr);
+					}
+				}
+				ttfPrintTextFormatted(ttf12, text_x + 6, text_y, "%s", "X");
+				if ( mouseInBounds(filename_padx, filename_padx + 2 * TTF12_WIDTH + 8, filename_pady, filename_pady + TTF12_HEIGHT * 2 + 4) )
+				{
+					drawDeleteTooltip = true;
+				}
+
+				filename_pady += 3 * filename_rowHeight / 2;
+			}
+		}
+
+		Uint32 saveNumColor = uint32ColorGreen(*mainsurface);
+		if ( numSingleplayerSaves == SAVE_GAMES_MAX )
+		{
+			saveNumColor = uint32ColorOrange(*mainsurface);
+		}
+		ttfPrintTextFormattedColor(ttf12, subx2 - (longestline(language[3067]) * TTF12_WIDTH), suby1 + 44, saveNumColor,
+			language[3067], numSingleplayerSaves, SAVE_GAMES_MAX);
+
+		saveNumColor = uint32ColorGreen(*mainsurface);
+		if ( numMultiplayerSaves == SAVE_GAMES_MAX )
+		{
+			saveNumColor = uint32ColorOrange(*mainsurface);
+		}
+		ttfPrintTextFormattedColor(ttf12, subx2 - (longestline(language[3068]) * TTF12_WIDTH), suby1 + 44 + TTF12_HEIGHT + 4, saveNumColor,
+			language[3068], numMultiplayerSaves, SAVE_GAMES_MAX);
+
+		// draw the tooltip we initialised earlier.
+		if ( drawDeleteTooltip )
+		{
+			tooltip.w = longestline(language[3064]) * TTF12_WIDTH + 16;
+			drawTooltip(&tooltip);
+			ttfPrintTextFormatted(ttf12, tooltip.x + 6, tooltip.y + 6, language[3064]);
+		}
+		else if ( drawScrollTooltip )
+		{
+			tooltip.w = longestline(language[3066]) * TTF12_WIDTH + 16;
+			drawTooltip(&tooltip);
+			ttfPrintTextFormatted(ttf12, tooltip.x + 6, tooltip.y + 6, language[3066]);
+		}
+	}
+	else if ( gamemods_window != 0 )
 	{
 		int filenameMaxLength = 24;
 		int filename_padx = subx1 + 16;
@@ -5764,7 +6245,8 @@ void handleMainMenu(bool mode)
 				highlightEntry.h = filename_rowHeight + 8;
 				drawRect(&highlightEntry, SDL_MapRGB(mainsurface->format, 128, 128, 128), 64);
 
-				std::string path = "./mods/" + folderName;
+				std::string path = outputdir;
+				path.append(PHYSFS_getDirSeparator()).append("mods").append(PHYSFS_getDirSeparator()).append(folderName);
 				bool pathIsMounted = gamemodsIsPathInMountedFiles(path);
 
 				if ( pathIsMounted )
@@ -5886,6 +6368,9 @@ void handleMainMenu(bool mode)
 
 			minimapPings.clear(); // clear minimap pings
 
+			// clear follower menu entities.
+			FollowerMenu.closeFollowerMenuGUI(true);
+
 			list_FreeAll(&damageIndicators);
 			for ( c = 0; c < NUMMONSTERS; c++ )
 			{
@@ -5966,16 +6451,25 @@ void handleMainMenu(bool mode)
 				}
 				lastEntityUIDs = entity_uids;
 				numplayers = 0;
+				int checkMapHash = -1;
 				if ( loadingmap == false )
 				{
-					physfsLoadMapFile(currentlevel, mapseed, false);
+					physfsLoadMapFile(currentlevel, mapseed, false, &checkMapHash);
+					if ( checkMapHash == 0 )
+					{
+						conductGameChallenges[CONDUCT_MODDED] = 1;
+					}
 				}
 				else
 				{
 					if ( genmap == false )
 					{
 						std::string fullMapName = physfsFormatMapName(maptoload);
-						loadMap(fullMapName.c_str(), &map, map.entities, map.creatures);
+						loadMap(fullMapName.c_str(), &map, map.entities, map.creatures, &checkMapHash);
+						if ( checkMapHash == 0 )
+						{
+							conductGameChallenges[CONDUCT_MODDED] = 1;
+						}
 					}
 					else
 					{
@@ -6020,10 +6514,10 @@ void handleMainMenu(bool mode)
 											{
 												monster->flags[USERFLAG2] = true;
 											}
-											monster->monsterPlayerAllyIndex = c;
+											monster->monsterAllyIndex = c;
 											if ( multiplayer == SERVER )
 											{
-												serverUpdateEntitySkill(monster, 42); // update monsterPlayerAllyIndex for clients.
+												serverUpdateEntitySkill(monster, 42); // update monsterAllyIndex for clients.
 											}
 
 											newNode = list_AddNodeLast(&stats[c]->FOLLOWERS);
@@ -6036,10 +6530,19 @@ void handleMainMenu(bool mode)
 											{
 												strcpy((char*)net_packet->data, "LEAD");
 												SDLNet_Write32((Uint32)monster->getUID(), &net_packet->data[4]);
+												strcpy((char*)(&net_packet->data[8]), monsterStats->name);
+												net_packet->data[8 + strlen(monsterStats->name)] = 0;
 												net_packet->address.host = net_clients[c - 1].host;
 												net_packet->address.port = net_clients[c - 1].port;
-												net_packet->len = 8;
+												net_packet->len = 8 + strlen(monsterStats->name) + 1;
 												sendPacketSafe(net_sock, -1, net_packet, c - 1);
+
+												serverUpdateAllyStat(c, monster->getUID(), monsterStats->LVL, monsterStats->HP, monsterStats->MAXHP, monsterStats->type);
+											}
+
+											if ( !FollowerMenu.recentEntity && c == clientnum )
+											{
+												FollowerMenu.recentEntity = monster;
 											}
 										}
 									}
@@ -6094,16 +6597,26 @@ void handleMainMenu(bool mode)
 				entity_uids = 1;
 				lastEntityUIDs = entity_uids;
 				numplayers = 0;
+
+				int checkMapHash = -1;
 				if ( loadingmap == false )
 				{
-					physfsLoadMapFile(currentlevel, mapseed, false);
+					physfsLoadMapFile(currentlevel, mapseed, false, &checkMapHash);
+					if ( checkMapHash == 0 )
+					{
+						conductGameChallenges[CONDUCT_MODDED] = 1;
+					}
 				}
 				else
 				{
 					if ( genmap == false )
 					{
 						std::string fullMapName = physfsFormatMapName(maptoload);
-						loadMap(fullMapName.c_str(), &map, map.entities, map.creatures);
+						loadMap(fullMapName.c_str(), &map, map.entities, map.creatures, &checkMapHash);
+						if ( checkMapHash == 0 )
+						{
+							conductGameChallenges[CONDUCT_MODDED] = 1;
+						}
 					}
 					else
 					{
@@ -6185,7 +6698,14 @@ void handleMainMenu(bool mode)
 			if ( creditstage >= 15 )
 			{
 #ifdef MUSIC
-				playmusic(intromusic[2], true, false, false);
+				if ( victory == 3 )
+				{
+					playmusic(intromusic[2], true, false, false);
+				}
+				else
+				{
+					playmusic(intromusic[rand() % 2], true, false, false);
+				}
 #endif
 				introstage = 1;
 				credittime = 0;
@@ -6218,7 +6738,7 @@ void handleMainMenu(bool mode)
 			}
 
 			// make a highscore!
-			saveScore();
+			int saveScoreResult = saveScore();
 
 			// pick a new subtitle :)
 			subtitleCurrent = rand() % NUMSUBTITLES;
@@ -6458,7 +6978,7 @@ void handleMainMenu(bool mode)
 				fadefinished = false;
 				fadeout = false;
 #ifdef MUSIC
-				if ( victory != 3 && menuMapType )
+				if ( menuMapType )
 				{
 					playmusic(intromusic[2], true, false, false);
 				}
@@ -7250,7 +7770,6 @@ void openGameoverWindow()
 	score_t* score = scoreConstructor();
 	Uint32 total = totalScore(score);
 	snprintf(scorenum, 16, "%d\n\n", total);
-	scoreDeconstructor((void*)score);
 
 	bool madetop = false;
 	list_t* scoresPtr = &topscores;
@@ -7270,6 +7789,8 @@ void openGameoverWindow()
 	{
 		madetop = true;
 	}
+
+	scoreDeconstructor((void*)score);
 
 	shootmode = false;
 	if ( multiplayer == SINGLE )
@@ -7450,6 +7971,7 @@ void openSettingsWindow()
 	settings_uiscale_chatlog = uiscale_chatlog;
 	settings_uiscale_playerbars = uiscale_playerbars;
 	settings_hide_statusbar = hide_statusbar;
+	settings_hide_playertags = hide_playertags;
 	for (c = 0; c < NUMIMPULSES; c++)
 	{
 		settings_impulses[c] = impulses[c];
@@ -7505,8 +8027,8 @@ void openSettingsWindow()
 	suby1 = yres / 2 - ((yres==480)?210:278);
 	suby2 = yres / 2 + ((yres==480)?210:278);
 #else
-	suby1 = yres / 2 - 312;
-	suby2 = yres / 2 + 312;
+	suby1 = yres / 2 - 320;
+	suby2 = yres / 2 + 320;
 #endif
 	strcpy(subtext, language[1306]);
 
@@ -8028,11 +8550,11 @@ void buttonCloseSubwindow(button_t* my)
 		return;
 	}
 	loadGameSaveShowRectangle = 0;
-	singleplayerSavegameExists = false; // clear this value when closing window, user could delete savegame
-	multiplayerSavegameExists = false;  // clear this value when closing window, user could delete savegame
+	singleplayerSavegameFreeSlot = -1; // clear this value when closing window
+	multiplayerSavegameFreeSlot = -1;  // clear this value when closing window
 	directoryPath = "";
 	gamemodsWindowClearVariables();
-	if ( score_window )
+	if ( score_window || score_leaderboard_window )
 	{
 		// reset class loadout
 		stats[0]->sex = static_cast<sex_t>(0);
@@ -8048,7 +8570,10 @@ void buttonCloseSubwindow(button_t* my)
 	requestingLobbies = false;
 #endif
 	score_window = 0;
+	score_leaderboard_window = 0;
 	gamemods_window = 0;
+	savegames_window = 0;
+	savegames_window_scroll = 0;
 	lobby_window = false;
 	settings_window = false;
 	connect_window = 0;
@@ -8121,8 +8646,24 @@ void buttonContinue(button_t* my)
 	}
 	else if ( charcreation_step == 5 )
 	{
-		singleplayerSavegameExists = saveGameExists(true); // load the savegames and see if they exist, once off operation.
-		multiplayerSavegameExists = saveGameExists(false); // load the savegames and see if they exist, once off operation.
+		// look for a gap in save game numbering
+		savegameCurrentFileIndex = 0;
+		for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+		{
+			if ( !saveGameExists(true, fileNumber) )
+			{
+				singleplayerSavegameFreeSlot = fileNumber;
+				break;
+			}
+		}
+		for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+		{
+			if ( !saveGameExists(false, fileNumber) )
+			{
+				multiplayerSavegameFreeSlot = fileNumber;
+				break;
+			}
+		}
 		if ( SDL_IsTextInputActive() )
 		{
 			lastname = (string)stats[0]->name;
@@ -8189,10 +8730,52 @@ void buttonContinue(button_t* my)
 		lastCreatedCharacterSex = stats[0]->sex;
 		lastCreatedCharacterClass = client_classes[0];
 		lastCreatedCharacterAppearance = stats[0]->appearance;
-		
+
+		if ( multiplayerselect != SINGLE )
+		{
+			if ( multiplayerSavegameFreeSlot == -1 )
+			{
+				savegameCurrentFileIndex = 0;
+				std::vector<std::tuple<int, int, int, std::string>>::reverse_iterator it = savegamesList.rbegin();
+				for ( ; it != savegamesList.rend(); ++it )
+				{
+					std::tuple<int, int, int, std::string> entry = *it;
+					if ( std::get<1>(entry) != SINGLE )
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						break;
+					}
+				}
+			}
+			else
+			{
+				savegameCurrentFileIndex = multiplayerSavegameFreeSlot;
+			}
+			multiplayerSavegameFreeSlot = -1;
+		}
+
 		if ( multiplayerselect == SINGLE )
 		{
+			if ( singleplayerSavegameFreeSlot == -1 )
+			{
+				savegameCurrentFileIndex = 0;
+				std::vector<std::tuple<int, int, int, std::string>>::reverse_iterator it = savegamesList.rbegin();
+				for ( ; it != savegamesList.rend(); ++it )
+				{
+					std::tuple<int, int, int, std::string> entry = *it;
+					if ( std::get<1>(entry) == SINGLE )
+					{
+						savegameCurrentFileIndex = std::get<2>(entry);
+						break;
+					}
+				}
+			}
+			else
+			{
+				savegameCurrentFileIndex = singleplayerSavegameFreeSlot;
+			}
 			buttonStartSingleplayer(my);
+			singleplayerSavegameFreeSlot = -1;
 		}
 		else if ( multiplayerselect == SERVER )
 		{
@@ -9041,7 +9624,7 @@ void applySettings()
 	uiscale_chatlog = settings_uiscale_chatlog;
 	uiscale_playerbars = settings_uiscale_playerbars;
 	hide_statusbar = settings_hide_statusbar;
-
+	hide_playertags = settings_hide_playertags;
 	saveConfig("default.cfg");
 }
 
@@ -9185,6 +9768,114 @@ void buttonScoreToggle(button_t* my)
 	loadScore(score_window - 1);
 }
 
+#ifdef STEAMWORKS
+
+void buttonLeaderboardFetch(button_t* my)
+{
+	if ( g_SteamLeaderboards )
+	{
+		g_SteamLeaderboards->DownloadScores(g_SteamLeaderboards->LeaderboardView.requestType,
+			g_SteamLeaderboards->LeaderboardView.rangeStart, g_SteamLeaderboards->LeaderboardView.rangeEnd);
+	}
+}
+
+void buttonLeaderboardNextCategory(button_t* my)
+{
+	if ( g_SteamLeaderboards )
+	{
+		g_SteamLeaderboards->LeaderboardView.boardToDownload = std::min(g_SteamLeaderboards->LeaderboardView.boardToDownload + 1, (int)LEADERBOARD_MULTIPLAYER_HELL_SCORE);
+		g_SteamLeaderboards->b_ScoresDownloaded = false;
+		score_leaderboard_window = 1;
+		g_SteamLeaderboards->FindLeaderboard(g_SteamLeaderboards->leaderboardNames[g_SteamLeaderboards->LeaderboardView.boardToDownload].c_str());
+	}
+}
+
+void buttonLeaderboardPrevCategory(button_t* my)
+{
+	if ( g_SteamLeaderboards )
+	{
+		g_SteamLeaderboards->LeaderboardView.boardToDownload = std::max(g_SteamLeaderboards->LeaderboardView.boardToDownload - 1, (int)LEADERBOARD_NORMAL_TIME);
+		g_SteamLeaderboards->b_ScoresDownloaded = false;
+		score_leaderboard_window = 1;
+		g_SteamLeaderboards->FindLeaderboard(g_SteamLeaderboards->leaderboardNames[g_SteamLeaderboards->LeaderboardView.boardToDownload].c_str());
+	}
+}
+
+void buttonOpenSteamLeaderboards(button_t* my)
+{
+	if ( g_SteamLeaderboards )
+	{
+		// close current window
+		buttonCloseSubwindow(nullptr);
+		list_FreeAll(&button_l);
+		deleteallbuttons = true;
+
+		// create confirmation window
+		subwindow = 1;
+		subx1 = xres / 2 - 390;
+		subx2 = xres / 2 + 390;
+		suby1 = yres / 2 - 300;
+		suby2 = yres / 2 + 300;
+		score_leaderboard_window = 1;
+		g_SteamLeaderboards->LeaderboardView.boardToDownload = LEADERBOARD_NORMAL_TIME;
+		g_SteamLeaderboards->b_ScoresDownloaded = false;
+		g_SteamLeaderboards->FindLeaderboard(g_SteamLeaderboards->leaderboardNames[g_SteamLeaderboards->LeaderboardView.boardToDownload].c_str());
+
+		strcpy(subtext, "Steam Leaderboards");
+
+		// close button
+		button_t* button = newButton();
+		strcpy(button->label, "x");
+		button->x = subx2 - 20;
+		button->y = suby1 + 4;
+		button->sizex = 20;
+		button->sizey = 20;
+		button->action = &buttonCloseSubwindow;
+		button->visible = 1;
+		button->focused = 1;
+		button->key = SDL_SCANCODE_ESCAPE;
+		button->joykey = joyimpulses[INJOY_MENU_CANCEL];
+
+		// next button
+		button = newButton();
+		strcpy(button->label, ">");
+		button->sizex = strlen(">") * 12 + 8;
+		button->sizey = 20;
+		button->x = subx2 - button->sizex - 4;
+		button->y = suby2 - 24;
+		button->action = &buttonLeaderboardNextCategory;
+		button->visible = 1;
+		button->focused = 1;
+		button->key = SDL_SCANCODE_RIGHT;
+		button->joykey = joyimpulses[INJOY_DPAD_RIGHT];
+
+		// previous button
+		button = newButton();
+		strcpy(button->label, "<");
+		button->sizex = strlen("<") * 12 + 8;
+		button->sizey = 20;
+		button->x = subx1 + 4;
+		button->y = suby2 - 24;
+		button->action = &buttonLeaderboardPrevCategory;
+		button->visible = 1;
+		button->focused = 1;
+		button->key = SDL_SCANCODE_LEFT;
+		button->joykey = joyimpulses[INJOY_DPAD_LEFT];
+
+		// fetch leaderboards
+		button = newButton();
+		strcpy(button->label, "Fetch Leaderboard");
+		button->y = suby1 + 2 * TTF12_HEIGHT + 8;
+		button->sizex = 25 * TTF12_WIDTH + 8;
+		button->x = subx2 - button->sizex - 8;
+		button->sizey = 32;
+		button->action = &buttonLeaderboardFetch;
+		button->visible = 1;
+		button->focused = 1;
+	}
+}
+#endif
+
 void buttonOpenScoresWindow(button_t* my)
 {
 	// create statistics window
@@ -9199,8 +9890,8 @@ void buttonOpenScoresWindow(button_t* my)
 	suby1 = yres / 2 - ((yres == 480) ? 200 : 240);
 	suby2 = yres / 2 + ((yres == 480) ? 200 : 240);
 #else
-	suby1 = yres / 2 - 240;
-	suby2 = yres / 2 + 240;
+	suby1 = yres / 2 - 260;
+	suby2 = yres / 2 + 260;
 #endif
 	strcpy(subtext, "");
 
@@ -9264,6 +9955,19 @@ void buttonOpenScoresWindow(button_t* my)
 	button->action = &buttonDeleteScoreWindow;
 	button->visible = 1;
 	button->focused = 1;
+
+	// open steam leaderboards button
+#ifdef STEAMWORKS
+	button = newButton();
+	strcpy(button->label, language[3095]);
+	button->sizex = strlen(language[3095]) * 12 + 8;
+	button->sizey = 20;
+	button->x = subx2 - 44 - strlen(language[3095]) * 12;
+	button->y = suby2 - 8 - TTF12_HEIGHT;
+	button->action = &buttonOpenSteamLeaderboards;
+	button->visible = 1;
+	button->focused = 1;
+#endif // STEAMWORKS
 }
 
 void buttonDeleteCurrentScore(button_t* my)
@@ -9530,6 +10234,113 @@ void openLoadGameWindow(button_t* my)
 	}
 }
 
+void openNewLoadGameWindow(button_t* my)
+{
+	// close current window
+	buttonCloseSubwindow(nullptr);
+	list_FreeAll(&button_l);
+	deleteallbuttons = true;
+
+	// create confirmation window
+	subwindow = 1;
+	subx1 = xres / 2 - 380;
+	subx2 = xres / 2 + 380;
+	suby1 = yres / 2 - 210;
+	suby2 = yres / 2 + 210;
+	strcpy(subtext, language[3065]);
+
+	// close button
+	button_t* button = newButton();
+	strcpy(button->label, "x");
+	button->x = subx2 - 20;
+	button->y = suby1;
+	button->sizex = 20;
+	button->sizey = 20;
+	button->action = &buttonCloseSubwindow;
+	button->visible = 1;
+	button->focused = 1;
+	button->key = SDL_SCANCODE_ESCAPE;
+	button->joykey = joyimpulses[INJOY_MENU_CANCEL];
+
+	button = newButton();
+	strcpy(button->label, language[1463]);
+	button->sizex = strlen(language[1463]) * 10 + 8;
+	button->sizey = 36;
+	button->x = subx1 + 16;
+	button->y = suby1 + 42;
+	button->action = &buttonOpenCharacterCreationWindow;
+	button->visible = 1;
+	button->focused = 1;
+	button->key = SDL_SCANCODE_RETURN;
+	button->joykey = joyimpulses[INJOY_MENU_DONT_LOAD_SAVE]; //load save game no => "y" button
+
+	savegamesList.clear();
+	// load single player files
+	for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+	{
+		if ( saveGameExists(true, fileNumber) )
+		{
+			time_t timeNow = std::time(nullptr);
+			struct tm *tm = nullptr;
+			char path[PATH_MAX] = "";
+			char savefile[PATH_MAX] = "";
+			strncpy(savefile, setSaveGameFileName(true, false, fileNumber).c_str(), PATH_MAX - 1);
+			completePath(path, savefile, outputdir);
+#ifdef WINDOWS
+			struct _stat result;
+			if ( _stat(path, &result) == 0 )
+			{
+				tm = localtime(&result.st_mtime);
+			}
+#else
+			struct stat result;
+			if ( stat(path, &result) == 0 )
+			{
+				tm = localtime(&result.st_mtime);
+			}
+#endif
+			if ( tm )
+			{
+				int timeDifference = std::difftime(timeNow, mktime(tm));
+				savegamesList.push_back(std::make_tuple(timeDifference, getSaveGameType(true, fileNumber), fileNumber, getSaveGameName(true, fileNumber)));
+			}
+		}
+	}
+	// load multiplayer files
+	for ( int fileNumber = 0; fileNumber < SAVE_GAMES_MAX; ++fileNumber )
+	{
+		if ( saveGameExists(false, fileNumber) )
+		{
+			time_t timeNow = std::time(nullptr);
+			struct tm *tm = nullptr;
+			char path[PATH_MAX] = "";
+			char savefile[PATH_MAX] = "";
+			strncpy(savefile, setSaveGameFileName(false, false, fileNumber).c_str(), PATH_MAX - 1);
+			completePath(path, savefile, outputdir);
+#ifdef WINDOWS
+			struct _stat result;
+			if ( _stat(path, &result) == 0 )
+			{
+				tm = localtime(&result.st_mtime);
+			}
+#else
+			struct stat result;
+			if ( stat(path, &result) == 0 )
+			{
+				tm = localtime(&result.st_mtime);
+			}
+#endif
+			if ( tm )
+			{
+				int timeDifference = std::difftime(timeNow, mktime(tm));
+				savegamesList.push_back(std::make_tuple(timeDifference, getSaveGameType(false, fileNumber), fileNumber, getSaveGameName(false, fileNumber)));
+			}
+		}
+	}
+	savegames_window = 1;
+	std::sort(savegamesList.begin(), savegamesList.end());
+}
+
 void buttonDeleteSavedSoloGame(button_t* my)
 {
 	// close current window
@@ -9652,9 +10463,9 @@ void buttonConfirmDeleteSoloFile(button_t* my)
 	deleteallbuttons = true;
 	loadGameSaveShowRectangle = 0;
 	deleteSaveGame(SINGLE);
-	if ( saveGameExists(false) ) // check for multiplayer game to load up
+	if ( anySaveFileExists() ) // check for saved game to load up
 	{
-		openLoadGameWindow(nullptr);
+		openNewLoadGameWindow(nullptr);
 	}
 	playSound(153, 96);
 }
@@ -9667,9 +10478,9 @@ void buttonConfirmDeleteMultiplayerFile(button_t* my)
 	deleteallbuttons = true;
 	loadGameSaveShowRectangle = 0;
 	deleteSaveGame(CLIENT);
-	if ( saveGameExists(true) ) // check for singleplayer game to load up
+	if ( anySaveFileExists() ) // check for saved game to load up
 	{
-		openLoadGameWindow(nullptr);
+		openNewLoadGameWindow(nullptr);
 	}
 	playSound(153, 96);
 }
@@ -9868,6 +10679,7 @@ void buttonOpenCharacterCreationWindow(button_t* my)
 void buttonLoadSingleplayerGame(button_t* button)
 {
 	loadGameSaveShowRectangle = 0;
+	savegamesList.clear();
 	loadingsavegame = getSaveGameUniqueGameKey(true);
 	int mul = getSaveGameType(true);
 
@@ -9961,6 +10773,7 @@ void buttonLoadSingleplayerGame(button_t* button)
 void buttonLoadMultiplayerGame(button_t* button)
 {
 	loadGameSaveShowRectangle = 0;
+	savegamesList.clear();
 	loadingsavegame = getSaveGameUniqueGameKey(false);
 	int mul = getSaveGameType(false);
 
@@ -10132,13 +10945,29 @@ void buttonGamemodsOpenDirectory(button_t* my)
 
 		if ( directoryName.compare("..") == 0 || directoryName.compare(".") == 0 )
 		{
-			directoryPath = directoryName;
-			directoryPath.append(PHYSFS_getDirSeparator());
+			if ( !strcmp(outputdir, "./") )
+			{
+				directoryPath.append(directoryName);
+				directoryPath.append(PHYSFS_getDirSeparator());
+			}
+			else
+			{
+				directoryPath = outputdir;
+				directoryPath.append(PHYSFS_getDirSeparator()).append(directoryName).append(PHYSFS_getDirSeparator());
+			}
 		}
 		else
 		{
-			directoryPath.append(directoryName);
-			directoryPath.append(PHYSFS_getDirSeparator());
+			if ( !strcmp(outputdir, "./") )
+			{
+				directoryPath.append(directoryName);
+				directoryPath.append(PHYSFS_getDirSeparator());
+			}
+			else
+			{
+				directoryPath = outputdir;
+				directoryPath.append(PHYSFS_getDirSeparator()).append(directoryName).append(PHYSFS_getDirSeparator());
+			}
 		}
 		gamemods_window_fileSelect = 0;
 		gamemods_window_scroll = 0;
@@ -10217,8 +11046,8 @@ void writeLevelsTxt(std::string modFolder)
 
 void buttonGamemodsCreateModDirectory(button_t* my)
 {
-	std::string baseDir = PHYSFS_getBaseDir();
-	baseDir.append("mods").append(PHYSFS_getDirSeparator()).append(gamemods_newBlankDirectory);
+	std::string baseDir = outputdir;
+	baseDir.append(PHYSFS_getDirSeparator()).append("mods").append(PHYSFS_getDirSeparator()).append(gamemods_newBlankDirectory);
 
 	if ( access(baseDir.c_str(), F_OK) == 0 )
 	{
@@ -10324,7 +11153,7 @@ void buttonGamemodsBaseDirectory(button_t* my)
 {
 	gamemods_window_fileSelect = 0;
 	gamemods_window_scroll = 0;
-	directoryPath = datadir;
+	directoryPath = outputdir;
 	directoryToUpload = directoryPath;
 	currentDirectoryFiles = directoryContents(directoryPath.c_str(), true, false);
 }
@@ -10616,8 +11445,8 @@ void buttonGamemodsStartUploadItem(button_t* my)
 void gamemodsWindowUploadInit(bool creatingNewItem)
 {
 	gamemods_window = 1;
-	currentDirectoryFiles = directoryContents(datadir, true, false);
-	directoryToUpload = datadir;
+	currentDirectoryFiles = directoryContents(outputdir, true, false);
+	directoryToUpload = outputdir;
 
 	// create window
 	subwindow = 1;
@@ -10744,8 +11573,8 @@ void gamemodsWindowUploadInit(bool creatingNewItem)
 void gamemodsSubscribedItemsInit()
 {
 	gamemods_window = 3;
-	currentDirectoryFiles = directoryContents(datadir, true, false);
-	directoryToUpload = datadir;
+	currentDirectoryFiles = directoryContents(outputdir, true, false);
+	directoryToUpload = outputdir;
 
 	gamemodsMountAllExistingPaths();
 
@@ -10966,7 +11795,6 @@ void buttonGamemodsSubscribeToHostsModFiles(button_t* my)
 		if ( serverNumModsLoaded > 0 )
 		{
 			char tagName[32];
-			char fullpath[PATH_MAX];
 			std::vector<uint64> fileIdsToDownload;
 			for ( int lines = 0; lines < serverNumModsLoaded; ++lines )
 			{
@@ -11153,11 +11981,27 @@ void buttonGamemodsGetLocalMods(button_t* my)
 	gamemods_window_scroll = 0;
 	gamemods_window = 7;
 	gamemods_localModFoldernames.clear();
-	gamemods_localModFoldernames = directoryContents("./mods/", true, false);
+	std::string path = outputdir;
+	path.append(PHYSFS_getDirSeparator()).append("mods").append(PHYSFS_getDirSeparator());
+	gamemods_localModFoldernames = directoryContents(path.c_str(), true, false);
 }
 
 void buttonGamemodsStartModdedGame(button_t* my)
 {
+	if ( gamemods_modPreload )
+	{
+		// look for a save game
+		if ( anySaveFileExists() )
+		{
+			openNewLoadGameWindow(nullptr);
+		}
+		else
+		{
+			buttonOpenCharacterCreationWindow(NULL);
+		}
+		return;
+	}
+
 	gamemods_numCurrentModsLoaded = gamemods_mountedFilepaths.size();
 	if ( gamemods_numCurrentModsLoaded > 0 )
 	{
@@ -11245,6 +12089,8 @@ void buttonGamemodsStartModdedGame(button_t* my)
 		gamemods_booksRequireReloadUnmodded = true;
 	}
 
+	gamemodsUnloadCustomThemeMusic();
+
 	if ( physfsSearchMusicToUpdate() )
 	{
 		// print a loading message
@@ -11253,12 +12099,12 @@ void buttonGamemodsStartModdedGame(button_t* my)
 		ttfPrintText(ttf16, (xres - w) / 2, (yres - h) / 2, language[2993]);
 		GO_SwapBuffers(screen);
 		bool reloadIntroMusic = false;
-		physfsReloadMusic(reloadIntroMusic);
+		physfsReloadMusic(reloadIntroMusic, false);
 		if ( reloadIntroMusic )
 		{
 
 #ifdef SOUND
-			playmusic(intromusic[rand() % NUMINTROMUSIC], false, true, true);
+			playmusic(intromusic[rand() % (NUMINTROMUSIC - 1)], false, true, true);
 #endif			
 		}
 		gamemods_musicRequireReloadUnmodded = true;
@@ -11305,6 +12151,12 @@ void buttonGamemodsStartModdedGame(button_t* my)
 		gamemods_itemSpritesRequireReloadUnmodded = true;
 	}
 
+	if ( physfsSearchItemsGlobalTxtToUpdate() )
+	{
+		gamemods_itemsGlobalTxtRequireReloadUnmodded = true;
+		loadItemLists();
+	}
+
 	if ( physfsSearchMonsterLimbFilesToUpdate() )
 	{
 		// print a loading message
@@ -11333,9 +12185,10 @@ void buttonGamemodsStartModdedGame(button_t* my)
 	}
 
 	// look for a save game
-	if ( saveGameExists(true) || saveGameExists(false) )
+	if ( anySaveFileExists() )
 	{
-		openLoadGameWindow(NULL);
+		//openLoadGameWindow(NULL);
+		openNewLoadGameWindow(nullptr);
 	}
 	else
 	{
@@ -11347,8 +12200,8 @@ void gamemodsCustomContentInit()
 {
 
 	gamemods_window = 3;
-	currentDirectoryFiles = directoryContents(datadir, true, false);
-	directoryToUpload = datadir;
+	currentDirectoryFiles = directoryContents(outputdir, true, false);
+	directoryToUpload = outputdir;
 
 	gamemodsMountAllExistingPaths();
 
@@ -11414,9 +12267,9 @@ bool gamemodsClearAllMountedPaths()
 	for ( i = PHYSFS_getSearchPath(); *i != NULL; i++ )
 	{
 		std::string line = *i;
-		if ( line.compare("./") != 0 ) // don't unmount the base ./ directory
+		if ( line.compare(outputdir) != 0 && line.compare("./") != 0 ) // don't unmount the base ./ directory
 		{
-			if ( PHYSFS_unmount(*i) == NULL )
+			if ( PHYSFS_unmount(*i) == 0 )
 			{
 				success = false;
 				printlog("[%s] unsuccessfully removed from the search path.\n", line.c_str());
@@ -11494,3 +12347,50 @@ void gamemodsWindowClearVariables()
 	gamemods_workshopSetPropertyReturn[2] = false;
 	gamemods_subscribedItemsStatus = 0;
 }
+
+bool savegameDrawClickableButton(int padx, int pady, int padw, int padh, Uint32 btnColor)
+{
+	bool clicked = false;
+	if ( mouseInBounds(padx, padx + padw, pady - 4, pady + padh) )
+	{
+		drawDepressed(padx, pady - 4, padx + padw, pady + padh);
+		if ( mousestatus[SDL_BUTTON_LEFT] )
+		{
+			playSound(139, 64);
+			mousestatus[SDL_BUTTON_LEFT] = 0;
+			clicked = true;
+		}
+	}
+	else
+	{
+		drawWindow(padx, pady - 4, padx + padw, pady + padh);
+	}
+	SDL_Rect pos;
+	pos.x = padx;
+	pos.y = pady - 4;
+	pos.w = padw;
+	pos.h = padh + 4;
+	drawRect(&pos, btnColor, 64);
+	return clicked;
+}
+#ifdef STEAMWORKS
+void gamemodsWorkshopPreloadMod(int fileID, std::string modTitle)
+{
+	char fullpath[PATH_MAX] = "";
+	useModelCache = false;
+	if ( SteamUGC()->GetItemInstallInfo(fileID, NULL, fullpath, PATH_MAX, NULL) )
+	{
+		gamemods_modPreload = true;
+		bool addToPath = !gamemodsIsPathInMountedFiles(fullpath);
+		if ( PHYSFS_mount(fullpath, NULL, 0) )
+		{
+			reloadLanguage();
+			if ( addToPath )
+			{
+				gamemods_mountedFilepaths.push_back(std::make_pair(fullpath, modTitle)); // change string to your mod name here.
+				gamemods_workshopLoadedFileIDMap.push_back(std::make_pair(modTitle, fileID));
+			}
+		}
+	}
+}
+#endif // STEAMWORKS

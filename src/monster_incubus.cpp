@@ -104,6 +104,7 @@ void initIncubus(Entity* my, Stat* myStats)
 
 			// always give special spell to incubus, undroppable.
 			newItem(SPELLBOOK_STEAL_WEAPON, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, &myStats->inventory);
+			newItem(SPELLBOOK_CHARM_MONSTER, DECREPIT, 0, 1, MONSTER_ITEM_UNDROPPABLE_APPEARANCE, false, &myStats->inventory);
 
 			if ( rand() % 4 == 0 ) // 1 in 4
 			{
@@ -464,6 +465,8 @@ void incubusMoveBodyparts(Entity* my, Stat* myStats, double dist)
 			my->z = -1;
 		}
 	}
+
+	Entity* shieldarm = nullptr;
 
 	//Move bodyparts
 	for (bodypart = 0, node = my->children.first; node != nullptr; node = node->next, bodypart++)
@@ -828,6 +831,7 @@ void incubusMoveBodyparts(Entity* my, Stat* myStats, double dist)
 			// left arm
 			case LIMB_HUMANOID_LEFTARM:
 			{
+				shieldarm = entity;
 				node_t* shieldNode = list_Node(&my->children, 8);
 				if ( shieldNode )
 				{
@@ -864,6 +868,15 @@ void incubusMoveBodyparts(Entity* my, Stat* myStats, double dist)
 				{
 					entity->pitch = 0;
 				}
+				if ( my->monsterDefend && my->monsterAttack == 0 )
+				{
+					MONSTER_SHIELDYAW = PI / 5;
+				}
+				else
+				{
+					MONSTER_SHIELDYAW = 0;
+				}
+				entity->yaw += MONSTER_SHIELDYAW;
 				break;
 			}
 			// weapon
@@ -967,27 +980,49 @@ void incubusMoveBodyparts(Entity* my, Stat* myStats, double dist)
 				entity->x -= 2.5 * cos(my->yaw + PI / 2) + .20 * cos(my->yaw);
 				entity->y -= 2.5 * sin(my->yaw + PI / 2) + .20 * sin(my->yaw);
 				entity->z += 2.5;
+				entity->yaw = shieldarm->yaw;
+				entity->roll = 0;
+				entity->pitch = 0;
 				if ( entity->sprite == items[TOOL_TORCH].index )
 				{
 					entity2 = spawnFlame(entity, SPRITE_FLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z -= 2;
 				}
 				else if ( entity->sprite == items[TOOL_CRYSTALSHARD].index )
 				{
 					entity2 = spawnFlame(entity, SPRITE_CRYSTALFLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z -= 2;
 				}
 				else if ( entity->sprite == items[TOOL_LANTERN].index )
 				{
 					entity->z += 2;
 					entity2 = spawnFlame(entity, SPRITE_FLAME);
-					entity2->x += 2 * cos(my->yaw);
-					entity2->y += 2 * sin(my->yaw);
+					entity2->x += 2 * cos(entity->yaw);
+					entity2->y += 2 * sin(entity->yaw);
 					entity2->z += 1;
+				}
+				if ( MONSTER_SHIELDYAW > PI / 32 )
+				{
+					if ( entity->sprite != items[TOOL_TORCH].index && entity->sprite != items[TOOL_LANTERN].index && entity->sprite != items[TOOL_CRYSTALSHARD].index )
+					{
+						// shield, so rotate a little.
+						entity->roll += PI / 64;
+					}
+					else
+					{
+						entity->x += 0.25 * cos(my->yaw);
+						entity->y += 0.25 * sin(my->yaw);
+						entity->pitch += PI / 16;
+						if ( entity2 )
+						{
+							entity2->x += 0.75 * cos(shieldarm->yaw);
+							entity2->y += 0.75 * sin(shieldarm->yaw);
+						}
+					}
 				}
 				break;
 			}
@@ -1068,11 +1103,19 @@ void Entity::incubusChooseWeapon(const Entity* target, double dist)
 			return;
 		}
 
-		if ( targetStats->weapon )
+		bool tryCharm = true;
+		bool trySteal = true;
+		if ( targetStats->EFFECTS[EFF_PACIFY] )
 		{
-			// try to steal weapon if target is holding.
-			// occurs less often against fellow monsters.
-			specialRoll = rand() % (40 + 40 * (target->behavior == &actMonster));
+			tryCharm = false;
+		}
+		if ( !targetStats->weapon )
+		{
+			trySteal = false;
+		}
+
+		if ( trySteal || tryCharm )
+		{
 			if ( myStats->HP <= myStats->MAXHP * 0.8 )
 			{
 				bonusFromHP += 1; // +2.5% chance if on low health
@@ -1083,19 +1126,61 @@ void Entity::incubusChooseWeapon(const Entity* target, double dist)
 			}
 
 			int requiredRoll = (1 + bonusFromHP + (targetStats->EFFECTS[EFF_CONFUSED] ? 4 : 0)
-				+ (targetStats->EFFECTS[EFF_DRUNK] ? 2 : 0)); // +2.5% base, + extra if target is inebriated
-			requiredRoll += (myStats->weapon == nullptr ? 3 : 0); // bonus if no weapon held
+				+ (targetStats->EFFECTS[EFF_DRUNK] ? 2 : 0)
+				+ (targetStats->EFFECTS[EFF_PACIFY] ? 2 : 0)); // +2.5% base, + extra if target is inebriated
+
+			if ( trySteal && tryCharm )
+			{
+				if ( rand() % 8 == 0 )
+				{
+					trySteal = false; // try charm 12.5% of the time.
+				}
+				else
+				{
+					tryCharm = false;
+				}
+			}
+
+			if ( trySteal )
+			{
+				// try to steal weapon if target is holding.
+				// occurs less often against fellow monsters.
+				specialRoll = rand() % (40 + 40 * (target->behavior == &actMonster));
+			}
+			else if ( tryCharm )
+			{
+				specialRoll = rand() % 40;
+			}
+
+			if ( trySteal )
+			{
+				requiredRoll += (myStats->weapon == nullptr ? 3 : 0); // bonus if no weapon held
+			}
 
 			if ( specialRoll < requiredRoll ) 
 			{
 				node_t* node = nullptr;
-				node = itemNodeInInventory(myStats, static_cast<ItemType>(-1), SPELLBOOK);
-				if ( node != nullptr )
+				if ( trySteal )
 				{
-					swapMonsterWeaponWithInventoryItem(this, myStats, node, true, true);
-					monsterSpecialState = INCUBUS_STEAL;
-					serverUpdateEntitySkill(this, 33); // for clients to keep track of animation
-					return;
+					node = itemNodeInInventory(myStats, SPELLBOOK_STEAL_WEAPON, static_cast<Category>(-1));
+					if ( node != nullptr )
+					{
+						swapMonsterWeaponWithInventoryItem(this, myStats, node, true, true);
+						monsterSpecialState = INCUBUS_STEAL;
+						serverUpdateEntitySkill(this, 33); // for clients to keep track of animation
+						return;
+					}
+				}
+				else if ( tryCharm )
+				{
+					node = itemNodeInInventory(myStats, SPELLBOOK_CHARM_MONSTER, static_cast<Category>(-1));
+					if ( node != nullptr )
+					{
+						swapMonsterWeaponWithInventoryItem(this, myStats, node, true, true);
+						monsterSpecialState = INCUBUS_CHARM;
+						serverUpdateEntitySkill(this, 33); // for clients to keep track of animation
+						return;
+					}
 				}
 			}
 		}

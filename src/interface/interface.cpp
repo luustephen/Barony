@@ -24,6 +24,9 @@
 #include "../shops.hpp"
 #include "../menu.hpp"
 #include "../player.hpp"
+#include "../colors.hpp"
+#include "../net.hpp"
+#include "../draw.hpp"
 
 Uint32 svFlags = 30;
 SDL_Surface* backdrop_minotaur_bmp = nullptr;
@@ -153,12 +156,17 @@ bool auto_appraise_new_items = false;
 bool lock_right_sidebar = false;
 bool show_game_timer_always = false;
 bool hide_statusbar = false;
+bool hide_playertags = false;
 real_t uiscale_chatlog = 1.f;
 real_t uiscale_playerbars = 1.f;
 real_t uiscale_hotbar = 1.f;
 real_t uiscale_inventory = 1.f;
 bool uiscale_charactersheet = false;
 bool uiscale_skillspage = false;
+
+FollowerRadialMenu FollowerMenu;
+SDL_Rect interfaceSkillsSheet;
+SDL_Rect interfacePartySheet;
 
 std::vector<std::pair<SDL_Surface**, std::string>> systemResourceImages =
 {
@@ -625,10 +633,10 @@ void defaultImpulses()
 	impulses[IN_BACK] = 22;
 	impulses[IN_RIGHT] = 7;
 #endif
-	impulses[IN_TURNL] = 20;
-	impulses[IN_TURNR] = 8;
-	impulses[IN_UP] = 6;
-	impulses[IN_DOWN] = 29;
+	impulses[IN_TURNL] = 80;
+	impulses[IN_TURNR] = 79;
+	impulses[IN_UP] = 82;
+	impulses[IN_DOWN] = 81;
 	impulses[IN_CHAT] = 40;
 	impulses[IN_COMMAND] = 56;
 	impulses[IN_STATUS] = 43;
@@ -646,6 +654,9 @@ void defaultImpulses()
 	impulses[IN_AUTOSORT] = 21;
 	impulses[IN_MINIMAPSCALE] = 27;
 	impulses[IN_TOGGLECHATLOG] = 15;
+	impulses[IN_FOLLOWERMENU] = 6;
+	impulses[IN_FOLLOWERMENU_LASTCMD] = 20;
+	impulses[IN_FOLLOWERMENU_CYCLENEXT] = 8;
 
 	joyimpulses[INJOY_STATUS] = 307;
 	joyimpulses[INJOY_SPELL_LIST] = SCANCODE_UNASSIGNED_BINDING;
@@ -680,8 +691,11 @@ void defaultImpulses()
 	joyimpulses[INJOY_MENU_INVENTORY_TAB] = 299;
 	joyimpulses[INJOY_MENU_MAGIC_TAB] = 300;
 	joyimpulses[INJOY_MENU_RANDOM_NAME] = 304;
-	joyimpulses[INJOY_GAME_TOGGLECHATLOG] = 399;
-	joyimpulses[INJOY_GAME_MINIMAPSCALE] = 399;
+	joyimpulses[INJOY_GAME_TOGGLECHATLOG] = SCANCODE_UNASSIGNED_BINDING;
+	joyimpulses[INJOY_GAME_MINIMAPSCALE] = SCANCODE_UNASSIGNED_BINDING;
+	joyimpulses[INJOY_GAME_FOLLOWERMENU] = SCANCODE_UNASSIGNED_BINDING;
+	joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD] = SCANCODE_UNASSIGNED_BINDING;
+	joyimpulses[INJOY_GAME_FOLLOWERMENU_CYCLE] = SCANCODE_UNASSIGNED_BINDING;
 }
 
 void defaultConfig()
@@ -715,10 +729,10 @@ void defaultConfig()
 	consoleCommand("/bind 22 IN_BACK");
 	consoleCommand("/bind 7 IN_RIGHT");
 #endif
-	consoleCommand("/bind 20 IN_TURNL");
-	consoleCommand("/bind 8 IN_TURNR");
-	consoleCommand("/bind 6 IN_UP");
-	consoleCommand("/bind 29 IN_DOWN");
+	consoleCommand("/bind 80 IN_TURNL");
+	consoleCommand("/bind 79 IN_TURNR");
+	consoleCommand("/bind 82 IN_UP");
+	consoleCommand("/bind 81 IN_DOWN");
 	consoleCommand("/bind 40 IN_CHAT");
 	consoleCommand("/bind 56 IN_COMMAND");
 	consoleCommand("/bind 43 IN_STATUS");
@@ -772,6 +786,9 @@ void defaultConfig()
 	consoleCommand("/joybind 304 INJOY_MENU_RANDOM_NAME");
 	consoleCommand("/joybind 399 INJOY_GAME_MINIMAPSCALE"); //SCANCODE_UNASSIGNED_BINDING
 	consoleCommand("/joybind 399 INJOY_GAME_TOGGLECHATLOG"); //SCANCODE_UNASSIGNED_BINDING
+	consoleCommand("/joybind 399 INJOY_GAME_FOLLOWERMENU"); //SCANCODE_UNASSIGNED_BINDING
+	consoleCommand("/joybind 399 INJOY_GAME_FOLLOWERMENU_LASTCMD"); //SCANCODE_UNASSIGNED_BINDING
+	consoleCommand("/joybind 399 INJOY_GAME_FOLLOWERMENU_CYCLE"); //SCANCODE_UNASSIGNED_BINDING
 	consoleCommand("/gamepad_deadzone 8000");
 	consoleCommand("/gamepad_trigger_deadzone 18000");
 	consoleCommand("/gamepad_leftx_sensitivity 1400");
@@ -784,7 +801,7 @@ void defaultConfig()
 	return;
 }
 
-static char impulsenames[NUMIMPULSES][12] =
+static char impulsenames[NUMIMPULSES][23] =
 {
 	"FORWARD",
 	"LEFT",
@@ -802,7 +819,12 @@ static char impulsenames[NUMIMPULSES][12] =
 	"DEFEND",
 	"ATTACK",
 	"USE",
-	"AUTOSORT"
+	"AUTOSORT",
+	"MINIMAPSCALE",
+	"TOGGLECHATLOG",
+	"FOLLOWERMENU_OPEN",
+	"FOLLOWERMENU_LASTCMD",
+	"FOLLOWERMENU_CYCLENEXT"
 };
 
 static char joyimpulsenames[NUM_JOY_IMPULSES][30] =
@@ -846,7 +868,10 @@ static char joyimpulsenames[NUM_JOY_IMPULSES][30] =
 	"GAME_HOTBAR_PREV",
 	"GAME_HOTBAR_NEXT",
 	"GAME_MINIMAPSCALE",
-	"GAME_TOGGLECHATLOG"
+	"GAME_TOGGLECHATLOG",
+	"GAME_FOLLOWERMENU_OPEN",
+	"GAME_FOLLOWERMENU_LASTCMD",
+	"GAME_FOLLOWERMENU_CYCLENEXT"
 };
 
 /*-------------------------------------------------------------------------------
@@ -915,6 +940,13 @@ int loadConfig(char* filename)
 	return 0;
 }
 
+int loadDefaultConfig()
+{
+	char path[PATH_MAX];
+	completePath(path, "default.cfg", outputdir);
+	return loadConfig(path);
+}
+
 /*-------------------------------------------------------------------------------
 
 	saveConfig
@@ -926,6 +958,7 @@ int loadConfig(char* filename)
 
 int saveConfig(char* filename)
 {
+	char path[PATH_MAX];
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 	FILE* fp;
@@ -943,8 +976,10 @@ int saveConfig(char* filename)
 		strcat(filename, ".cfg");
 	}
 
+	completePath(path, filename, outputdir);
+
 	// open the config file
-	if ( (fp = fopen(filename, "wb")) == NULL )
+	if ( (fp = fopen(path, "wb")) == NULL )
 	{
 		printlog("ERROR: failed to save config file '%s'!\n", filename);
 		return 1;
@@ -1138,6 +1173,10 @@ int saveConfig(char* filename)
 	fprintf(fp, "/uiscale_hotbar %f\n", uiscale_hotbar);
 	fprintf(fp, "/uiscale_chatbox %f\n", uiscale_chatlog);
 	fprintf(fp, "/uiscale_playerbars %f\n", uiscale_playerbars);
+	if ( hide_playertags )
+	{
+		fprintf(fp, "/hideplayertags\n");
+	}
 	if ( !gamemods_mountedFilepaths.empty() )
 	{
 		std::vector<std::pair<std::string, std::string>>::iterator it;
@@ -1347,4 +1386,1150 @@ void openStatusScreen(int whichGUIMode, int whichInventoryMode)
 	mousey = yres / 2;
 	attributespage = 0;
 	//proficienciesPage = 0;
+}
+
+void FollowerRadialMenu::initFollowerMenuGUICursor(bool openInventory)
+{
+	if ( openInventory )
+	{
+		openStatusScreen(GUI_MODE_INVENTORY, INVENTORY_MODE_ITEM);
+	}
+	omousex = mousex;
+	omousey = mousey;
+	if ( menuX == -1 )
+	{
+		menuX = mousex;
+	}
+	if ( menuY == -1 )
+	{
+		menuY = mousey;
+	}
+}
+
+void FollowerRadialMenu::closeFollowerMenuGUI(bool clearRecentEntity)
+{
+	followerToCommand = nullptr;
+	menuX = -1;
+	menuY = -1;
+	moveToX = -1;
+	moveToY = -1;
+	if ( clearRecentEntity )
+	{
+		recentEntity = nullptr;
+	}
+	menuToggleClick = false;
+	holdWheel = false;
+	if ( accessedMenuFromPartySheet )
+	{
+		if ( optionSelected == ALLY_CMD_MOVETO_CONFIRM || optionSelected == ALLY_CMD_ATTACK_CONFIRM )
+		{
+			initFollowerMenuGUICursor(true);
+		}
+		accessedMenuFromPartySheet = false;
+		if ( optionSelected != ALLY_CMD_CANCEL && optionSelected != -1 )
+		{
+			mousex = partySheetMouseX;
+			mousey = partySheetMouseY;
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+			SDL_WarpMouseInWindow(screen, mousex, mousey);
+		}
+	}
+	optionSelected = -1;
+}
+
+bool FollowerRadialMenu::followerMenuIsOpen()
+{
+	if ( selectMoveTo || followerToCommand != nullptr )
+	{
+		return true;
+	}
+	return false;
+}
+
+void FollowerRadialMenu::drawFollowerMenu()
+{
+	if ( selectMoveTo )
+	{
+		if ( !followerToCommand )
+		{
+			selectMoveTo = false;
+		}
+		return;
+	}
+
+	int disableOption = 0;
+	bool keepWheelOpen = false;
+	if ( followerToCommand )
+	{
+		if ( players[clientnum] && players[clientnum]->entity
+			&& followerToCommand->monsterTarget == players[clientnum]->entity->getUID() )
+		{
+			shootmode = true;
+			CloseIdentifyGUI();
+			closeRemoveCurseGUI();
+			if ( openedChest[clientnum] )
+			{
+				openedChest[clientnum]->closeChest();
+			}
+			gui_mode = GUI_MODE_NONE;
+			closeFollowerMenuGUI();
+			return;
+		}
+
+		Stat* followerStats = followerToCommand->getStats();
+		if ( !followerStats )
+		{
+			return;
+		}
+		int skillLVL = 0;
+		if ( stats[clientnum] )
+		{
+			if ( optionSelected >= ALLY_CMD_DEFEND && optionSelected < ALLY_CMD_ATTACK_CONFIRM )
+			{
+				skillLVL = stats[clientnum]->PROFICIENCIES[PRO_LEADERSHIP] + statGetCHR(stats[clientnum]);
+				if ( optionSelected == ALLY_CMD_ATTACK_SELECT )
+				{
+					if ( attackCommandOnly(followerStats->type) )
+					{
+						// attack only.
+						disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, ALLY_CMD_ATTACK_CONFIRM);
+					}
+					else
+					{
+						disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, optionSelected);
+					}
+				}
+				else
+				{
+					disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, optionSelected);
+				}
+			}
+		}
+		// process commands if option selected on the wheel.
+		if ( (!(*inputPressed(impulses[IN_USE])) && !(*inputPressed(joyimpulses[INJOY_GAME_USE])) && !menuToggleClick && !holdWheel)
+			|| ((*inputPressed(impulses[IN_USE]) || *inputPressed(joyimpulses[INJOY_GAME_USE])) && menuToggleClick)
+			|| (!(*inputPressed(impulses[IN_FOLLOWERMENU] || !(*inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU])) )) && holdWheel && !menuToggleClick)
+			|| (*inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD] || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD])) && optionPrevious != -1)
+			)
+		{
+			if ( menuToggleClick )
+			{
+				*inputPressed(impulses[IN_USE]) = 0;
+				*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
+				menuToggleClick = false;
+				if ( optionSelected == -1 )
+				{
+					optionSelected = ALLY_CMD_CANCEL;
+				}
+			}
+
+			if ( *inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) )
+			{
+				if ( optionPrevious != -1 )
+				{
+					if ( optionPrevious == ALLY_CMD_ATTACK_CONFIRM )
+					{
+						optionPrevious = ALLY_CMD_ATTACK_SELECT;
+					}
+					else if ( optionPrevious == ALLY_CMD_MOVETO_CONFIRM )
+					{
+						optionPrevious = ALLY_CMD_MOVETO_SELECT;
+					}
+					else if ( optionPrevious == ALLY_CMD_FOLLOW || optionPrevious == ALLY_CMD_DEFEND )
+					{
+						if ( followerToCommand->monsterAllyState == ALLY_STATE_DEFEND || followerToCommand->monsterAllyState == ALLY_STATE_MOVETO )
+						{
+							optionPrevious = ALLY_CMD_FOLLOW;
+						}
+						else
+						{
+							optionPrevious = ALLY_CMD_DEFEND;
+						}
+					}
+					optionSelected = optionPrevious;
+				}
+			}
+
+			keepWheelOpen = (optionSelected == ALLY_CMD_CLASS_TOGGLE || optionSelected == ALLY_CMD_PICKUP_TOGGLE);
+			if ( disableOption != 0 )
+			{
+				keepWheelOpen = true;
+			}
+
+			if ( *inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) )
+			{
+				if ( keepWheelOpen )
+				{
+					// need to reset the coordinates of the mouse.
+					initFollowerMenuGUICursor();
+				}
+				*inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) = 0;
+				*inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) = 0;
+			}
+
+			if ( optionSelected != -1 )
+			{
+				holdWheel = false;
+				if ( optionSelected != ALLY_CMD_ATTACK_CONFIRM && optionSelected != ALLY_CMD_MOVETO_CONFIRM )
+				{
+					playSound(139, 64); // click
+				}
+				else
+				{
+					playSound(399, 48); // ping
+				}
+				// return to shootmode and close guis etc. TODO: tidy up interface code into 1 spot?
+				if ( !keepWheelOpen )
+				{
+					if ( !accessedMenuFromPartySheet
+						|| optionSelected == ALLY_CMD_MOVETO_SELECT
+						|| optionSelected == ALLY_CMD_ATTACK_SELECT
+						|| optionSelected == ALLY_CMD_CANCEL )
+					{
+						shootmode = true;
+						CloseIdentifyGUI();
+						closeRemoveCurseGUI();
+						if ( openedChest[clientnum] )
+						{
+							openedChest[clientnum]->closeChest();
+						}
+						gui_mode = GUI_MODE_NONE;
+					}
+				}
+
+				if ( disableOption == 0
+					&& (optionSelected == ALLY_CMD_MOVETO_SELECT || optionSelected == ALLY_CMD_ATTACK_SELECT) )
+				{
+					// return early, let the player use select command point.
+					selectMoveTo = true;
+					return;
+				}
+				else
+				{
+					if ( disableOption == 0 )
+					{
+						if ( optionSelected == ALLY_CMD_DEFEND &&
+							(followerToCommand->monsterAllyState == ALLY_STATE_DEFEND || followerToCommand->monsterAllyState == ALLY_STATE_MOVETO) )
+						{
+							optionSelected = ALLY_CMD_FOLLOW;
+						}
+						if ( multiplayer == CLIENT )
+						{
+							if ( optionSelected == ALLY_CMD_ATTACK_CONFIRM )
+							{
+								sendAllyCommandClient(clientnum, followerToCommand->getUID(), optionSelected, 0, 0, followerToCommand->monsterAllyInteractTarget);
+							}
+							else if ( optionSelected == ALLY_CMD_MOVETO_CONFIRM )
+							{
+								sendAllyCommandClient(clientnum, followerToCommand->getUID(), optionSelected, moveToX, moveToY);
+							}
+							else
+							{
+								sendAllyCommandClient(clientnum, followerToCommand->getUID(), optionSelected, 0, 0);
+							}
+						}
+						else
+						{
+							followerToCommand->monsterAllySendCommand(optionSelected, moveToX, moveToY, followerToCommand->monsterAllyInteractTarget);
+						}
+					}
+
+					if ( optionSelected != ALLY_CMD_CANCEL && disableOption == 0 )
+					{
+						optionPrevious = optionSelected;
+					}
+
+					if ( !keepWheelOpen )
+					{
+						closeFollowerMenuGUI();
+					}
+					optionSelected = -1; 
+				}
+			}
+			else
+			{
+				menuToggleClick = true;
+			}
+		}
+	}
+
+	if ( followerToCommand )
+	{
+		int skillLVL = 0;
+		Stat* followerStats = followerToCommand->getStats();
+		if ( !followerStats )
+		{
+			return;
+		}
+		if ( stats[clientnum] )
+		{
+			skillLVL = stats[clientnum]->PROFICIENCIES[PRO_LEADERSHIP] + statGetCHR(stats[clientnum]);
+		}
+
+		SDL_Rect src;
+		src.x = xres / 2;
+		src.y = yres / 2;
+
+		int numoptions = 8;
+		real_t angleStart = PI / 2 - (PI / numoptions);
+		real_t angleMiddle = angleStart + PI / numoptions;
+		real_t angleEnd = angleMiddle + PI / numoptions;
+		int radius = 140;
+		int thickness = 70;
+		src.h = radius;
+		src.w = radius;
+		if ( yres <= 768 )
+		{
+			radius = 110;
+			thickness = 70;
+			src.h = 125;
+			src.w = 125;
+		}
+		int highlight = -1;
+		int i = 0;
+
+		int width = 0;
+		TTF_SizeUTF8(ttf12, language[3036], &width, nullptr);
+		if ( yres < 768 )
+		{
+			ttfPrintText(ttf12, src.x - width / 2, src.y - radius - thickness - 14, language[3036]);
+		}
+		else
+		{
+			ttfPrintText(ttf12, src.x - width / 2, src.y - radius - thickness - 24, language[3036]);
+		}
+
+		drawImageRing(fancyWindow_bmp, nullptr, radius, thickness, 40, 0, PI * 2, 156);
+
+		for ( i = 0; i < numoptions; ++i )
+		{
+			// draw borders around ring.
+			drawLine(xres / 2 + (radius - thickness) * cos(angleStart), yres / 2 - (radius - thickness) * sin(angleStart),
+				xres / 2 + (radius + thickness) * cos(angleStart), yres / 2 - (radius + thickness) * sin(angleStart), uint32ColorGray(*mainsurface), 192);
+			drawLine(xres / 2 + (radius - thickness) * cos(angleEnd), yres / 2 - (radius - thickness) * sin(angleEnd),
+				xres / 2 + (radius + thickness - 1) * cos(angleEnd), yres / 2 - (radius + thickness - 1) * sin(angleEnd), uint32ColorGray(*mainsurface), 192);
+
+			drawArcInvertedY(xres / 2, yres / 2, radius - thickness, std::round((angleStart * 180) / PI), ((angleEnd * 180) / PI), uint32ColorGray(*mainsurface), 192);
+			drawArcInvertedY(xres / 2, yres / 2, (radius + thickness), std::round((angleStart * 180) / PI), ((angleEnd * 180) / PI) + 1, uint32ColorGray(*mainsurface), 192);
+
+			angleStart += 2 * PI / numoptions;
+			angleMiddle = angleStart + PI / numoptions;
+			angleEnd = angleMiddle + PI / numoptions;
+		}
+
+		angleStart = PI / 2 - (PI / numoptions);
+		angleMiddle = angleStart + PI / numoptions;
+		angleEnd = angleMiddle + PI / numoptions;
+
+		bool mouseInCenterButton = sqrt(pow((omousex - menuX), 2) + pow((omousey - menuY), 2)) < (radius - thickness);
+
+		for ( i = 0; i < numoptions; ++i )
+		{
+			// see if mouse cursor is within an option.
+			if ( highlight == -1 )
+			{
+				if ( !mouseInCenterButton )
+				{
+					real_t x1 = menuX + (radius + thickness + 45) * cos(angleEnd);
+					real_t y1 = menuY - (radius + thickness + 45) * sin(angleEnd);
+					real_t x2 = menuX + 5 * cos(angleMiddle);
+					real_t y2 = menuY - 5 * sin(angleMiddle);
+					real_t x3 = menuX + (radius + thickness + 45) * cos(angleStart);
+					real_t y3 = menuY - (radius + thickness + 45) * sin(angleStart);
+					real_t a = ((y2 - y3)*(omousex - x3) + (x3 - x2)*(omousey - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3));
+					real_t b = ((y3 - y1)*(omousex - x3) + (x1 - x3)*(omousey - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3));
+					real_t c = 1 - a - b;
+					if ( (0 <= a && a <= 1) && (0 <= b && b <= 1) && (0 <= c && c <= 1) )
+					{
+						//barycentric calc for figuring if mouse point is within triangle.
+						highlight = i;
+						drawImageRing(fancyWindow_bmp, &src, radius, thickness, (numoptions) * 8, angleStart, angleEnd, 192);
+
+						// draw borders around highlighted item.
+						Uint32 borderColor = uint32ColorBaronyBlue(*mainsurface);
+						if ( optionDisabledForCreature(skillLVL, followerStats->type, i) != 0 )
+						{
+							borderColor = uint32ColorOrange(*mainsurface);
+						}
+						drawLine(xres / 2 + (radius - thickness) * cos(angleStart), yres / 2 - (radius - thickness) * sin(angleStart),
+							xres / 2 + (radius + thickness) * cos(angleStart), yres / 2 - (radius + thickness) * sin(angleStart), borderColor, 192);
+						drawLine(xres / 2 + (radius - thickness) * cos(angleEnd), yres / 2 - (radius - thickness) * sin(angleEnd),
+							xres / 2 + (radius + thickness - 1) * cos(angleEnd), yres / 2 - (radius + thickness - 1) * sin(angleEnd), borderColor, 192);
+
+						drawArcInvertedY(xres / 2, yres / 2, radius - thickness, std::round((angleStart * 180) / PI), ((angleEnd * 180) / PI), borderColor, 192);
+						drawArcInvertedY(xres / 2, yres / 2, (radius + thickness), std::round((angleStart * 180) / PI), ((angleEnd * 180) / PI) + 1, borderColor, 192);
+					}
+				}
+			}
+
+			SDL_Rect txt;
+			txt.x = src.x + src.w * cos(angleMiddle);
+			txt.y = src.y - src.h * sin(angleMiddle);
+			txt.w = 0;
+			txt.h = 0;
+			SDL_Rect img;
+			img.x = txt.x - sidebar_unlock_bmp->w / 2;
+			img.y = txt.y - sidebar_unlock_bmp->h / 2;
+			img.w = sidebar_unlock_bmp->w;
+			img.h = sidebar_unlock_bmp->h;
+
+			// draw the text for the menu wheel.
+
+			if ( optionDisabledForCreature(skillLVL, followerStats->type, i) != 0 )
+			{
+				drawImage(sidebar_unlock_bmp, nullptr, &img); // locked menu options
+			}
+			else if ( i == ALLY_CMD_DEFEND
+				&& (followerToCommand->monsterAllyState == ALLY_STATE_DEFEND || followerToCommand->monsterAllyState == ALLY_STATE_MOVETO) )
+			{
+				TTF_SizeUTF8(ttf12, language[3037 + i + 8], &width, nullptr);
+				ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3037 + i + 8]);
+			}
+			else
+			{
+				TTF_SizeUTF8(ttf12, language[3037 + i], &width, nullptr);
+				if ( i == ALLY_CMD_CLASS_TOGGLE )
+				{
+					// draw higher.
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 12, language[3037 + i]);
+					TTF_SizeUTF8(ttf12, language[3053 + followerToCommand->monsterAllyClass], &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y + 4, language[3053 + followerToCommand->monsterAllyClass]);
+				}
+				else if ( i == ALLY_CMD_PICKUP_TOGGLE )
+				{
+					// draw higher.
+					TTF_SizeUTF8(ttf12, "Pickup", &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 24, language[3037 + i]);
+					TTF_SizeUTF8(ttf12, language[3056 + followerToCommand->monsterAllyPickupItems], &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y + 12, language[3056 + followerToCommand->monsterAllyPickupItems]);
+				}
+				else if ( i == ALLY_CMD_DROP_EQUIP )
+				{
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 12, language[3037 + i]);
+					if ( skillLVL >= SKILL_LEVEL_LEGENDARY )
+					{
+						TTF_SizeUTF8(ttf12, language[3061], &width, nullptr);
+						ttfPrintText(ttf12, txt.x - width / 2, txt.y + 4, language[3061]);
+					}
+					else if ( skillLVL >= SKILL_LEVEL_MASTER )
+					{
+						TTF_SizeUTF8(ttf12, language[3060], &width, nullptr);
+						ttfPrintText(ttf12, txt.x - width / 2, txt.y + 4, language[3060]);
+					}
+					else
+					{
+						TTF_SizeUTF8(ttf12, language[3059], &width, nullptr);
+						ttfPrintText(ttf12, txt.x - width / 2, txt.y + 4, language[3059]);
+					}
+				}
+				else if ( i == ALLY_CMD_SPECIAL )
+				{
+					TTF_SizeUTF8(ttf12, language[3037 + i], &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3037 + i]);
+				}
+				else if ( i == ALLY_CMD_ATTACK_SELECT )
+				{
+					if ( !attackCommandOnly(followerStats->type) )
+					{
+						if ( optionDisabledForCreature(skillLVL, followerStats->type, ALLY_CMD_ATTACK_CONFIRM) == 0 )
+						{
+							TTF_SizeUTF8(ttf12, "Interact / ", &width, nullptr);
+							ttfPrintText(ttf12, txt.x - width / 2, txt.y - 12, language[3051]);
+						}
+						else
+						{
+							TTF_SizeUTF8(ttf12, language[3037 + i], &width, nullptr);
+							ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3037 + i]);
+						}
+					}
+					else
+					{
+						TTF_SizeUTF8(ttf12, language[3104], &width, nullptr); // print just attack if no world interaction.
+						ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3104]);
+					}
+				}
+				else if ( i == ALLY_CMD_MOVETO_SELECT )
+				{
+					TTF_SizeUTF8(ttf12, language[3037 + i], &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3037 + i]);
+				}
+				else
+				{
+					TTF_SizeUTF8(ttf12, language[3037 + i], &width, nullptr);
+					ttfPrintText(ttf12, txt.x - width / 2, txt.y - 4, language[3037 + i]);
+				}
+			}
+
+			angleStart += 2 * PI / numoptions;
+			angleMiddle = angleStart + PI / numoptions;
+			angleEnd = angleMiddle + PI / numoptions;
+		}
+		// draw center text.
+		if ( mouseInCenterButton )
+		{
+			highlight = -1;
+			//drawImageRing(fancyWindow_bmp, nullptr, 35, 35, 40, 0, 2 * PI, 192);
+			drawCircle(xres / 2, yres / 2, radius - thickness, uint32ColorBaronyBlue(*mainsurface), 192);
+			//TTF_SizeUTF8(ttf12, language[3063], &width, nullptr);
+			//ttfPrintText(ttf12, xres / 2 - width / 2, yres / 2 - 8, language[3063]);
+		}
+
+		if ( optionSelected == -1 && disableOption == 0 && highlight != -1 )
+		{
+			// in case optionSelected is cleared, but we're still highlighting text (happens on next frame when clicking on disabled option.)
+			if ( highlight == ALLY_CMD_ATTACK_SELECT )
+			{
+				if ( attackCommandOnly(followerStats->type) )
+				{
+					// attack only.
+					disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, ALLY_CMD_ATTACK_CONFIRM);
+				}
+				else
+				{
+					disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, highlight);
+				}
+			}
+			else
+			{
+				disableOption = FollowerMenu.optionDisabledForCreature(skillLVL, followerStats->type, highlight);
+			}
+		}
+
+		if ( disableOption != 0 )
+		{
+			SDL_Rect tooltip;
+			tooltip.x = omousex + 16;
+			tooltip.y = omousey + 16;
+			tooltip.w = longestline(language[3062]) * TTF12_WIDTH + 8;
+			tooltip.h = TTF12_HEIGHT * 2 + 8;
+
+			if ( disableOption == -2 ) // disabled due to cooldown
+			{
+				tooltip.h = TTF12_HEIGHT + 8;
+				tooltip.w = longestline(language[3092]) * TTF12_WIDTH + 8;
+				drawTooltip(&tooltip);
+				ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, uint32ColorOrange(*mainsurface), language[3092]);
+			}
+			else if ( disableOption == -1 ) // disabled due to creature type
+			{
+				tooltip.h = TTF12_HEIGHT + 8;
+				tooltip.w = longestline(language[3103]) * TTF12_WIDTH + 8;
+				if ( followerStats->type < KOBOLD ) //Original monster count
+				{
+					tooltip.w += strlen(language[90 + followerStats->type]) * TTF12_WIDTH;
+					drawTooltip(&tooltip);
+					ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6,
+						uint32ColorOrange(*mainsurface), language[3103], language[90 + followerStats->type]);
+				}
+				else if ( followerStats->type >= KOBOLD ) //New monsters
+				{
+					tooltip.w += strlen(language[2000 + followerStats->type - KOBOLD]) * TTF12_WIDTH;
+					drawTooltip(&tooltip);
+					ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, 
+						uint32ColorOrange(*mainsurface), language[3103], language[2000 + followerStats->type - KOBOLD]);
+				}
+			}
+			else
+			{
+				drawTooltip(&tooltip);
+				std::string requirement = "";
+				std::string current = "";
+				if ( highlight >= ALLY_CMD_DEFEND && highlight <= ALLY_CMD_END && highlight != ALLY_CMD_CANCEL )
+				{
+					switch ( std::min(disableOption, SKILL_LEVEL_LEGENDARY) )
+					{
+						case 0:
+							requirement = language[363];
+							break;
+						case SKILL_LEVEL_NOVICE:
+							requirement = language[364];
+							break;
+						case SKILL_LEVEL_BASIC:
+							requirement = language[365];
+							break;
+						case SKILL_LEVEL_SKILLED:
+							requirement = language[366];
+							break;
+						case SKILL_LEVEL_EXPERT:
+							requirement = language[367];
+							break;
+						case SKILL_LEVEL_MASTER:
+							requirement = language[368];
+							break;
+						case SKILL_LEVEL_LEGENDARY:
+							requirement = language[369];
+							break;
+						default:
+							break;
+					}
+					requirement.erase(std::remove(requirement.begin(), requirement.end(), ' '), requirement.end()); // trim whitespace
+
+					if ( skillLVL >= SKILL_LEVEL_LEGENDARY )
+					{
+						current = language[369];
+					}
+					else if ( skillLVL >= SKILL_LEVEL_MASTER )
+					{
+						current = language[368];
+					}
+					else if ( skillLVL >= SKILL_LEVEL_EXPERT )
+					{
+						current = language[367];
+					}
+					else if ( skillLVL >= SKILL_LEVEL_SKILLED )
+					{
+						current = language[366];
+					}
+					else if ( skillLVL >= SKILL_LEVEL_BASIC )
+					{
+						current = language[365];
+					}
+					else if ( skillLVL >= SKILL_LEVEL_NOVICE )
+					{
+						current = language[364];
+					}
+					else
+					{
+						current = language[363];
+					}
+					current.erase(std::remove(current.begin(), current.end(), ' '), current.end()); // trim whitespace
+				}
+				ttfPrintTextFormattedColor(ttf12, tooltip.x + 4, tooltip.y + 6, 
+					uint32ColorOrange(*mainsurface), language[3062], requirement.c_str(), current.c_str());
+			}
+		}
+
+		if ( !keepWheelOpen )
+		{
+			optionSelected = highlight; // don't reselect if we're keeping the wheel open by using a toggle option.
+		}
+	}
+}
+
+int FollowerRadialMenu::numMonstersToDrawInParty()
+{
+	int players = 0;
+	for ( int c = 0; c < MAXPLAYERS; ++c )
+	{
+		if ( !client_disconnected[c] )
+		{
+			++players;
+		}
+	}
+	return std::max(2, (maxMonstersToDraw - std::max(0, players - 1) * 2));
+}
+
+void FollowerRadialMenu::selectNextFollower()
+{
+	if ( !stats[clientnum] )
+	{
+		return;
+	}
+
+	int numFollowers = list_Size(&stats[clientnum]->FOLLOWERS);
+
+	if ( numFollowers <= 0 )
+	{
+		return;
+	}
+
+	if ( !recentEntity ) // set first follower to be the selected one.
+	{
+		node_t* node = stats[clientnum]->FOLLOWERS.first;
+		if ( node )
+		{
+			Entity* follower = uidToEntity(*((Uint32*)node->element));
+			if ( follower )
+			{
+				recentEntity = follower;
+				FollowerMenu.sidebarScrollIndex = 0;
+				return;
+			}
+		}
+	}
+	else if ( numFollowers == 1 )
+	{
+		// only 1 follower, no work to do.
+		FollowerMenu.sidebarScrollIndex = 0;
+		return;
+	}
+
+	int monstersToDraw = numMonstersToDrawInParty();
+
+	node_t* node2 = nullptr;
+	int i = 0;
+	for ( node_t* node = stats[clientnum]->FOLLOWERS.first; node != nullptr; node = node->next, ++i)
+	{
+		Entity* follower = uidToEntity(*((Uint32*)node->element));
+		if ( follower == recentEntity )
+		{
+			if ( node->next != nullptr )
+			{
+				follower = uidToEntity(*((Uint32*)(node->next)->element));
+				if ( follower )
+				{
+					recentEntity = follower;
+					if ( followerToCommand )
+					{
+						followerToCommand = follower; // if we had the menu open, we're now controlling the new selected follower.
+					}
+					if ( numFollowers > monstersToDraw )
+					{
+						if ( monstersToDraw > 1 )
+						{
+							if ( i < sidebarScrollIndex || i >= sidebarScrollIndex + monstersToDraw )
+							{
+								sidebarScrollIndex = std::min(i, numFollowers - monstersToDraw - 1);
+							}
+							if ( i != 0 )
+							{
+								sidebarScrollIndex = std::min(sidebarScrollIndex + 1, numFollowers - monstersToDraw - 1);
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				node2 = stats[clientnum]->FOLLOWERS.first; // loop around to first index.
+				follower = uidToEntity(*((Uint32*)(node2)->element));
+				if ( follower )
+				{
+					recentEntity = follower;
+					if ( followerToCommand )
+					{
+						followerToCommand = follower; // if we had the menu open, we're now controlling the new selected follower.
+					}
+					sidebarScrollIndex = 0;
+				}
+			}
+			if ( recentEntity )
+			{
+				createParticleFollowerCommand(recentEntity->x, recentEntity->y, 0, 174);
+				playSound(139, 64);
+			}
+			return;
+		}
+	}
+}
+
+void FollowerRadialMenu::updateScrollPartySheet()
+{
+	if ( !stats[clientnum] )
+	{
+		return;
+	}
+
+	int numFollowers = list_Size(&stats[clientnum]->FOLLOWERS);
+
+	if ( numFollowers <= 0 )
+	{
+		return;
+	}
+
+	int monstersToDraw = numMonstersToDrawInParty();
+
+	if ( !recentEntity ) // set first follower to be the selected one.
+	{
+		return;
+	}
+	else if ( numFollowers == 1 || numFollowers <= monstersToDraw )
+	{
+		// only 1 follower or limit not reached, no work to do.
+		FollowerMenu.sidebarScrollIndex = 0;
+		return;
+	}
+
+	int i = 0;
+
+	for ( node_t* node = stats[clientnum]->FOLLOWERS.first; node != nullptr; node = node->next, ++i )
+	{
+		Entity* follower = uidToEntity(*((Uint32*)node->element));
+		if ( follower == recentEntity )
+		{
+			if ( monstersToDraw > 1 )
+			{
+				if ( i < sidebarScrollIndex || i >= sidebarScrollIndex + monstersToDraw )
+				{
+					sidebarScrollIndex = std::min(i, numFollowers - monstersToDraw - 1);
+				}
+			}
+			break;
+		}
+	}
+}
+
+bool FollowerRadialMenu::allowedInteractEntity(Entity& selectedEntity)
+{
+	if ( optionSelected != ALLY_CMD_ATTACK_SELECT )
+	{
+		return false;
+	}
+
+	if ( !followerToCommand )
+	{
+		return false;
+	}
+
+	if ( followerToCommand == &selectedEntity )
+	{
+		return false;
+	}
+
+	Stat* followerStats = followerToCommand->getStats();
+	if ( !followerStats )
+	{
+		return false;
+	}
+
+	bool interactItems = allowedInteractItems(followerStats->type) || allowedInteractFood(followerStats->type);
+	bool interactWorld = allowedInteractWorld(followerStats->type);
+
+	int skillLVL = stats[clientnum]->PROFICIENCIES[PRO_LEADERSHIP] + statGetCHR(stats[clientnum]);
+	bool enableAttack = (optionDisabledForCreature(skillLVL, followerStats->type, ALLY_CMD_ATTACK_CONFIRM) == 0);
+	
+	if ( !interactItems && !interactWorld && enableAttack )
+	{
+		strcpy(FollowerMenu.interactText, "Attack ");
+	}
+	else
+	{
+		strcpy(FollowerMenu.interactText, "Interact with ");
+	}
+	if ( selectedEntity.behavior == &actTorch && interactWorld )
+	{
+		strcat(FollowerMenu.interactText, items[TOOL_TORCH].name_identified);
+	}
+	else if ( (selectedEntity.behavior == &actSwitch || selectedEntity.sprite == 184) && interactWorld )
+	{
+		strcat(FollowerMenu.interactText, "switch");
+	}
+	else if ( selectedEntity.behavior == &actItem && interactItems )
+	{
+		if ( multiplayer != CLIENT )
+		{
+			if ( selectedEntity.skill[15] == 0 )
+			{
+				strcat(FollowerMenu.interactText, items[selectedEntity.skill[10]].name_unidentified);
+			}
+			else
+			{
+				strcat(FollowerMenu.interactText, items[selectedEntity.skill[10]].name_identified);
+			}
+		}
+		else
+		{
+			strcat(FollowerMenu.interactText, "item");
+		}
+	}
+	else if ( selectedEntity.behavior == &actMonster && enableAttack )
+	{
+		strcpy(FollowerMenu.interactText, "Attack ");
+		int monsterType = selectedEntity.getMonsterTypeFromSprite();
+		if ( monsterType < KOBOLD ) //Original monster count
+		{
+			strcat(FollowerMenu.interactText, language[90 + monsterType]);
+		}
+		else if ( monsterType >= KOBOLD ) //New monsters
+		{
+			strcat(FollowerMenu.interactText, language[2000 + monsterType - KOBOLD]);
+		}
+	}
+	else
+	{
+		strcpy(FollowerMenu.interactText, "No interactions available");
+		return false;
+	}
+	return true;
+}
+
+int FollowerRadialMenu::optionDisabledForCreature(int playerSkillLVL, int monsterType, int option)
+{
+	int creatureTier = 0;
+
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case RAT:
+		case SLIME:
+		case SPIDER:
+		case SKELETON:
+		case SCORPION:
+			creatureTier = 0;
+			break;
+		case GOBLIN:
+		case TROLL:
+		case GHOUL:
+		case GNOME:
+		case SCARAB:
+		case AUTOMATON:
+		case SUCCUBUS:
+			creatureTier = 1;
+			break;
+		case CREATURE_IMP:
+		case DEMON:
+		case KOBOLD:
+		case INCUBUS:
+		case INSECTOID:
+		case GOATMAN:
+			creatureTier = 2;
+			break;
+		case CRYSTALGOLEM:
+		case VAMPIRE:
+		case COCKATRICE:
+		case SHADOW:
+			creatureTier = 3;
+			break;
+	}
+
+	int requirement = AllyNPCSkillRequirements[option];
+
+	if ( option == ALLY_CMD_SPECIAL
+		&& followerToCommand->monsterAllySpecialCooldown != 0 )
+	{
+		return -2; // disabled due to cooldown.
+	}
+
+	switch ( option )
+	{
+		case ALLY_CMD_MOVEASIDE:
+		case ALLY_CMD_CANCEL:
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to basic skill requirements.
+			}
+			return 0; // all permitted.
+			break;
+
+		case ALLY_CMD_FOLLOW:
+		case ALLY_CMD_DEFEND:
+			if ( creatureTier > 0 )
+			{
+				requirement = 20 * creatureTier; // 20, 40, 60.
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to advanced skill requirements.
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_MOVETO_SELECT:
+		case ALLY_CMD_MOVETO_CONFIRM:
+			if ( creatureTier > 0 )
+			{
+				requirement += 20 * creatureTier; // 40, 60, 80.
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to advanced skill requirements.
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_DROP_EQUIP:
+			if ( !allowedInteractItems(monsterType) )
+			{
+				return -1; // disabled due to creature.
+			}
+			else if ( creatureTier > 0 )
+			{
+				requirement += 20 * creatureTier; // 60, 80, 100
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to advanced skill requirements.
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_ATTACK_SELECT:
+			if ( attackCommandOnly(monsterType) )
+			{
+				// attack only.
+				if ( creatureTier == 3 && playerSkillLVL < SKILL_LEVEL_LEGENDARY )
+				{
+					return SKILL_LEVEL_LEGENDARY; // disabled due to advanced skill requirements.
+				}
+				else if ( creatureTier == 2 && playerSkillLVL < SKILL_LEVEL_MASTER )
+				{
+					return SKILL_LEVEL_MASTER; // disabled due to advanced skill requirements.
+				}
+				else if ( playerSkillLVL < AllyNPCSkillRequirements[ALLY_CMD_ATTACK_CONFIRM] )
+				{
+					return AllyNPCSkillRequirements[ALLY_CMD_ATTACK_CONFIRM];
+				}
+				return 0;
+			}
+			else
+			{
+				if ( playerSkillLVL < AllyNPCSkillRequirements[ALLY_CMD_ATTACK_SELECT] )
+				{
+					return AllyNPCSkillRequirements[ALLY_CMD_ATTACK_SELECT];
+				}
+				return 0;
+			}
+			break;
+
+		case ALLY_CMD_ATTACK_CONFIRM:
+			if ( creatureTier == 3 && playerSkillLVL < SKILL_LEVEL_LEGENDARY )
+			{
+				return SKILL_LEVEL_LEGENDARY; // disabled due to advanced skill requirements.
+			}
+			else if ( creatureTier == 2 && playerSkillLVL < SKILL_LEVEL_MASTER )
+			{
+				return SKILL_LEVEL_MASTER; // disabled due to advanced skill requirements.
+			}
+			else if ( playerSkillLVL < AllyNPCSkillRequirements[ALLY_CMD_ATTACK_CONFIRM] )
+			{
+				return AllyNPCSkillRequirements[ALLY_CMD_ATTACK_CONFIRM];
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_CLASS_TOGGLE:
+			if ( !allowedClassToggle(monsterType) )
+			{
+				return -1; // disabled due to creature.
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to basic skill requirements.
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_PICKUP_TOGGLE:
+			if ( !allowedItemPickupToggle(monsterType) )
+			{
+				return -1; // disabled due to creature.
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to basic skill requirements.
+			}
+			return 0;
+			break;
+
+		case ALLY_CMD_SPECIAL:
+			if ( creatureTier == 3 )
+			{
+				return -1; // disabled due to creature.
+			}
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to basic skill requirements.
+			}
+			break;
+		default:
+			if ( playerSkillLVL < requirement )
+			{
+				return requirement; // disabled due to basic skill requirements.
+			}
+			break;
+	}
+	return 0;
+}
+
+bool FollowerRadialMenu::allowedClassToggle(int monsterType)
+{
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case GOBLIN:
+		case AUTOMATON:
+		case GOATMAN:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
+bool FollowerRadialMenu::allowedItemPickupToggle(int monsterType)
+{
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case GOBLIN:
+		case AUTOMATON:
+		case GOATMAN:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
+bool FollowerRadialMenu::allowedInteractFood(int monsterType)
+{
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case GOBLIN:
+		case GNOME:
+		case KOBOLD:
+		case GOATMAN:
+		case SLIME:
+		case INSECTOID:
+		case SPIDER:
+		case SCORPION:
+		case RAT:
+		case TROLL:
+		case COCKATRICE:
+		case SCARAB:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
+bool FollowerRadialMenu::allowedInteractWorld(int monsterType)
+{
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case GOBLIN:
+		case AUTOMATON:
+		case GNOME:
+		case KOBOLD:
+		case GOATMAN:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
+bool FollowerRadialMenu::allowedInteractItems(int monsterType)
+{
+	switch ( monsterType )
+	{
+		case HUMAN:
+		case GOBLIN:
+		case AUTOMATON:
+		case GNOME:
+		case KOBOLD:
+		case GOATMAN:
+		case INCUBUS:
+		case INSECTOID:
+		case SKELETON:
+		case VAMPIRE:
+		case SLIME:
+			return true;
+			break;
+		default:
+			break;
+	}
+	return false;
+}
+
+bool FollowerRadialMenu::attackCommandOnly(int monsterType)
+{
+	return !(allowedInteractItems(monsterType) || allowedInteractWorld(monsterType) || allowedInteractFood(monsterType));
 }

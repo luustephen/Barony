@@ -28,6 +28,346 @@
 
 std::vector<int> gamemods_modelsListModifiedIndexes;
 std::vector<std::pair<SDL_Surface**, std::string>> systemResourceImagesToReload;
+std::unordered_map<std::string, int> mapHashes = 
+{
+	{ "start.lmp", 97295 },
+	{ "mine.lmp", 85780 },
+	{ "mine00.lmp", 12895 },
+	{ "mine01.lmp", 11830 },
+	{ "mine02.lmp", 6249 },
+	{ "mine03.lmp", 6098 },
+	{ "mine04.lmp", 7120 },
+	{ "mine05.lmp", 8076 },
+	{ "mine06.lmp", 18001 },
+	{ "mine07.lmp", 19587 },
+	{ "mine08.lmp", 5241 },
+	{ "mine09.lmp", 18992 },
+	{ "mine10.lmp", 24825 },
+	{ "mine11.lmp", 13415 },
+	{ "mine12.lmp", 12253 },
+	{ "mine13.lmp", 10261 },
+	{ "mine14.lmp", 15502 },
+	{ "mine15.lmp", 9930 },
+	{ "mine16.lmp", 13337 },
+	{ "mine17.lmp", 11360 },
+	{ "mine18.lmp", 10841 },
+	{ "mine19.lmp", 4695 },
+	{ "mine20.lmp", 5250 },
+	{ "mine21.lmp", 6005 },
+	{ "mine22.lmp", 5940 },
+	{ "mine23.lmp", 6022 },
+	{ "mine24.lmp", 8775 },
+	{ "mine25.lmp", 2509 },
+	{ "mine26.lmp", 1852 },
+	{ "mine27.lmp", 1909 },
+	{ "mine28.lmp", 1966 },
+	{ "mine29.lmp", 2189 },
+	{ "mine30.lmp", 36103 },
+	{ "mine31.lmp", 20880 },
+	{ "mine32.lmp", 10381 },
+	{ "minetoswamp.lmp", 35867 },
+	{ "minesecret.lmp", 10316 },
+	{ "gnomishmines.lmp", 483571 },
+	{ "minetown.lmp", 1401309 },
+	{ "swamp.lmp", 13542615 },
+	{ "swamp00.lmp", 14498 },
+	{ "swamp01.lmp", 6780 },
+	{ "swamp02.lmp", 27059 },
+	{ "swamp03.lmp", 17148 },
+	{ "swamp04.lmp", 26450 },
+	{ "swamp05.lmp", 13262 },
+	{ "swamp06.lmp", 16320 },
+	{ "swamp07.lmp", 100108 },
+	{ "swamp08.lmp", 8690 },
+	{ "swamp09.lmp", 7540 },
+	{ "swamp10.lmp", 19205 },
+	{ "swamp11.lmp", 52707 },
+	{ "swamp12.lmp", 88446 },
+	{ "swamp13.lmp", 12936 },
+	{ "swamp14.lmp", 14215 },
+	{ "swamp15.lmp", 1092 },
+	{ "swamp16.lmp", 3977 },
+	{ "swamp17.lmp", 4683 },
+	{ "swamp18.lmp", 1524 },
+	{ "swamp19.lmp", 6366 },
+	{ "swamp20.lmp", 8541 },
+	{ "swamp21.lmp", 9036 },
+	{ "swamp22.lmp", 15810 },
+	{ "swamp23.lmp", 151549 },
+	{ "swamp24.lmp", 16155 },
+	{ "swamp25.lmp", 9710 },
+	{ "swamp26.lmp", 41369 },
+	{ "swamp27.lmp", 49462 },
+	{ "swamp28.lmp", 1223 },
+	{ "swamp29.lmp", 1136 },
+	{ "swamp30.lmp", 43685 },
+	{ "swamp31.lmp", 19612 },
+	{ "swamp32.lmp", 13342 },
+	{ "swamptolabyrinth.lmp", 63062 },
+	{ "swampsecret.lmp", 11316 },
+	{ "temple.lmp", 1756474 },
+	{ "greatcastle.lmp", 551758 },
+	{ "labyrinth.lmp", 219311 },
+	{ "labyrinth00.lmp", 12194 },
+	{ "labyrinth01.lmp", 4079 },
+	{ "labyrinth02.lmp", 472 },
+	{ "labyrinth03.lmp", 24615 },
+	{ "labyrinth04.lmp", 8421 },
+	{ "labyrinth05.lmp", 5520 },
+	{ "labyrinth06.lmp", 4296 },
+	{ "labyrinth07.lmp", 4297 },
+	{ "labyrinth08.lmp", 4389 },
+	{ "labyrinth09.lmp", 9494 },
+	{ "labyrinth10.lmp", 10304 },
+	{ "labyrinth11.lmp", 96656 },
+	{ "labyrinth12.lmp", 39775 },
+	{ "labyrinth13.lmp", 9162 },
+	{ "labyrinth14.lmp", 40743 },
+	{ "labyrinth15.lmp", 38253 },
+	{ "labyrinth16.lmp", 13093 },
+	{ "labyrinth17.lmp", 10923 },
+	{ "labyrinth18.lmp", 4565 },
+	{ "labyrinth19.lmp", 6714 },
+	{ "labyrinth20.lmp", 10117 },
+	{ "labyrinth21.lmp", 6830 },
+	{ "labyrinth22.lmp", 5829 },
+	{ "labyrinth23.lmp", 13042 },
+	{ "labyrinth24.lmp", 14902 },
+	{ "labyrinth25.lmp", 6399 },
+	{ "labyrinth26.lmp", 1913 },
+	{ "labyrinth27.lmp", 1916 },
+	{ "labyrinth28.lmp", 1755 },
+	{ "labyrinth29.lmp", 5155 },
+	{ "labyrinth30.lmp", 163483 },
+	{ "labyrinth31.lmp", 28195 },
+	{ "labyrinth32.lmp", 23002 },
+	{ "labyrinthtoruins.lmp", 36433 },
+	{ "labyrinthsecret.lmp", 26508 },
+	{ "sokoban.lmp", 137092 },
+	{ "minotaur.lmp", 484073 },
+	{ "ruins.lmp", 11472 },
+	{ "ruins00.lmp", 6373 },
+	{ "ruins01.lmp", 2301 },
+	{ "ruins02.lmp", 2295 },
+	{ "ruins03.lmp", 18465 },
+	{ "ruins04.lmp", 11113 },
+	{ "ruins05.lmp", 16194 },
+	{ "ruins06.lmp", 1890 },
+	{ "ruins07.lmp", 2486 },
+	{ "ruins08.lmp", 4682 },
+	{ "ruins09.lmp", 4704 },
+	{ "ruins10.lmp", 10987 },
+	{ "ruins11.lmp", 13490 },
+	{ "ruins12.lmp", 6662 },
+	{ "ruins13.lmp", 26335 },
+	{ "ruins14.lmp", 766 },
+	{ "ruins15.lmp", 772 },
+	{ "ruins16.lmp", 4681 },
+	{ "ruins17.lmp", 1848 },
+	{ "ruins18.lmp", 9066 },
+	{ "ruins19.lmp", 17940 },
+	{ "ruins20.lmp", 40374 },
+	{ "ruins21.lmp", 10664 },
+	{ "ruins22.lmp", 11523 },
+	{ "ruins23.lmp", 88 },
+	{ "ruins24.lmp", 39421 },
+	{ "ruins25.lmp", 290 },
+	{ "ruins26.lmp", 72992 },
+	{ "ruins27.lmp", 1430 },
+	{ "ruins28.lmp", 244 },
+	{ "ruins29.lmp", 13673 },
+	{ "ruins30.lmp", 39050 },
+	{ "ruins31.lmp", 46626 },
+	{ "ruins32.lmp", 32243 },
+	{ "ruinssecret.lmp", 66694 },
+	{ "mysticlibrary.lmp", 55745 },
+	{ "boss.lmp", 588024 },
+	{ "underworld.lmp", 187740 },
+	{ "underworld00.lmp", 20100 },
+	{ "underworld01.lmp", 31871 },
+	{ "underworld02.lmp", 9820 },
+	{ "underworld03.lmp", 1687 },
+	{ "underworld04.lmp", 5941 },
+	{ "underworld05.lmp", 8743 },
+	{ "underworld06.lmp", 11131 },
+	{ "underworld07.lmp", 14844 },
+	{ "underworld08.lmp", 11533 },
+	{ "underworld09.lmp", 40231 },
+	{ "underworld10.lmp", 218726 },
+	{ "underworld11.lmp", 43090 },
+	{ "underworld12.lmp", 13684 },
+	{ "underworld13.lmp", 13664 },
+	{ "underworld14.lmp", 43872 },
+	{ "underworld15.lmp", 486983 },
+	{ "underworld16.lmp", 2122 },
+	{ "underworld17.lmp", 33907 },
+	{ "underworld18.lmp", 48642 },
+	{ "underworld19.lmp", 75679 },
+	{ "underworld20.lmp", 89314 },
+	{ "underworld21.lmp", 79585 },
+	{ "underworld22.lmp", 76361 },
+	{ "underworld23.lmp", 6463 },
+	{ "underworld24.lmp", 9343 },
+	{ "underworld25.lmp", 88248 },
+	{ "underworld26.lmp", 3298 },
+	{ "underworld27.lmp", 56635 },
+	{ "underworld28.lmp", 12961 },
+	{ "underworld29.lmp", 12473 },
+	{ "hell.lmp", 145792 },
+	{ "hell00.lmp", 43314 },
+	{ "hell01.lmp", 15404 },
+	{ "hell02.lmp", 17388 },
+	{ "hell03.lmp", 23065 },
+	{ "hell04.lmp", 2222 },
+	{ "hell05.lmp", 3790 },
+	{ "hell06.lmp", 2270 },
+	{ "hell07.lmp", 3790 },
+	{ "hell08.lmp", 10844 },
+	{ "hell09.lmp", 11219 },
+	{ "hell10.lmp", 19144 },
+	{ "hell11.lmp", 4066 },
+	{ "hell12.lmp", 20327 },
+	{ "hell13.lmp", 3600 },
+	{ "hell14.lmp", 28891 },
+	{ "hell15.lmp", 99289 },
+	{ "hell16.lmp", 357141 },
+	{ "hell17.lmp", 14157 },
+	{ "hell18.lmp", 14717 },
+	{ "hell19.lmp", 5471 },
+	{ "hell20.lmp", 15568 },
+	{ "hell21.lmp", 8218 },
+	{ "hell22.lmp", 14855 },
+	{ "hell23.lmp", 8685 },
+	{ "hell24.lmp", 61443 },
+	{ "hell25.lmp", 53518 },
+	{ "hell26.lmp", 4116 },
+	{ "hell27.lmp", 2333 },
+	{ "hell28.lmp", 1329 },
+	{ "hell29.lmp", 36832 },
+	{ "hellboss.lmp", 1115424 },
+	{ "hamlet.lmp", 7100363 },
+	{ "caves.lmp", 1065461 },
+	{ "caves00.lmp", 70935 },
+	{ "caves01.lmp", 13350 },
+	{ "caves02.lmp", 6995 },
+	{ "caves03.lmp", 11883 },
+	{ "caves04.lmp", 15294 },
+	{ "caves05.lmp", 10359 },
+	{ "caves06.lmp", 8376 },
+	{ "caves07.lmp", 9198 },
+	{ "caves08.lmp", 6873 },
+	{ "caves09.lmp", 102879 },
+	{ "caves10.lmp", 28899 },
+	{ "caves11.lmp", 35066 },
+	{ "caves12.lmp", 39802 },
+	{ "caves13.lmp", 45478 },
+	{ "caves14.lmp", 37757 },
+	{ "caves15.lmp", 26887 },
+	{ "caves16.lmp", 233992 },
+	{ "caves17.lmp", 31734 },
+	{ "caves18.lmp", 36806 },
+	{ "caves19.lmp", 25878 },
+	{ "caves20.lmp", 117281 },
+	{ "caves21.lmp", 16169 },
+	{ "caves22.lmp", 26212 },
+	{ "caves23.lmp", 35367 },
+	{ "caves24.lmp", 80159 },
+	{ "caves25.lmp", 19691 },
+	{ "caves26.lmp", 41694 },
+	{ "caves27.lmp", 10622 },
+	{ "caves28.lmp", 8712 },
+	{ "caves01a.lmp", 5 },
+	{ "caves01b.lmp", 898 },
+	{ "caves01c.lmp", 1238 },
+	{ "caves01d.lmp", 709 },
+	{ "caves01e.lmp", 5 },
+	{ "caves01f.lmp", 955 },
+	{ "caves09a.lmp", 2836 },
+	{ "caves09b.lmp", 6462 },
+	{ "caves09c.lmp", 8822 },
+	{ "caves09d.lmp", 9722 },
+	{ "caves09e.lmp", 6727 },
+	{ "caves13a.lmp", 1855 },
+	{ "caves13b.lmp", 1678 },
+	{ "caves13c.lmp", 6637 },
+	{ "caves13d.lmp", 3017 },
+	{ "caves13e.lmp", 2892 },
+	{ "caves24a.lmp", 159828 },
+	{ "caves24b.lmp", 170175 },
+	{ "caves24c.lmp", 169732 },
+	{ "caves24d.lmp", 391561 },
+	{ "cavestocitadel.lmp", 215724 },
+	{ "cavessecret.lmp", 198959 },
+	{ "caveslair.lmp", 4872675 },
+	{ "citadel.lmp", 729069 },
+	{ "citadel00.lmp", 23997 },
+	{ "citadel01.lmp", 30094 },
+	{ "citadel02.lmp", 20605 },
+	{ "citadel03.lmp", 23292 },
+	{ "citadel04.lmp", 23377 },
+	{ "citadel05.lmp", 24208 },
+	{ "citadel06.lmp", 22342 },
+	{ "citadel07.lmp", 24158 },
+	{ "citadel08.lmp", 23917 },
+	{ "citadel09.lmp", 31320 },
+	{ "citadel10.lmp", 31323 },
+	{ "citadel11.lmp", 31330 },
+	{ "citadel12.lmp", 31330 },
+	{ "citadel13.lmp", 62357 },
+	{ "citadel14.lmp", 121487 },
+	{ "citadel15.lmp", 62368 },
+	{ "citadel16.lmp", 55383 },
+	{ "citadel17.lmp", 111086 },
+	{ "citadel01a.lmp", 2025 },
+	{ "citadel01b.lmp", 2224 },
+	{ "citadel01c.lmp", 2025 },
+	{ "citadel01d.lmp", 2377 },
+	{ "citadel01e.lmp", 582 },
+	{ "citadel01f.lmp", 204 },
+	{ "citadel01g.lmp", 6 },
+	{ "citadel02a.lmp", 4 },
+	{ "citadel02b.lmp", 4 },
+	{ "citadel02c.lmp", 4 },
+	{ "citadel02d.lmp", 4 },
+	{ "citadel02e.lmp", 4 },
+	{ "citadel02f.lmp", 4 },
+	{ "citadel02g.lmp", 4 },
+	{ "citadel09a.lmp", 4930 },
+	{ "citadel09b.lmp", 6181 },
+	{ "citadel09c.lmp", 5270 },
+	{ "citadel10a.lmp", 4930 },
+	{ "citadel10b.lmp", 8900 },
+	{ "citadel10c.lmp", 6072 },
+	{ "citadel11a.lmp", 4930 },
+	{ "citadel11b.lmp", 7722 },
+	{ "citadel11c.lmp", 4860 },
+	{ "citadel11d.lmp", 4179 },
+	{ "citadel12a.lmp", 4930 },
+	{ "citadel12b.lmp", 5874 },
+	{ "citadel12c.lmp", 6072 },
+	{ "citadel13a.lmp", 21969 },
+	{ "citadel13b.lmp", 12526 },
+	{ "citadel14a.lmp", 171089 },
+	{ "citadel14b.lmp", 42457 },
+	{ "citadel14c.lmp", 43306 },
+	{ "citadel15a.lmp", 9038 },
+	{ "citadel15b.lmp", 12010 },
+	{ "citadel16a.lmp", 11376 },
+	{ "citadel16b.lmp", 6314 },
+	{ "citadel17a.lmp", 7279 },
+	{ "citadel17b.lmp", 1729 },
+	{ "citadel17c.lmp", 4197 },
+	{ "citadel17d.lmp", 8339 },
+	{ "citadelsecret.lmp", 104229 },
+	{ "bramscastle.lmp", 2995692 },
+	{ "sanctum.lmp", 5630316 },
+	{ "shop00.lmp", 7106 },
+	{ "shop02.lmp", 11805 },
+	{ "shop01.lmp", 11521 },
+	{ "shop03.lmp", 11396 },
+	{ "shopcitadel.lmp", 23033 },
+	{  "warpzone.lmp", 3133088  }
+};
 
 /*-------------------------------------------------------------------------------
 
@@ -57,31 +397,31 @@ void glLoadTexture(SDL_Surface* image, int texnum)
 }
 
 
-bool completePath(char *dest, const char * const filename) {
+bool completePath(char *dest, const char * const filename, const char *base) {
 	if (!(filename && filename[0])) {
 		return false;
 	}
 
 	// Already absolute
 	if (filename[0] == '/') {
-		strncpy(dest, filename, 1024);
+		strncpy(dest, filename, PATH_MAX);
 		return true;
 	}
 
 #ifdef WINDOWS
 	// Already absolute (drive letter in path)
 	if ( filename[1] == ':' ) {
-		strncpy(dest, filename, 1024);
+		strncpy(dest, filename, PATH_MAX);
 		return true;
 	}
 #endif
 
-	snprintf(dest, 1024, "%s/%s", datadir, filename);
+	snprintf(dest, PATH_MAX, "%s/%s", base, filename);
 	return true;
 }
 
 FILE* openDataFile(const char * const filename, const char * const mode) {
-	char path[1024];
+	char path[PATH_MAX];
 	completePath(path, filename);
 	FILE * result = fopen(path, mode);
 	if (!result) {
@@ -91,7 +431,7 @@ FILE* openDataFile(const char * const filename, const char * const mode) {
 }
 
 DIR* openDataDir(const char * const name) {
-	char path[1024];
+	char path[PATH_MAX];
 	completePath(path, name);
 	DIR * result = opendir(path);
 	if (!result) {
@@ -102,9 +442,16 @@ DIR* openDataDir(const char * const name) {
 
 
 bool dataPathExists(const char * const path) {
-	char full_path[1024];
+	char full_path[PATH_MAX];
 	completePath(full_path, path);
 	return access(full_path, F_OK) != -1;
+}
+
+void openLogFile() {
+	char path[PATH_MAX];
+	completePath(path, "log.txt", outputdir);
+
+	logfile = freopen(path, "wb" /*or "wt"*/, stderr);
 }
 
 
@@ -119,7 +466,7 @@ bool dataPathExists(const char * const path) {
 
 SDL_Surface* loadImage(char* filename)
 {
-	char full_path[1024];
+	char full_path[PATH_MAX];
 	completePath(full_path, filename);
 	SDL_Surface* originalSurface;
 
@@ -214,7 +561,7 @@ voxel_t* loadVoxel(char* filename)
 
 -------------------------------------------------------------------------------*/
 
-int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* creatureList)
+int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* creatureList, int *checkMapHash)
 {
 	FILE* fp;
 	char valid_data[16];
@@ -228,6 +575,11 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	sex_t s;
 	int editorVersion = 0;
 	char filename[1024];
+	int mapHashData = 0;
+	if ( checkMapHash )
+	{
+		*checkMapHash = 0;
+	}
 
 	char oldmapname[64];
 	strcpy(oldmapname, map.name);
@@ -333,6 +685,8 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	fread(&destmap->width, sizeof(Uint32), 1, fp); // map width
 	fread(&destmap->height, sizeof(Uint32), 1, fp); // map height
 
+	mapHashData += destmap->width + destmap->height;
+
 	// map skybox
 	if ( editorVersion == 1 || editorVersion == 2 )
 	{
@@ -365,6 +719,12 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	destmap->tiles = (Sint32*) malloc(sizeof(Sint32) * destmap->width * destmap->height * MAPLAYERS);
 	fread(destmap->tiles, sizeof(Sint32), destmap->width * destmap->height * MAPLAYERS, fp);
 	fread(&numentities, sizeof(Uint32), 1, fp); // number of entities on the map
+
+	for ( c = 0; c < destmap->width * destmap->height * MAPLAYERS; ++c )
+	{
+		mapHashData += destmap->tiles[c];
+	}
+
 	for (c = 0; c < numentities; c++)
 	{
 		fread(&sprite, sizeof(Sint32), 1, fp);
@@ -410,8 +770,12 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 							//					node2->deconstructor = &myStats->~Stat;
 							node2->size = sizeof(myStats);
 
-
-							fread(&myStats->sex, sizeof(sex_t), 1, fp);
+							sex_t dummyVar = MALE; 
+							// we don't actually embed the sex from the editor
+							// advance the fp since we read in 0 always.
+							// otherwise it would overwrite the value of a handplaced succubus or a certain icey lich.
+							// certainly were a lot of male adventurers locked in cells...
+							fread(&dummyVar, sizeof(sex_t), 1, fp);
 							fread(&myStats->name, sizeof(char[128]), 1, fp);
 							fread(&myStats->HP, sizeof(Sint32), 1, fp);
 							fread(&myStats->MAXHP, sizeof(Sint32), 1, fp);
@@ -570,6 +934,41 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 						fread(&entity->floorDecorationRotation, sizeof(Sint32), 1, fp);
 						fread(&entity->floorDecorationHeightOffset, sizeof(Sint32), 1, fp);
 						break;
+					case 14:
+						fread(&entity->soundSourceToPlay, sizeof(Sint32), 1, fp);
+						fread(&entity->soundSourceVolume, sizeof(Sint32), 1, fp);
+						fread(&entity->soundSourceLatchOn, sizeof(Sint32), 1, fp);
+						fread(&entity->soundSourceDelay, sizeof(Sint32), 1, fp);
+						fread(&entity->soundSourceOrigin, sizeof(Sint32), 1, fp);
+						break;
+					case 15:
+						fread(&entity->lightSourceAlwaysOn, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceBrightness, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceInvertPower, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceLatchOn, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceRadius, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceFlicker, sizeof(Sint32), 1, fp);
+						fread(&entity->lightSourceDelay, sizeof(Sint32), 1, fp);
+						break;
+					case 16:
+					{
+						fread(&entity->textSourceColorRGB, sizeof(Sint32), 1, fp);
+						fread(&entity->textSourceVariables4W, sizeof(Sint32), 1, fp);
+						fread(&entity->textSourceDelay, sizeof(Sint32), 1, fp);
+						fread(&entity->textSource3, sizeof(Sint32), 1, fp);
+						for ( int i = 4; i < 60; ++i )
+						{
+							fread(&entity->skill[i], sizeof(Sint32), 1, fp);
+						}
+						break;
+					}
+					case 17:
+						fread(&entity->signalInputDirection, sizeof(Sint32), 1, fp);
+						fread(&entity->signalActivateDelay, sizeof(Sint32), 1, fp);
+						fread(&entity->signalTimerInterval, sizeof(Sint32), 1, fp);
+						fread(&entity->signalTimerRepeatCount, sizeof(Sint32), 1, fp);
+						fread(&entity->signalTimerLatchInput, sizeof(Sint32), 1, fp);
+						break;
 					default:
 						break;
 				}
@@ -586,6 +985,7 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 		fread(&y, sizeof(Sint32), 1, fp);
 		entity->x = x;
 		entity->y = y;
+		mapHashData += (sprite * c);
 	}
 
 	fclose(fp);
@@ -675,6 +1075,49 @@ int loadMap(const char* filename2, map_t* destmap, list_t* entlist, list_t* crea
 	for ( c = 0; c < 512; c++ )
 	{
 		keystatus[c] = 0;
+	}
+
+
+	if ( checkMapHash != nullptr )
+	{
+		std::string mapShortName = filename2;
+		size_t found = mapShortName.rfind("/");
+		if ( found != std::string::npos )
+		{
+			mapShortName = mapShortName.substr(found + 1);
+			std::unordered_map<std::string, int>::iterator it;
+			it = mapHashes.find(mapShortName);
+			if ( it != mapHashes.end() && (*it).second == mapHashData )
+			{
+				//printlog("MAP HASH SUCCESS");
+				*checkMapHash = 1;
+			}
+			else
+			{
+				printlog("Notice: Unable to verify map %s hash %d.", filename2, mapHashData);
+				*checkMapHash = 0;
+			}
+		}
+		else
+		{
+			size_t found2 = mapShortName.rfind("\\");
+			if ( found2 != std::string::npos )
+			{
+				mapShortName = mapShortName.substr(found2 + 1);
+				std::unordered_map<std::string, int>::iterator it;
+				it = mapHashes.find(mapShortName);
+				if ( it != mapHashes.end() && (*it).second == mapHashData )
+				{
+					//printlog("MAP HASH SUCCESS");
+					*checkMapHash = 1;
+				}
+				else
+				{
+					printlog("Notice: Unable to verify map %s hash %d.", filename2, mapHashData);
+					*checkMapHash = 0;
+				}
+			}
+		}
 	}
 
 	return numentities;
@@ -843,6 +1286,41 @@ int saveMap(const char* filename2)
 					fwrite(&entity->floorDecorationRotation, sizeof(Sint32), 1, fp);
 					fwrite(&entity->floorDecorationHeightOffset, sizeof(Sint32), 1, fp);
 					break;
+				case 14:
+					fwrite(&entity->soundSourceToPlay, sizeof(Sint32), 1, fp);
+					fwrite(&entity->soundSourceVolume, sizeof(Sint32), 1, fp);
+					fwrite(&entity->soundSourceLatchOn, sizeof(Sint32), 1, fp);
+					fwrite(&entity->soundSourceDelay, sizeof(Sint32), 1, fp);
+					fwrite(&entity->soundSourceOrigin, sizeof(Sint32), 1, fp);
+					break;
+				case 15:
+					fwrite(&entity->lightSourceAlwaysOn, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceBrightness, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceInvertPower, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceLatchOn, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceRadius, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceFlicker, sizeof(Sint32), 1, fp);
+					fwrite(&entity->lightSourceDelay, sizeof(Sint32), 1, fp);
+					break;
+				case 16:
+				{
+					fwrite(&entity->textSourceColorRGB, sizeof(Sint32), 1, fp);
+					fwrite(&entity->textSourceVariables4W, sizeof(Sint32), 1, fp);
+					fwrite(&entity->textSourceDelay, sizeof(Sint32), 1, fp);
+					fwrite(&entity->textSource3, sizeof(Sint32), 1, fp);
+					for ( int i = 4; i < 60; ++i )
+					{
+						fwrite(&entity->skill[i], sizeof(Sint32), 1, fp);
+					}
+					break;
+				}
+				case 17:
+					fwrite(&entity->signalInputDirection, sizeof(Sint32), 1, fp);
+					fwrite(&entity->signalActivateDelay, sizeof(Sint32), 1, fp);
+					fwrite(&entity->signalTimerInterval, sizeof(Sint32), 1, fp);
+					fwrite(&entity->signalTimerRepeatCount, sizeof(Sint32), 1, fp);
+					fwrite(&entity->signalTimerLatchInput, sizeof(Sint32), 1, fp);
+					break;
 				default:
 					break;
 			}
@@ -1002,7 +1480,7 @@ std::vector<std::string> getLinesFromDataFile(std::string filename)
 	return lines;
 }
 
-int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed)
+int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed, int* checkMapHash)
 {
 	std::string mapsDirectory; // store the full file path here.
 	if ( !secretlevel )
@@ -1050,19 +1528,66 @@ int physfsLoadMapFile(int levelToLoad, Uint32 seed, bool useRandSeed)
 			strncpy(tempstr, mapName.c_str(), mapName.length());
 			tempstr[mapName.length()] = '\0';
 			mapName = physfsFormatMapName(tempstr);
-			return loadMap(mapName.c_str(), &map, map.entities, map.creatures);
+			if ( checkMapHash )
+			{
+				return loadMap(mapName.c_str(), &map, map.entities, map.creatures, checkMapHash);
+			}
+			else
+			{
+				return loadMap(mapName.c_str(), &map, map.entities, map.creatures);
+			}
 		}
 		else if ( mapType.compare("gen:") == 0 )
 		{
+			std::size_t secretChanceFound = mapName.find(" secret%: ");
+			std::size_t darkmapChanceFound = mapName.find(" darkmap%: ");
+			std::size_t minotaurChanceFound = mapName.find(" minotaur%: ");
+			std::string parameterStr = "";
+			std::tuple<int, int, int> mapParameters = std::make_tuple(-1, -1, -1);
+			if ( secretChanceFound != std::string::npos )
+			{
+				// found a percentage for secret levels to spawn.
+				parameterStr = mapName.substr(secretChanceFound + strlen(" secret%: "));
+				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
+				std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) = std::stoi(parameterStr);
+				if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) > 100 )
+				{
+					std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) = -1;
+				}
+			}
+			if ( darkmapChanceFound != std::string::npos )
+			{
+				// found a percentage for secret levels to spawn.
+				parameterStr = mapName.substr(darkmapChanceFound + strlen(" darkmap%: "));
+				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
+				std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) = std::stoi(parameterStr);
+				if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) > 100 )
+				{
+					std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) = -1;
+				}
+			}
+			if ( minotaurChanceFound != std::string::npos )
+			{
+				// found a percentage for secret levels to spawn.
+				parameterStr = mapName.substr(minotaurChanceFound + strlen(" minotaur%: "));
+				parameterStr = parameterStr.substr(0, parameterStr.find_first_of(" \0"));
+				std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) = std::stoi(parameterStr);
+				if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) < 0 || std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) > 100 )
+				{
+					std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) = -1;
+				}
+			}
+			mapName = mapName.substr(0, mapName.find_first_of(" \0"));
+
 			strncpy(tempstr, mapName.c_str(), mapName.length());
 			tempstr[mapName.length()] = '\0';
 			if ( useRandSeed )
 			{
-				return generateDungeon(tempstr, rand());
+				return generateDungeon(tempstr, rand(), mapParameters);
 			}
 			else
 			{
-				return generateDungeon(tempstr, seed);
+				return generateDungeon(tempstr, seed, mapParameters);
 			}
 		}
 		//printlog("%s", mapName.c_str());
@@ -1409,20 +1934,21 @@ void physfsReloadTiles(bool reloadAll)
 				{
 					SDL_FreeSurface(tiles[c]);
 				}
-				strncpy(name, tileFile.c_str(), 127);
-				tiles[c] = loadImage(name);
+				char fullname[128];
+				strncpy(fullname, tileFile.c_str(), 127);
+				tiles[c] = loadImage(fullname);
 				animatedtiles[c] = false;
 				lavatiles[c] = false;
 				swimmingtiles[c] = false;
 				if ( tiles[c] != NULL )
 				{
-					for ( int x = 0; x < strlen(name); x++ )
+					size_t found = tileFile.find(".png");
+					if ( found != string::npos && found != 0 )
 					{
-						if ( name[x] >= '0' && name[x] < '9' )
+						if ( tileFile.at(found - 1) >= '0' && tileFile.at(found - 1) <= '9' )
 						{
 							// animated tiles if the tile name ends in a number 0-9.
 							animatedtiles[c] = true;
-							break;
 						}
 					}
 					if ( strstr(name, "Lava") || strstr(name, "lava") )
@@ -1486,6 +2012,7 @@ bool physfsIsMapLevelListModded()
 			{
 				mapName.erase(carriageReturn);
 			}
+			mapName = mapName.substr(0, mapName.find_first_of(" \0"));
 			mapName = "maps/" + mapName + ".lmp";
 			//printlog("%s", mapName.c_str());
 			if ( PHYSFS_getRealDir(mapName.c_str()) != NULL )
@@ -1534,6 +2061,7 @@ bool physfsIsMapLevelListModded()
 			{
 				mapName.erase(carriageReturn);
 			}
+			mapName = mapName.substr(0, mapName.find_first_of(" \0"));
 			mapName = "maps/" + mapName + ".lmp";
 			//printlog("%s", mapName.c_str());
 			if ( PHYSFS_getRealDir(mapName.c_str()) != NULL )
@@ -1649,6 +2177,17 @@ bool physfsSearchItemsTxtToUpdate()
 	if ( itemsTxtDirectory.compare("./") != 0 )
 	{
 		printlog("[PhysFS]: Found modified items/items.txt file, reloading all item information...");
+		return true;
+	}
+	return false;
+}
+
+bool physfsSearchItemsGlobalTxtToUpdate()
+{
+	std::string itemsTxtDirectory = PHYSFS_getRealDir("items/items_global.txt");
+	if ( itemsTxtDirectory.compare("./") != 0 )
+	{
+		printlog("[PhysFS]: Found modified items/items_global.txt file, reloading item spawn levels...");
 		return true;
 	}
 	return false;

@@ -327,7 +327,7 @@ int monsterCurve(int level)
 
 -------------------------------------------------------------------------------*/
 
-int generateDungeon(char* levelset, Uint32 seed)
+int generateDungeon(char* levelset, Uint32 seed, std::tuple<int, int, int> mapParameters)
 {
 	char* sublevelname, *subRoomName;
 	char sublevelnum[3];
@@ -354,14 +354,49 @@ int generateDungeon(char* levelset, Uint32 seed)
 	bool *monsterexcludelocations;
 	bool *lootexcludelocations;
 
-	printlog("generating a dungeon from level set '%s' (seed %d)...\n", levelset, seed);
+	if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) == -1
+		&& std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) == -1
+		&& std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) == -1 )
+	{
+		printlog("generating a dungeon from level set '%s' (seed %d)...\n", levelset, seed);
+	}
+	else
+	{
+		char generationLog[256] = "generating a dungeon from level set '%s'";
+		char tmpBuffer[32];
+		if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) != -1 )
+		{
+			snprintf(tmpBuffer, 31, ", secret chance %d%%%%", std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters));
+			strcat(generationLog, tmpBuffer);
+		}
+		if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) != -1 )
+		{
+			snprintf(tmpBuffer, 31, ", darkmap chance %d%%%%", std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters));
+			strcat(generationLog, tmpBuffer);
+		}
+		if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) != -1 )
+		{
+			snprintf(tmpBuffer, 31, ", minotaur chance %d%%%%", std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters));
+			strcat(generationLog, tmpBuffer);
+		}
+		strcat(generationLog, ", (seed %d)...\n");
+		printlog(generationLog, levelset, seed);
+
+		conductGameChallenges[CONDUCT_MODDED] = 1;
+	}
+
 	std::string fullMapPath;
 	fullMapPath = physfsFormatMapName(levelset);
 
-	if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &map, map.entities, map.creatures) == -1 )
+	int checkMapHash = -1;
+	if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &map, map.entities, map.creatures, &checkMapHash) == -1 )
 	{
 		printlog("error: no level of set '%s' could be found.\n", levelset);
 		return -1;
+	}
+	if ( checkMapHash == 0 )
+	{
+		conductGameChallenges[CONDUCT_MODDED] = 1;
 	}
 
 	// store this map's seed
@@ -375,7 +410,14 @@ int generateDungeon(char* levelset, Uint32 seed)
 	}
 
 	// determine whether minotaur level or not
-	if ( (currentlevel < 25 && (currentlevel % LENGTH_OF_LEVEL_REGION == 2 || currentlevel % LENGTH_OF_LEVEL_REGION == 3))
+	if ( std::get<LEVELPARAM_CHANCE_MINOTAUR>(mapParameters) != -1 )
+	{
+		if ( prng_get_uint() % 100 < std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) && (svFlags & SV_FLAG_MINOTAURS) )
+		{
+			minotaurlevel = 1;
+		}
+	}
+	else if ( (currentlevel < 25 && (currentlevel % LENGTH_OF_LEVEL_REGION == 2 || currentlevel % LENGTH_OF_LEVEL_REGION == 3))
 		|| (currentlevel > 25 && (currentlevel % LENGTH_OF_LEVEL_REGION == 2 || currentlevel % LENGTH_OF_LEVEL_REGION == 4)) )
 	{
 		if ( prng_get_uint() % 2 && (svFlags & SV_FLAG_MINOTAURS) )
@@ -385,19 +427,45 @@ int generateDungeon(char* levelset, Uint32 seed)
 	}
 
 	// dark level
-	if ( !secretlevel && currentlevel % LENGTH_OF_LEVEL_REGION >= 2 )
+	if ( !secretlevel )
 	{
-		if ( prng_get_uint() % 4 == 0 )
+		if ( std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) != -1 )
 		{
-			darkmap = true;
-			messagePlayer(clientnum, language[1108]);
+			if ( prng_get_uint() % 100 < std::get<LEVELPARAM_CHANCE_DARKNESS>(mapParameters) )
+			{
+				darkmap = true;
+				messagePlayer(clientnum, language[1108]);
+			}
+			else
+			{
+				darkmap = false;
+			}
+		}
+		else if ( currentlevel % LENGTH_OF_LEVEL_REGION >= 2 )
+		{
+			if ( prng_get_uint() % 4 == 0 )
+			{
+				darkmap = true;
+				messagePlayer(clientnum, language[1108]);
+			}
 		}
 	}
 
 	// secret stuff
 	if ( !secretlevel )
 	{
-		if ( (currentlevel == 3 && prng_get_uint() % 2) || currentlevel == 2 )
+		if ( std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) != -1 )
+		{
+			if ( prng_get_uint() % 100 < std::get<LEVELPARAM_CHANCE_SECRET>(mapParameters) )
+			{
+				secretlevelexit = 7;
+			}
+			else
+			{
+				secretlevelexit = 0;
+			}
+		}
+		else if ( (currentlevel == 3 && prng_get_uint() % 2) || currentlevel == 2 )
 		{
 			secretlevelexit = 1;
 		}
@@ -468,7 +536,7 @@ int generateDungeon(char* levelset, Uint32 seed)
 			shopmap.creatures = new list_t;
 			shopmap.creatures->first = nullptr;
 			shopmap.creatures->last = nullptr;
-			if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &shopmap, shopmap.entities, shopmap.creatures) == -1 )
+			if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &shopmap, shopmap.entities, shopmap.creatures, &checkMapHash) == -1 )
 			{
 				list_FreeAll(shopmap.entities);
 				free(shopmap.entities);
@@ -478,6 +546,10 @@ int generateDungeon(char* levelset, Uint32 seed)
 				{
 					free(shopmap.tiles);
 				}
+			}
+			if ( checkMapHash == 0 )
+			{
+				conductGameChallenges[CONDUCT_MODDED] = 1;
 			}
 		}
 		else
@@ -511,10 +583,14 @@ int generateDungeon(char* levelset, Uint32 seed)
 		tempMap->creatures = new list_t;
 		tempMap->creatures->first = nullptr;
 		tempMap->creatures->last = nullptr;
-		if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), tempMap, tempMap->entities, tempMap->creatures) == -1 )
+		if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), tempMap, tempMap->entities, tempMap->creatures, &checkMapHash) == -1 )
 		{
 			mapDeconstructor((void*)tempMap);
 			continue; // failed to load level
+		}
+		if ( checkMapHash == 0 )
+		{
+			conductGameChallenges[CONDUCT_MODDED] = 1;
 		}
 
 		// level is successfully loaded, add it to the pool
@@ -610,10 +686,14 @@ int generateDungeon(char* levelset, Uint32 seed)
 			subRoomMap->creatures = new list_t;
 			subRoomMap->creatures->first = nullptr;
 			subRoomMap->creatures->last = nullptr;
-			if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), subRoomMap, subRoomMap->entities, subRoomMap->creatures) == -1 )
+			if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), subRoomMap, subRoomMap->entities, subRoomMap->creatures, &checkMapHash) == -1 )
 			{
 				mapDeconstructor((void*)subRoomMap);
 				continue; // failed to load level
+			}
+			if ( checkMapHash == 0 )
+			{
+				conductGameChallenges[CONDUCT_MODDED] = 1;
 			}
 
 			// level is successfully loaded, add it to the pool
@@ -766,11 +846,15 @@ int generateDungeon(char* levelset, Uint32 seed)
 					case 6:
 						strcpy(secretmapname, "citadelsecret");
 						break;
+					case 7:
+						strcpy(secretmapname, levelset);
+						strcat(secretmapname, "secret");
+						break;
 					default:
 						break;
 				}
 				fullMapPath = physfsFormatMapName(secretmapname);
-				if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &secretlevelmap, secretlevelmap.entities, secretlevelmap.creatures) == -1 )
+				if ( fullMapPath.empty() || loadMap(fullMapPath.c_str(), &secretlevelmap, secretlevelmap.entities, secretlevelmap.creatures, &checkMapHash) == -1 )
 				{
 					list_FreeAll(secretlevelmap.entities);
 					free(secretlevelmap.entities);
@@ -781,6 +865,11 @@ int generateDungeon(char* levelset, Uint32 seed)
 						free(secretlevelmap.tiles);
 					}
 				}
+				if ( checkMapHash == 0 )
+				{
+					conductGameChallenges[CONDUCT_MODDED] = 1;
+				}
+
 				levelnum = 0;
 				levelnum2 = -1;
 				tempMap = &secretlevelmap;
@@ -1968,7 +2057,7 @@ int generateDungeon(char* levelset, Uint32 seed)
 					{
 						if ( prng_get_uint() % 10 == 0 && currentlevel > 1 )
 						{
-							if ( currentlevel > 15 )
+							if ( currentlevel > 15 && prng_get_uint() % 4 > 0 )
 							{
 								entity = newEntity(93, 1, map.entities, map.creatures);  // automaton
 								if ( currentlevel < 25 )
@@ -1979,6 +2068,10 @@ int generateDungeon(char* levelset, Uint32 seed)
 							else
 							{
 								entity = newEntity(27, 1, map.entities, map.creatures);  // human
+								if ( multiplayer != CLIENT && currentlevel > 5 )
+								{
+									entity->monsterStoreType = (currentlevel / 5) * 3 + (rand() % 4); // scale humans with depth.  3 LVL each 5 floors, + 0-3.
+								}
 							}
 						}
 						else
@@ -2121,7 +2214,7 @@ int generateDungeon(char* levelset, Uint32 seed)
 							{
 								if ( prng_get_uint() % 10 == 0 && currentlevel > 1 )
 								{
-									if ( currentlevel > 15 )
+									if ( currentlevel > 15 && prng_get_uint() % 4 > 0 )
 									{
 										entity = newEntity(93, 1, map.entities, map.creatures);  // automaton
 										if ( currentlevel < 25 )
@@ -2132,6 +2225,10 @@ int generateDungeon(char* levelset, Uint32 seed)
 									else
 									{
 										entity = newEntity(27, 1, map.entities, map.creatures);  // human
+										if ( multiplayer != CLIENT && currentlevel > 5 )
+										{
+											entity->monsterStoreType = (currentlevel / 5) * 3 + (rand() % 4); // scale humans with depth. 3 LVL each 5 floors, + 0-3.
+										}
 									}
 								}
 								else
@@ -3409,6 +3506,7 @@ void assignActions(map_t* map)
 				childEntity->roll = PI / 4; // "off" position
 				childEntity->flags[PASSABLE] = true;
 				childEntity->behavior = &actSwitch;
+				entity->parent = childEntity->getUID();
 				break;
 			//Circuit.
 			case 18:
@@ -3707,7 +3805,7 @@ void assignActions(map_t* map)
 							childEntity->x = (x << 4) + 8;
 							childEntity->y = (y << 4) + 8;
 							//printlog("30 Generated entity. Sprite: %d Uid: %d X: %.2f Y: %.2f\n",childEntity->sprite,childEntity->getUID(),childEntity->x,childEntity->y);
-							entity->flags[PASSABLE] = true;
+							childEntity->flags[PASSABLE] = true;
 							if ( !map->tiles[(MAPLAYERS - 1) + y * MAPLAYERS + x * MAPLAYERS * map->height] )
 							{
 								childEntity->z = -26.99;
@@ -3716,6 +3814,7 @@ void assignActions(map_t* map)
 							{
 								childEntity->z = -10.99;
 							}
+							entity->boulderTrapRocksToSpawn |= (1 << c); // add this location to spawn a boulder below the trapdoor model.
 						}
 					}
 				}
@@ -4091,7 +4190,7 @@ void assignActions(map_t* map)
 						childEntity->x = (x << 4) + 8;
 						childEntity->y = (y << 4) + 8;
 						//printlog("30 Generated entity. Sprite: %d Uid: %d X: %.2f Y: %.2f\n",childEntity->sprite,childEntity->getUID(),childEntity->x,childEntity->y);
-						entity->flags[PASSABLE] = true;
+						childEntity->flags[PASSABLE] = true;
 						if ( !map->tiles[(MAPLAYERS - 1) + y * MAPLAYERS + x * MAPLAYERS * map->height] )
 						{
 							childEntity->z = -26.99;
@@ -4130,7 +4229,7 @@ void assignActions(map_t* map)
 						childEntity->x = (x << 4) + 8;
 						childEntity->y = (y << 4) + 8;
 						//printlog("30 Generated entity. Sprite: %d Uid: %d X: %.2f Y: %.2f\n",childEntity->sprite,childEntity->getUID(),childEntity->x,childEntity->y);
-						entity->flags[PASSABLE] = true;
+						childEntity->flags[PASSABLE] = true;
 						if ( !map->tiles[(MAPLAYERS - 1) + y * MAPLAYERS + x * MAPLAYERS * map->height] )
 						{
 							childEntity->z = -26.99;
@@ -4169,7 +4268,7 @@ void assignActions(map_t* map)
 						childEntity->x = (x << 4) + 8;
 						childEntity->y = (y << 4) + 8;
 						//printlog("30 Generated entity. Sprite: %d Uid: %d X: %.2f Y: %.2f\n",childEntity->sprite,childEntity->getUID(),childEntity->x,childEntity->y);
-						entity->flags[PASSABLE] = true;
+						childEntity->flags[PASSABLE] = true;
 						if ( !map->tiles[(MAPLAYERS - 1) + y * MAPLAYERS + x * MAPLAYERS * map->height] )
 						{
 							childEntity->z = -26.99;
@@ -4208,7 +4307,7 @@ void assignActions(map_t* map)
 						childEntity->x = (x << 4) + 8;
 						childEntity->y = (y << 4) + 8;
 						//printlog("30 Generated entity. Sprite: %d Uid: %d X: %.2f Y: %.2f\n",childEntity->sprite,childEntity->getUID(),childEntity->x,childEntity->y);
-						entity->flags[PASSABLE] = true;
+						childEntity->flags[PASSABLE] = true;
 						if ( !map->tiles[(MAPLAYERS - 1) + y * MAPLAYERS + x * MAPLAYERS * map->height] )
 						{
 							childEntity->z = -26.99;
@@ -4882,6 +4981,58 @@ void assignActions(map_t* map)
 				entity->portalVictoryType = 3;
 				entity->skill[28] = 1; // is a mechanism
 				break;
+			//sound source
+			case 130: 
+				entity->sizex = 2;
+				entity->sizey = 2;
+				entity->x += 8;
+				entity->y += 8;
+				entity->behavior = &actSoundSource;
+				entity->flags[SPRITE] = true;
+				entity->flags[INVISIBLE] = true;
+				entity->flags[PASSABLE] = true;
+				entity->flags[NOUPDATE] = true;
+				entity->skill[28] = 1; // is a mechanism
+				break;
+			//light source
+			case 131:
+				entity->sizex = 2;
+				entity->sizey = 2;
+				entity->x += 8;
+				entity->y += 8;
+				entity->behavior = &actLightSource;
+				entity->flags[SPRITE] = true;
+				entity->flags[INVISIBLE] = true;
+				entity->flags[PASSABLE] = true;
+				//entity->flags[NOUPDATE] = true;
+				entity->skill[28] = 1; // is a mechanism
+				break;
+			//text source
+			case 132:
+				entity->sizex = 2;
+				entity->sizey = 2;
+				entity->x += 8;
+				entity->y += 8;
+				entity->behavior = &actTextSource;
+				entity->flags[SPRITE] = true;
+				entity->flags[INVISIBLE] = true;
+				entity->flags[PASSABLE] = true;
+				entity->flags[NOUPDATE] = true;
+				entity->skill[28] = 1; // is a mechanism
+				break;
+			//signal timer
+			case 133:
+				entity->sizex = 2;
+				entity->sizey = 2;
+				entity->x += 8;
+				entity->y += 8;
+				entity->behavior = &actSignalTimer;
+				entity->flags[SPRITE] = true;
+				entity->flags[INVISIBLE] = true;
+				entity->flags[PASSABLE] = true;
+				entity->flags[NOUPDATE] = true;
+				entity->skill[28] = 1; // is a mechanism
+				break;
 			default:
 				break;
 		}
@@ -4956,28 +5107,6 @@ void mapLevel(int player)
 			}
 		}
 	}
-}
-
-Entity* map_t::getEntityWithUID(Uint32 uid)
-{
-	Entity* entity = nullptr;
-
-	for ( node_t* node = entities->first; node; node = node->next )
-	{
-		entity = (node->element? static_cast<Entity*>(node->element) : nullptr);
-
-		if ( !entity )
-		{
-			continue;
-		}
-
-		if ( entity->getUID() == uid )
-		{
-			return entity;
-		}
-	}
-
-	return nullptr;
 }
 
 int loadMainMenuMap(bool blessedAdditionMaps, bool forceVictoryMap)

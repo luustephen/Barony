@@ -25,7 +25,7 @@ typedef struct damageIndicator_t
 } damageIndicator_t;
 extern list_t damageIndicators;
 
-#define STATUS_BAR_Y_OFFSET (status_bmp->h * uiscale_chatlog)
+#define STATUS_BAR_Y_OFFSET (status_bmp->h * uiscale_chatlog * !hide_statusbar)
 #define INVENTORY_SLOTSIZE (40 * uiscale_inventory)
 #define STATUS_X (xres / 2 - status_bmp->w * uiscale_chatlog / 2)
 #define STATUS_Y (yres - STATUS_BAR_Y_OFFSET)
@@ -39,8 +39,8 @@ extern real_t uiscale_hotbar;
 extern real_t uiscale_inventory;
 
 extern char enemy_name[128];
-extern Sint32 enemy_hp, enemy_maxhp;
-extern Uint32 enemy_timer;
+extern Sint32 enemy_hp, enemy_maxhp, enemy_oldhp;
+extern Uint32 enemy_timer, enemy_lastuid;
 extern Uint32 enemy_bar_color[MAXPLAYERS];
 
 #ifndef SHOPWINDOW_SIZE
@@ -409,6 +409,8 @@ extern bool lock_right_sidebar;
 
 extern bool show_game_timer_always;
 
+extern bool hide_playertags;
+
 const char* getInputName(Uint32 scancode);
 Sint8* inputPressed(Uint32 scancode);
 
@@ -461,3 +463,67 @@ void minimapPingAdd(MinimapPing newPing);
 extern int minimapPingGimpTimer;
 
 extern std::vector<std::pair<SDL_Surface**, std::string>> systemResourceImages;
+
+class FollowerRadialMenu
+{
+public:
+	Entity* followerToCommand;
+	Entity* recentEntity;
+	Entity* entityToInteractWith;
+	int menuX; // starting mouse coordinates that are the center of the circle.
+	int menuY; // starting mouse coordinates that are the center of the circle.
+	int optionSelected; // current moused over option.
+	int optionPrevious; // previously selected option.
+	bool selectMoveTo; // player is choosing a point or target to interact with.
+	int moveToX; // x position for follower to move to.
+	int moveToY; // y position for follower to move to.
+	bool menuToggleClick; // user pressed menu key but did not select option before letting go. keeps the menu open without input.
+	bool holdWheel; // user pressed quick menu for last follower.
+	char interactText[128]; // user moused over object while selecting interact object.
+	bool accessedMenuFromPartySheet; // right click from party sheet will warp mouse back after a selection.
+	int partySheetMouseX; // store mouse x cooord for accessedMenuFromPartySheet warp.
+	int partySheetMouseY; // store mouse y cooord for accessedMenuFromPartySheet warp.
+	int sidebarScrollIndex; // entries scrolled in the sidebar list if overflowed with followers.
+	int maxMonstersToDraw;
+
+	FollowerRadialMenu() :
+		followerToCommand(nullptr),
+		recentEntity(nullptr),
+		entityToInteractWith(nullptr),
+		menuX(-1),
+		menuY(-1),
+		optionSelected(-1),
+		optionPrevious(-1),
+		selectMoveTo(false),
+		moveToX(-1),
+		moveToY(-1),
+		menuToggleClick(false),
+		holdWheel(false),
+		accessedMenuFromPartySheet(false),
+		partySheetMouseX(-1),
+		partySheetMouseY(-1),
+		sidebarScrollIndex(0),
+		maxMonstersToDraw(5)
+	{
+		memset(interactText, 0, 128);
+	}
+
+	bool followerMenuIsOpen();
+	void drawFollowerMenu();
+	void initFollowerMenuGUICursor(bool openInventory = true);
+	void closeFollowerMenuGUI(bool clearRecentEntity = false);
+	void selectNextFollower();
+	int numMonstersToDrawInParty();
+	void updateScrollPartySheet();
+	bool allowedInteractEntity(Entity& selectedEntity);
+	int optionDisabledForCreature(int playerSkillLVL, int monsterType, int option);
+	bool allowedClassToggle(int monsterType);
+	bool allowedItemPickupToggle(int monsterType);
+	bool allowedInteractFood(int monsterType);
+	bool allowedInteractWorld(int monsterType);
+	bool allowedInteractItems(int monsterType);
+	bool attackCommandOnly(int monsterType);
+};
+extern FollowerRadialMenu FollowerMenu;
+extern SDL_Rect interfaceSkillsSheet;
+extern SDL_Rect interfacePartySheet;

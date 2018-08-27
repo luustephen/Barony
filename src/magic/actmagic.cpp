@@ -866,17 +866,68 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					{
 						if ( parent->behavior == &actMagicTrap || parent->behavior == &actMagicTrapCeiling )
 						{
-							monsterMoveAside(hit.entity, hit.entity);
+							if ( parent->behavior == &actMagicTrap )
+							{
+								if ( static_cast<int>(parent->y / 16) == static_cast<int>(hit.entity->y / 16) )
+								{
+									// avoid y axis.
+									int direction = 1;
+									if ( rand() % 2 == 0 )
+									{
+										direction = -1;
+									}
+									if ( hit.entity->monsterSetPathToLocation(hit.entity->x / 16, (hit.entity->y / 16) + 1 * direction, 0) )
+									{
+										hit.entity->monsterState = MONSTER_STATE_HUNT;
+										serverUpdateEntitySkill(hit.entity, 0);
+									}
+									else if ( hit.entity->monsterSetPathToLocation(hit.entity->x / 16, (hit.entity->y / 16) - 1 * direction, 0) )
+									{
+										hit.entity->monsterState = MONSTER_STATE_HUNT;
+										serverUpdateEntitySkill(hit.entity, 0);
+									}
+									else
+									{
+										monsterMoveAside(hit.entity, hit.entity);
+									}
+								}
+								else if ( static_cast<int>(parent->x / 16) == static_cast<int>(hit.entity->x / 16) )
+								{
+									int direction = 1;
+									if ( rand() % 2 == 0 )
+									{
+										direction = -1;
+									}
+									// avoid x axis.
+									if ( hit.entity->monsterSetPathToLocation((hit.entity->x / 16) + 1 * direction, hit.entity->y / 16, 0) )
+									{
+										hit.entity->monsterState = MONSTER_STATE_HUNT;
+										serverUpdateEntitySkill(hit.entity, 0);
+									}
+									else if ( hit.entity->monsterSetPathToLocation((hit.entity->x / 16) - 1 * direction, hit.entity->y / 16, 0) )
+									{
+										hit.entity->monsterState = MONSTER_STATE_HUNT;
+										serverUpdateEntitySkill(hit.entity, 0);
+									}
+									else
+									{
+										monsterMoveAside(hit.entity, hit.entity);
+									}
+								}
+								else
+								{
+									monsterMoveAside(hit.entity, hit.entity);
+								}
+							}
+							else
+							{
+								monsterMoveAside(hit.entity, hit.entity);
+							}
 						}
 						else
 						{
 							if ( hit.entity->monsterState != MONSTER_STATE_ATTACK && (hitstats->type < LICH || hitstats->type >= SHOPKEEPER) )
 							{
-								/*hit.entity->monsterState = MONSTER_STATE_PATH;
-								hit.entity->monsterTarget = parent->getUID();
-								hit.entity->monsterTargetX = parent->x;
-								hit.entity->monsterTargetY = parent->y;*/
-
 								hit.entity->monsterAcquireAttackTarget(*parent, MONSTER_STATE_PATH);
 							}
 
@@ -898,11 +949,6 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 												lineTrace(ohitentity, ohitentity->x, ohitentity->y, tangent, 1024, 0, false);
 												if ( hit.entity == entity )
 												{
-													/*entity->monsterState = MONSTER_STATE_PATH;
-													entity->monsterTarget = parent->getUID();
-													entity->monsterTargetX = parent->x;
-													entity->monsterTargetY = parent->y;*/
-
 													entity->monsterAcquireAttackTarget(*parent, MONSTER_STATE_PATH);
 												}
 											}
@@ -1389,7 +1435,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					{
 						if (hit.entity->behavior == &actMonster || hit.entity->behavior == &actPlayer)
 						{
-							playSoundEntity(hit.entity, 396 + rand() % 3, 64); //TODO: Slow spell sound.
+							playSoundEntity(hit.entity, 396 + rand() % 3, 64);
 							hitstats->EFFECTS[EFF_SLOW] = true;
 							hitstats->EFFECTS_TIMERS[EFF_SLOW] = (element->duration * (((element->mana) / static_cast<double>(element->base_mana)) * element->overload_multiplier));
 							hitstats->EFFECTS_TIMERS[EFF_SLOW] /= (1 + (int)resistance);
@@ -1604,13 +1650,22 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					{
 						if (hit.entity->behavior == &actDoor)
 						{
-							playSoundEntity(hit.entity, 92, 64);
-							hit.entity->skill[5] = 1; //Lock the door.
-							if ( parent )
+							if ( parent && parent->behavior == &actPlayer && MFLAG_DISABLEOPENING )
 							{
-								if ( parent->behavior == &actPlayer )
+								Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 255);
+								messagePlayerColor(parent->skill[2], 0xFFFFFFFF, language[3096], language[3097]);
+								messagePlayerColor(parent->skill[2], color, language[3101]); // disabled locking spell.
+							}
+							else
+							{
+								playSoundEntity(hit.entity, 92, 64);
+								hit.entity->skill[5] = 1; //Lock the door.
+								if ( parent )
 								{
-									messagePlayer(parent->skill[2], language[399]);
+									if ( parent->behavior == &actPlayer )
+									{
+										messagePlayer(parent->skill[2], language[399]);
+									}
 								}
 							}
 						}
@@ -1620,12 +1675,21 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							playSoundEntity(hit.entity, 92, 64);
 							if ( !hit.entity->chestLocked )
 							{
-								hit.entity->lockChest();
-								if ( parent )
+								if ( parent && parent->behavior == &actPlayer && MFLAG_DISABLEOPENING )
 								{
-									if ( parent->behavior == &actPlayer )
+									Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 255);
+									messagePlayerColor(parent->skill[2], 0xFFFFFFFF, language[3096], language[3099]);
+									messagePlayerColor(parent->skill[2], color, language[3100]); // disabled locking spell.
+								}
+								else
+								{
+									hit.entity->lockChest();
+									if ( parent )
 									{
-										messagePlayer(parent->skill[2], language[400]);
+										if ( parent->behavior == &actPlayer )
+										{
+											messagePlayer(parent->skill[2], language[400]);
+										}
 									}
 								}
 							}
@@ -1651,45 +1715,65 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 					{
 						if (hit.entity->behavior == &actDoor)
 						{
-							// Open the Door
-							playSoundEntity(hit.entity, 91, 64); // "UnlockDoor.ogg"
-							hit.entity->skill[5] = 0; // Unlocks the Door
+							if ( parent && parent->behavior == &actPlayer && MFLAG_DISABLEOPENING )
+							{
+								Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 255);
+								messagePlayerColor(parent->skill[2], 0xFFFFFFFF, language[3096], language[3097]);
+								messagePlayerColor(parent->skill[2], color, language[3101]); // disabled opening spell.
+							}
+							else
+							{
+								// Open the Door
+								playSoundEntity(hit.entity, 91, 64); // "UnlockDoor.ogg"
+								hit.entity->skill[5] = 0; // Unlocks the Door
 
-							if ( !hit.entity->skill[0] && !hit.entity->skill[3] )
-							{
-								hit.entity->skill[3] = 1 + (my->x > hit.entity->x); // Opens the Door
-								playSoundEntity(hit.entity, 21, 96); // "UnlockDoor.ogg"
-							}
-							else if ( hit.entity->skill[0] && !hit.entity->skill[3] )
-							{
-								hit.entity->skill[3] = 1 + (my->x < hit.entity->x); // Opens the Door
-								playSoundEntity(hit.entity, 21, 96); // "UnlockDoor.ogg"
-							}
-							if ( parent )
-								if ( parent->behavior == &actPlayer)
+								if ( !hit.entity->skill[0] && !hit.entity->skill[3] )
 								{
-									messagePlayer(parent->skill[2], language[402]);
+									hit.entity->skill[3] = 1 + (my->x > hit.entity->x); // Opens the Door
+									playSoundEntity(hit.entity, 21, 96); // "UnlockDoor.ogg"
 								}
-						}
-						else if ( hit.entity->behavior == &actGate )
-						{
-							// Open the Gate
-							if ( (hit.entity->skill[28] != 2 && hit.entity->gateInverted == 0)
-								|| (hit.entity->skill[28] != 1 && hit.entity->gateInverted == 1) )
-							{
-								if ( hit.entity->gateInverted == 1 )
+								else if ( hit.entity->skill[0] && !hit.entity->skill[3] )
 								{
-									hit.entity->skill[28] = 1; // Depowers the Gate
-								}
-								else
-								{
-									hit.entity->skill[28] = 2; // Powers the Gate
+									hit.entity->skill[3] = 1 + (my->x < hit.entity->x); // Opens the Door
+									playSoundEntity(hit.entity, 21, 96); // "UnlockDoor.ogg"
 								}
 								if ( parent )
 								{
-									if ( parent->behavior == &actPlayer )
+									if ( parent->behavior == &actPlayer)
 									{
-										messagePlayer(parent->skill[2], language[403]); // "The spell opens the gate!"
+										messagePlayer(parent->skill[2], language[402]);
+									}
+								}
+							}
+						}
+						else if ( hit.entity->behavior == &actGate )
+						{
+							if ( parent && parent->behavior == &actPlayer && MFLAG_DISABLEOPENING )
+							{
+								Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 255);
+								messagePlayerColor(parent->skill[2], 0xFFFFFFFF, language[3096], language[3098]);
+								messagePlayerColor(parent->skill[2], color, language[3102]); // disabled opening spell.
+							}
+							else
+							{
+								// Open the Gate
+								if ( (hit.entity->skill[28] != 2 && hit.entity->gateInverted == 0)
+									|| (hit.entity->skill[28] != 1 && hit.entity->gateInverted == 1) )
+								{
+									if ( hit.entity->gateInverted == 1 )
+									{
+										hit.entity->skill[28] = 1; // Depowers the Gate
+									}
+									else
+									{
+										hit.entity->skill[28] = 2; // Powers the Gate
+									}
+									if ( parent )
+									{
+										if ( parent->behavior == &actPlayer )
+										{
+											messagePlayer(parent->skill[2], language[403]); // "The spell opens the gate!"
+										}
 									}
 								}
 							}
@@ -1699,13 +1783,22 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 							// Unlock the Chest
 							if ( hit.entity->chestLocked )
 							{
-								playSoundEntity(hit.entity, 91, 64); // "UnlockDoor.ogg"
-								hit.entity->unlockChest();
-								if ( parent )
+								if ( parent && parent->behavior == &actPlayer && MFLAG_DISABLEOPENING )
 								{
-									if ( parent->behavior == &actPlayer)
+									Uint32 color = SDL_MapRGB(mainsurface->format, 255, 0, 255);
+									messagePlayerColor(parent->skill[2], 0xFFFFFFFF, language[3096], language[3099]);
+									messagePlayerColor(parent->skill[2], color, language[3100]); // disabled opening spell.
+								}
+								else
+								{
+									playSoundEntity(hit.entity, 91, 64); // "UnlockDoor.ogg"
+									hit.entity->unlockChest();
+									if ( parent )
 									{
-										messagePlayer(parent->skill[2], language[404]); // "The spell unlocks the chest!"
+										if ( parent->behavior == &actPlayer)
+										{
+											messagePlayer(parent->skill[2], language[404]); // "The spell unlocks the chest!"
+										}
 									}
 								}
 							}
@@ -1807,6 +1900,7 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 									}
 
 									map.tiles[(int)(OBSTACLELAYER + hit.mapy * MAPLAYERS + hit.mapx * MAPLAYERS * map.height)] = 0;
+
 									// send wall destroy info to clients
 									for ( c = 1; c < MAXPLAYERS; c++ )
 									{
@@ -1822,6 +1916,8 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 										net_packet->len = 8;
 										sendPacketSafe(net_sock, -1, net_packet, c - 1);
 									}
+
+									generatePathMaps();
 								}
 							}
 						}
@@ -2071,6 +2167,10 @@ void actMagicMissile(Entity* my)   //TODO: Verify this function.
 				else if ( !strcmp(element->name, spellElement_drainSoul.name) )
 				{
 					spellEffectDrainSoul(*my, *element, parent, resistance);
+				}
+				else if ( !strcmp(element->name, spellElement_charmMonster.name) )
+				{
+					spellEffectCharmMonster(*my, *element, parent, resistance, static_cast<bool>(my->actmagicCastByMagicstaff));
 				}
 
 				if ( hitstats )
@@ -3591,4 +3691,165 @@ Entity* Entity::castOrbitingMagicMissile(int spellID, real_t distFromCaster, rea
 		//spawnMagicEffectParticles(entity->x, entity->y, 0, 174);
 	}
 	return entity;
+}
+
+void createParticleFollowerCommand(real_t x, real_t y, real_t z, int sprite)
+{
+	Entity* entity = newEntity(sprite, 1, map.entities, nullptr); //Particle entity.
+	//entity->sizex = 1;
+	//entity->sizey = 1;
+	entity->x = x;
+	entity->y = y;
+	entity->z = 7.5;
+	entity->vel_z = -0.8;
+	//entity->yaw = (rand() % 360) * PI / 180.0;
+	entity->skill[0] = 50;
+	entity->behavior = &actParticleFollowerCommand;
+	entity->flags[PASSABLE] = true;
+	entity->flags[NOUPDATE] = true;
+	entity->flags[UNCLICKABLE] = true;
+	if ( multiplayer != CLIENT )
+	{
+		entity_uids--;
+	}
+	entity->setUID(-3);
+
+	// boosty boost
+	for ( int c = 0; c < 10; c++ )
+	{
+		entity = newEntity(sprite, 1, map.entities, nullptr); //Particle entity.
+		entity->x = x - 4 + rand() % 9;
+		entity->y = y - 4 + rand() % 9;
+		entity->z = z - 0 + rand() % 11;
+		entity->scalex = 0.7;
+		entity->scaley = 0.7;
+		entity->scalez = 0.7;
+		entity->sizex = 1;
+		entity->sizey = 1;
+		entity->yaw = (rand() % 360) * PI / 180.f;
+		entity->flags[PASSABLE] = true;
+		entity->flags[BRIGHT] = true;
+		entity->flags[NOUPDATE] = true;
+		entity->flags[UNCLICKABLE] = true;
+		entity->behavior = &actMagicParticle;
+		entity->vel_z = -1;
+		if ( multiplayer != CLIENT )
+		{
+			entity_uids--;
+		}
+		entity->setUID(-3);
+	}
+
+}
+
+void actParticleFollowerCommand(Entity* my)
+{
+	if ( PARTICLE_LIFE < 0 )
+	{
+		list_RemoveNode(my->mynode);
+		return;
+	}
+	else
+	{
+		--PARTICLE_LIFE;
+		my->z += my->vel_z;
+		my->yaw += my->vel_z * 2;
+		if ( my->z < -3 )
+		{
+			my->vel_z *= 0.9;
+		}
+	}
+}
+
+void createParticleCharmMonster(Entity* parent)
+{
+	if ( !parent )
+	{
+		return;
+	}
+	Entity* entity = newEntity(685, 1, map.entities, nullptr); //Particle entity.
+	//entity->sizex = 1;
+	//entity->sizey = 1;
+	entity->parent = parent->getUID();
+	entity->x = parent->x;
+	entity->y = parent->y;
+	entity->z = 7.5;
+	entity->vel_z = -0.8;
+	entity->scalex = 0.1;
+	entity->scaley = 0.1;
+	entity->scalez = 0.1;
+	entity->yaw = (rand() % 360) * PI / 180.0;
+	entity->skill[0] = 45;
+	entity->behavior = &actParticleCharmMonster;
+	entity->flags[PASSABLE] = true;
+	entity->flags[NOUPDATE] = true;
+	entity->flags[UNCLICKABLE] = true;
+	if ( multiplayer != CLIENT )
+	{
+		entity_uids--;
+	}
+	entity->setUID(-3);
+}
+
+void actParticleCharmMonster(Entity* my)
+{
+	if ( PARTICLE_LIFE < 0 )
+	{
+		real_t yaw = 0;
+		int numParticles = 8;
+		for ( int c = 0; c < 8; c++ )
+		{
+			Entity* entity = newEntity(576, 1, map.entities, nullptr); //Particle entity.
+			entity->sizex = 1;
+			entity->sizey = 1;
+			entity->x = my->x;
+			entity->y = my->y;
+			entity->z = -10;
+			entity->yaw = yaw;
+			entity->vel_x = 0.2;
+			entity->vel_y = 0.2;
+			entity->vel_z = -0.02;
+			entity->skill[0] = 100;
+			entity->skill[1] = 0; // direction.
+			entity->fskill[0] = 0.1;
+			entity->behavior = &actParticleErupt;
+			entity->flags[PASSABLE] = true;
+			entity->flags[NOUPDATE] = true;
+			entity->flags[UNCLICKABLE] = true;
+			if ( multiplayer != CLIENT )
+			{
+				entity_uids--;
+			}
+			entity->setUID(-3);
+			yaw += 2 * PI / numParticles;
+		}
+		list_RemoveNode(my->mynode);
+		return;
+	}
+	else
+	{
+		--PARTICLE_LIFE;
+		Entity* parent = uidToEntity(my->parent);
+		if ( parent )
+		{
+			my->x = parent->x;
+			my->y = parent->y;
+		}
+		my->z += my->vel_z;
+		my->yaw += my->vel_z * 2;
+		if ( my->scalex < 0.8 )
+		{
+			my->scalex += 0.02;
+		}
+		else
+		{
+			my->scalex = 0.8;
+		}
+		my->scaley = my->scalex;
+		my->scalez = my->scalex;
+		if ( my->z < -3 )
+		{
+			my->vel_z *= 0.9;
+		}
+	}
 }

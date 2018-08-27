@@ -20,10 +20,11 @@
 #include "../menu.hpp"
 #include "../player.hpp"
 #include "interface.hpp"
+#include "../colors.hpp"
 
 char enemy_name[128];
-Sint32 enemy_hp = 0, enemy_maxhp = 0;
-Uint32 enemy_timer = 0;
+Sint32 enemy_hp = 0, enemy_maxhp = 0, enemy_oldhp = 0;
+Uint32 enemy_timer = 0, enemy_lastuid = 0;
 Uint32 enemy_bar_color[MAXPLAYERS] = { 0 }; // color for each player's enemy bar to display. multiplayer clients only refer to their own [clientnum] entry.
 
 /*-------------------------------------------------------------------------------
@@ -145,6 +146,10 @@ void updateEnemyBarStatusEffectColor(int player, const Entity &target, const Sta
 	{
 		enemy_bar_color[player] = SDL_MapRGB(mainsurface->format, 92, 0, 92);
 	}
+	else if ( targetStats.EFFECTS[EFF_PACIFY] )
+	{
+		enemy_bar_color[player] = SDL_MapRGB(mainsurface->format, 128, 32, 80);
+	}
 	else
 	{
 		enemy_bar_color[player] = 0;
@@ -161,6 +166,7 @@ void updateEnemyBarStatusEffectColor(int player, const Entity &target, const Sta
 
 void updateEnemyBar(Entity* source, Entity* target, char* name, Sint32 hp, Sint32 maxhp)
 {
+	// server/singleplayer only function.
 	int player = -1;
 	int c;
 
@@ -207,13 +213,30 @@ void updateEnemyBar(Entity* source, Entity* target, char* name, Sint32 hp, Sint3
 				net_packet->len = 12;
 				sendPacketSafe(net_sock, -1, net_packet, playertarget - 1);
 			}
-			if ( player >= 0 )
-			{
-				updateEnemyBarStatusEffectColor(player, *target, *stats); // set color depending on status effects of the target.
-			}
+		}
+
+		if ( player >= 0 )
+		{
+			updateEnemyBarStatusEffectColor(player, *target, *stats); // set color depending on status effects of the target.
 		}
 	}
 
+	if ( player >= 0 )
+	{
+		if ( enemy_lastuid != target->getUID() || enemy_timer == 0 )
+		{
+			// if new target or timer expired, get new OLDHP value.
+			if ( stats )
+			{
+				enemy_oldhp = stats->OLDHP;
+			}
+			else
+			{
+				enemy_oldhp = enemy_hp; // chairs/tables and things.
+			}
+		}
+		enemy_lastuid = target->getUID();
+	}
 	if ( player == clientnum )
 	{
 		enemy_timer = ticks;
@@ -227,11 +250,13 @@ void updateEnemyBar(Entity* source, Entity* target, char* name, Sint32 hp, Sint3
 		SDLNet_Write32(hp, &net_packet->data[4]);
 		SDLNet_Write32(maxhp, &net_packet->data[8]);
 		SDLNet_Write32(enemy_bar_color[player], &net_packet->data[12]);
-		strcpy((char*)(&net_packet->data[16]), name);
-		net_packet->data[16 + strlen(name)] = 0;
+		SDLNet_Write32(enemy_oldhp, &net_packet->data[16]);
+		SDLNet_Write32(enemy_lastuid, &net_packet->data[20]);
+		strcpy((char*)(&net_packet->data[24]), name);
+		net_packet->data[24 + strlen(name)] = 0;
 		net_packet->address.host = net_clients[player - 1].host;
 		net_packet->address.port = net_clients[player - 1].port;
-		net_packet->len = 16 + strlen(name) + 1;
+		net_packet->len = 24 + strlen(name) + 1;
 		sendPacketSafe(net_sock, -1, net_packet, player - 1);
 	}
 }
@@ -262,6 +287,7 @@ void drawStatus()
 	node_t* node;
 	string_t* string;
 	pos.x = STATUS_X;
+
 	if ( !hide_statusbar )
 	{
 		pos.y = STATUS_Y;
@@ -317,6 +343,30 @@ void drawStatus()
 		pos.w = 506;
 		pos.h = 32;
 		drawRect(&pos, SDL_MapRGB(mainsurface->format, 16, 0, 0), 255);
+		if ( enemy_oldhp > enemy_hp )
+		{
+			int timeDiff = ticks - enemy_timer;
+			if ( timeDiff > 30 || enemy_hp == 0 )
+			{
+				// delay 30 ticks before background hp drop animation, or if health 0 start immediately.
+				// we want to complete animation with x ticks to go
+				int depletionTicks = (80 - timeDiff) / 2;
+				int healthDiff = enemy_oldhp - enemy_hp;
+				if ( ticks % 2 == 0 )
+				{
+					enemy_oldhp -= std::max((healthDiff) / std::max(depletionTicks, 1), 1);
+				}
+			}
+			pos.w = 506 * ((double)enemy_oldhp / enemy_maxhp);
+			if ( enemy_bar_color[clientnum] > 0 )
+			{
+				drawRect(&pos, enemy_bar_color[clientnum], 128);
+			}
+			else
+			{
+				drawRect(&pos, SDL_MapRGB(mainsurface->format, 128, 0, 0), 128);
+			}
+		}
 		if ( enemy_hp > 0 )
 		{
 			pos.w = 506 * ((double)enemy_hp / enemy_maxhp);
@@ -1057,7 +1107,7 @@ void drawStatus()
 
 		// minimap pinging.
 		int minimapTotalScale = minimapScaleQuickToggle + minimapScale;
-		if ( mouseInBounds(xres - map.width * minimapTotalScale, xres, yres - map.height * minimapTotalScale, yres) ) // mouse within minimap pixels (each map tile is 4 pixels)
+		if ( !FollowerMenu.selectMoveTo && mouseInBounds(xres - map.width * minimapTotalScale, xres, yres - map.height * minimapTotalScale, yres) ) // mouse within minimap pixels (each map tile is 4 pixels)
 		{
 			if ( mousestatus[SDL_BUTTON_RIGHT] || (*inputPressed(joyimpulses[INJOY_MENU_USE])) )
 			{
@@ -1258,11 +1308,19 @@ void drawStatus()
 		}
 	}
 
+	FollowerMenu.drawFollowerMenu();
+
 	// stat increase icons
 	pos.w = 64;
 	pos.h = 64;
 	pos.x = xres - pos.w * 3 - 9;
 	pos.y = (NUMPROFICIENCIES * TTF12_HEIGHT) + (TTF12_HEIGHT * 3) + (32 + 64 + 64 + 3); // 131px from end of prof window.
+
+	if ( (!shootmode || lock_right_sidebar) && proficienciesPage == 1 
+		&& pos.y < (interfacePartySheet.y + interfacePartySheet.h + 16) )
+	{
+		pos.y = interfacePartySheet.y + interfacePartySheet.h + 16;
+	}
 
 	if ( pos.y + pos.h > (yres - map.height * 4) ) // check if overlapping minimap
 	{

@@ -25,6 +25,7 @@
 #include "collision.hpp"
 #include "player.hpp"
 #include "colors.hpp"
+#include "draw.hpp"
 
 bool smoothmouse = false;
 bool settings_smoothmouse = false;
@@ -261,6 +262,28 @@ void actPlayer(Entity* my)
 	{
 		PLAYER_INIT = 1;
 		my->flags[BURNABLE] = true;
+
+		Entity* nametag = newEntity(-1, 1, map.entities, nullptr);
+		nametag->x = my->x;
+		nametag->y = my->y;
+		nametag->z = my->z - 6;
+		nametag->sizex = 1;
+		nametag->sizey = 1;
+		nametag->flags[NOUPDATE] = true;
+		nametag->flags[PASSABLE] = true;
+		nametag->flags[SPRITE] = true;
+		nametag->flags[BRIGHT] = true;
+		nametag->flags[UNCLICKABLE] = true;
+		nametag->behavior = &actSpriteNametag;
+		nametag->parent = my->getUID();
+		nametag->scalex = 0.2;
+		nametag->scaley = 0.2;
+		nametag->scalez = 0.2;
+		if ( multiplayer != CLIENT )
+		{
+			entity_uids--;
+		}
+		nametag->setUID(-3);
 
 		// hud weapon
 		if ( PLAYER_NUM == clientnum )
@@ -1346,56 +1369,291 @@ void actPlayer(Entity* my)
 		if ( intro == false )
 		{
 			clickDescription(PLAYER_NUM, NULL); // inspecting objects
-			selectedEntity = entityClicked(); // using objects
 
+			if ( FollowerMenu.optionSelected == ALLY_CMD_ATTACK_SELECT )
+			{
+				Entity* underMouse = nullptr;
+				if ( FollowerMenu.optionSelected == ALLY_CMD_ATTACK_SELECT && ticks % 10 == 0 )
+				{
+					if ( !shootmode )
+					{
+						Uint32 uidnum = GO_GetPixelU32(omousex, yres - omousey);
+						if ( uidnum > 0 )
+						{
+							underMouse = uidToEntity(uidnum);
+						}
+					}
+					else
+					{
+						Uint32 uidnum = GO_GetPixelU32(xres / 2, yres / 2);
+						if ( uidnum > 0 )
+						{
+							underMouse = uidToEntity(uidnum);
+						}
+					}
+
+					if ( underMouse && FollowerMenu.followerToCommand )
+					{
+						Entity* parent = uidToEntity(underMouse->skill[2]);
+						if ( underMouse->behavior == &actMonster || (parent && parent->behavior == &actMonster) )
+						{
+							// see if we selected a limb
+							if ( parent )
+							{
+								underMouse = parent;
+							}
+						}
+						FollowerMenu.allowedInteractEntity(*underMouse);
+					}
+					else
+					{
+						strcpy(FollowerMenu.interactText, "");
+					}
+				}
+			}
+
+			if ( FollowerMenu.followerToCommand == nullptr && FollowerMenu.selectMoveTo == false )
+			{
+				selectedEntity = entityClicked(); // using objects
+			}
+			else
+			{
+				selectedEntity = NULL;
+
+				if ( !command && (*inputPressed(impulses[IN_USE]) || *inputPressed(joyimpulses[INJOY_GAME_USE])) )
+				{
+					if ( !FollowerMenu.menuToggleClick && FollowerMenu.selectMoveTo )
+					{
+						if ( FollowerMenu.optionSelected == ALLY_CMD_MOVETO_SELECT )
+						{
+							// we're selecting a point for the ally to move to.
+							*inputPressed(impulses[IN_USE]) = 0;
+							*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
+
+							int minimapTotalScale = minimapScaleQuickToggle + minimapScale;
+							if ( mouseInBounds(xres - map.width * minimapTotalScale, xres, yres - map.height * minimapTotalScale, yres) ) // mouse within minimap pixels (each map tile is 4 pixels)
+							{
+								MinimapPing newPing(ticks, -1, (omousex - (xres - map.width * minimapTotalScale)) / minimapTotalScale, (omousey - (yres - map.height * minimapTotalScale)) / minimapTotalScale);
+								minimapPingAdd(newPing);
+								createParticleFollowerCommand(newPing.x, newPing.y, 0, 174);
+								FollowerMenu.optionSelected = ALLY_CMD_MOVETO_CONFIRM;
+								FollowerMenu.selectMoveTo = false;
+								FollowerMenu.moveToX = static_cast<int>(newPing.x);
+								FollowerMenu.moveToY = static_cast<int>(newPing.y);
+							}
+							else if ( players[PLAYER_NUM] && players[PLAYER_NUM]->entity )
+							{
+								real_t startx = players[PLAYER_NUM]->entity->x;
+								real_t starty = players[PLAYER_NUM]->entity->y;
+								real_t startz = -4;
+								real_t pitch = players[PLAYER_NUM]->entity->pitch;
+								if ( pitch < 0 )
+								{
+									pitch = 0;
+								}
+								// draw line from the players height and direction until we hit the ground.
+								real_t previousx = startx;
+								real_t previousy = starty;
+								int index = 0;
+								for ( ; startz < 0.f; startz += abs(0.05 * tan(pitch)) )
+								{
+									startx += 0.1 * cos(players[PLAYER_NUM]->entity->yaw);
+									starty += 0.1 * sin(players[PLAYER_NUM]->entity->yaw);
+									index = (static_cast<int>(starty + 16 * sin(players[PLAYER_NUM]->entity->yaw)) >> 4) * MAPLAYERS + (static_cast<int>(startx + 16 * cos(players[PLAYER_NUM]->entity->yaw)) >> 4) * MAPLAYERS * map.height;
+									if ( map.tiles[index] && !map.tiles[OBSTACLELAYER + index] )
+									{
+										// store the last known good coordinate
+										previousx = startx;
+										previousy = starty;
+									}
+									if ( map.tiles[OBSTACLELAYER + index] )
+									{
+										break;
+									}
+								}
+
+								createParticleFollowerCommand(previousx, previousy, 0, 174);
+								FollowerMenu.optionSelected = ALLY_CMD_MOVETO_CONFIRM;
+								FollowerMenu.selectMoveTo = false;
+								FollowerMenu.moveToX = static_cast<int>(previousx) / 16;
+								FollowerMenu.moveToY = static_cast<int>(previousy) / 16;
+								//messagePlayer(PLAYER_NUM, "%d, %d, pitch: %f", followerMoveToX, followerMoveToY, players[PLAYER_NUM]->entity->pitch);
+							}
+						}
+						else if ( FollowerMenu.optionSelected == ALLY_CMD_ATTACK_SELECT )
+						{
+							// we're selecting a target for the ally.
+							Entity* target = entityClicked();
+							*inputPressed(impulses[IN_USE]) = 0;
+							*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
+							if ( target )
+							{
+								Entity* parent = uidToEntity(target->skill[2]);
+								if ( target->behavior == &actMonster || (parent && parent->behavior == &actMonster) )
+								{
+									// see if we selected a limb
+									if ( parent )
+									{
+										target = parent;
+									}
+								}
+								else if ( target->sprite == 184 ) // switch base.
+								{
+									parent = uidToEntity(target->parent);
+									if ( parent )
+									{
+										target = parent;
+									}
+								}
+								if ( FollowerMenu.allowedInteractEntity(*target) )
+								{
+									createParticleFollowerCommand(target->x, target->y, 0, 174);
+									FollowerMenu.optionSelected = ALLY_CMD_ATTACK_CONFIRM;
+									FollowerMenu.followerToCommand->monsterAllyInteractTarget = target->getUID();
+								}
+								else
+								{
+									messagePlayer(clientnum, language[3094]);
+									FollowerMenu.optionSelected = ALLY_CMD_CANCEL;
+									FollowerMenu.optionPrevious = ALLY_CMD_ATTACK_CONFIRM;
+									FollowerMenu.followerToCommand->monsterAllyInteractTarget = 0;
+								}
+							}
+							else
+							{
+								FollowerMenu.optionSelected = ALLY_CMD_CANCEL;
+								FollowerMenu.optionPrevious = ALLY_CMD_ATTACK_CONFIRM;
+								FollowerMenu.followerToCommand->monsterAllyInteractTarget = 0;
+							}
+							FollowerMenu.selectMoveTo = false;
+							strcpy(FollowerMenu.interactText, "");
+						}
+					}
+				}
+			}
+
+			if ( !command && !FollowerMenu.followerToCommand && FollowerMenu.recentEntity )
+			{
+				if ( *inputPressed(impulses[IN_FOLLOWERMENU]) || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU]) )
+				{
+					if ( players[PLAYER_NUM] && players[PLAYER_NUM]->entity
+						&& FollowerMenu.recentEntity->monsterTarget == players[PLAYER_NUM]->entity->getUID() )
+					{
+						// your ally is angry at you!
+					}
+					else
+					{
+						selectedEntity = FollowerMenu.recentEntity;
+						FollowerMenu.holdWheel = true;
+					}
+				}
+				else if ( *inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) )
+				{
+					if ( players[PLAYER_NUM] && players[PLAYER_NUM]->entity
+						&& FollowerMenu.recentEntity->monsterTarget == players[PLAYER_NUM]->entity->getUID() )
+					{
+						// your ally is angry at you!
+						*inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) = 0;
+						*inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) = 0;
+					}
+					else if ( FollowerMenu.optionPrevious != -1 )
+					{
+						FollowerMenu.followerToCommand = FollowerMenu.recentEntity;
+					}
+					else
+					{
+						*inputPressed(impulses[IN_FOLLOWERMENU_LASTCMD]) = 0;
+						*inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_LASTCMD]) = 0;
+					}
+				}
+			}
 			if ( selectedEntity != NULL )
 			{
-				if ( entityDist(my, selectedEntity) <= TOUCHRANGE )
+				FollowerMenu.followerToCommand = nullptr;
+				Entity* parent = uidToEntity(selectedEntity->skill[2]);
+				if ( selectedEntity->behavior == &actMonster || (parent && parent->behavior == &actMonster) )
 				{
-					inrange[PLAYER_NUM] = true;
-				}
-				else
-				{
-					inrange[PLAYER_NUM] = false;
-				}
-				if ( multiplayer == CLIENT )
-				{
-					if ( inrange[PLAYER_NUM] )
+					// see if we selected a follower to process right click menu.
+					if ( parent && parent->monsterAllyIndex == PLAYER_NUM )
 					{
-						strcpy((char*)net_packet->data, "CKIR");
+						FollowerMenu.followerToCommand = parent;
+						//messagePlayer(0, "limb");
 					}
-					else
+					else if ( selectedEntity->monsterAllyIndex == PLAYER_NUM )
 					{
-						strcpy((char*)net_packet->data, "CKOR");
+						FollowerMenu.followerToCommand = selectedEntity;
+						//messagePlayer(0, "head");
 					}
-					net_packet->data[4] = PLAYER_NUM;
-					if (selectedEntity->behavior == &actPlayerLimb)
+
+					if ( FollowerMenu.followerToCommand )
 					{
-						SDLNet_Write32((Uint32)players[selectedEntity->skill[2]]->entity->getUID(), &net_packet->data[5]);
-					}
-					else
-					{
-						Entity* tempEntity = uidToEntity(selectedEntity->skill[2]);
-						if (tempEntity)
+						if ( players[PLAYER_NUM] && players[PLAYER_NUM]->entity
+							&& FollowerMenu.followerToCommand->monsterTarget == players[PLAYER_NUM]->entity->getUID() )
 						{
-							if (tempEntity->behavior == &actMonster)
+							// your ally is angry at you!
+							FollowerMenu.followerToCommand = nullptr;
+							FollowerMenu.optionPrevious = -1;
+						}
+						else
+						{
+							FollowerMenu.recentEntity = FollowerMenu.followerToCommand;
+							FollowerMenu.initFollowerMenuGUICursor(true);
+							FollowerMenu.updateScrollPartySheet();
+							selectedEntity = NULL;
+						}
+					}
+				}
+				if ( selectedEntity )
+				{
+					*inputPressed(impulses[IN_USE]) = 0;
+					*inputPressed(joyimpulses[INJOY_GAME_USE]) = 0;
+					if ( entityDist(my, selectedEntity) <= TOUCHRANGE )
+					{
+						inrange[PLAYER_NUM] = true;
+					}
+					else
+					{
+						inrange[PLAYER_NUM] = false;
+					}
+					if ( multiplayer == CLIENT )
+					{
+						if ( inrange[PLAYER_NUM] )
+						{
+							strcpy((char*)net_packet->data, "CKIR");
+						}
+						else
+						{
+							strcpy((char*)net_packet->data, "CKOR");
+						}
+						net_packet->data[4] = PLAYER_NUM;
+						if (selectedEntity->behavior == &actPlayerLimb)
+						{
+							SDLNet_Write32((Uint32)players[selectedEntity->skill[2]]->entity->getUID(), &net_packet->data[5]);
+						}
+						else
+						{
+							Entity* tempEntity = uidToEntity(selectedEntity->skill[2]);
+							if (tempEntity)
 							{
-								SDLNet_Write32((Uint32)tempEntity->getUID(), &net_packet->data[5]);
+								if (tempEntity->behavior == &actMonster)
+								{
+									SDLNet_Write32((Uint32)tempEntity->getUID(), &net_packet->data[5]);
+								}
+								else
+								{
+									SDLNet_Write32((Uint32)selectedEntity->getUID(), &net_packet->data[5]);
+								}
 							}
 							else
 							{
 								SDLNet_Write32((Uint32)selectedEntity->getUID(), &net_packet->data[5]);
 							}
 						}
-						else
-						{
-							SDLNet_Write32((Uint32)selectedEntity->getUID(), &net_packet->data[5]);
-						}
+						net_packet->address.host = net_server.host;
+						net_packet->address.port = net_server.port;
+						net_packet->len = 9;
+						sendPacketSafe(net_sock, -1, net_packet, 0);
 					}
-					net_packet->address.host = net_server.host;
-					net_packet->address.port = net_server.port;
-					net_packet->len = 9;
-					sendPacketSafe(net_sock, -1, net_packet, 0);
 				}
 			}
 		}
@@ -1636,7 +1894,14 @@ void actPlayer(Entity* my)
 						entity->pitch = PI / 8;
 						node_t* nextnode;
 
-						deleteMultiplayerSaveGames(); //Will only delete save games if was last player alive.
+						if ( multiplayer == SINGLE )
+						{
+							deleteSaveGame(multiplayer); // stops save scumming c:
+						}
+						else
+						{
+							deleteMultiplayerSaveGames(); //Will only delete save games if was last player alive.
+						}
 
 						closeBookGUI();
 
@@ -1820,6 +2085,9 @@ void actPlayer(Entity* my)
 						deleteMultiplayerSaveGames(); //Will only delete save games if was last player alive.
 					}
 
+					assailant[PLAYER_NUM] = false;
+					assailantTimer[PLAYER_NUM] = 0;
+
 					if ( multiplayer != SINGLE )
 					{
 						messagePlayer(PLAYER_NUM, language[578]);
@@ -1863,55 +2131,81 @@ void actPlayer(Entity* my)
 		weightratio = fmin(fmax(0, weightratio), 1);
 
 		// calculate movement forces
-		if ( !command && my->isMobile() )
+
+		bool allowMovement = my->isMobile();
+		bool pacified = stats[PLAYER_NUM]->EFFECTS[EFF_PACIFY];
+		if ( !allowMovement && pacified )
+		{
+			if ( !stats[PLAYER_NUM]->EFFECTS[EFF_PARALYZED] && !stats[PLAYER_NUM]->EFFECTS[EFF_STUNNED]
+				&& !stats[PLAYER_NUM]->EFFECTS[EFF_ASLEEP] )
+			{
+				allowMovement = true;
+			}
+		}
+
+		if ( (!command || pacified) && allowMovement )
 		{
 			//x_force and y_force represent the amount of percentage pushed on that respective axis. Given a keyboard, it's binary; either you're pushing "move left" or you aren't. On an analog stick, it can range from whatever value to whatever.
 			float x_force = 0;
 			float y_force = 0;
-			if (!stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
+
+			if ( pacified )
 			{
-				//Normal controls.
-				x_force = (*inputPressed(impulses[IN_RIGHT]) - *inputPressed(impulses[IN_LEFT]));
-				y_force = (*inputPressed(impulses[IN_FORWARD]) - (double) * inputPressed(impulses[IN_BACK]) * .25);
-				if ( noclip )
+				x_force = 0.f;
+				y_force = -0.1;
+				if ( stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED] )
 				{
-					if ( keystatus[SDL_SCANCODE_LSHIFT] )
-					{
-						x_force = x_force * 0.5;
-						y_force = y_force * 0.5;
-					}
+					y_force *= -1;
 				}
 			}
 			else
 			{
-				//Confused controls.
-				x_force = (*inputPressed(impulses[IN_LEFT]) - *inputPressed(impulses[IN_RIGHT]));
-				y_force = (*inputPressed(impulses[IN_BACK]) - (double) * inputPressed(impulses[IN_FORWARD]) * .25);
-			}
-
-			if (game_controller && !*inputPressed(impulses[IN_LEFT]) && !*inputPressed(impulses[IN_RIGHT]))
-			{
-				x_force = game_controller->getLeftXPercent();
-
-				if (stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
+				if (!stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
 				{
-					x_force *= -1;
+					//Normal controls.
+					x_force = (*inputPressed(impulses[IN_RIGHT]) - *inputPressed(impulses[IN_LEFT]));
+					y_force = (*inputPressed(impulses[IN_FORWARD]) - (double) * inputPressed(impulses[IN_BACK]) * .25);
+					if ( noclip )
+					{
+						if ( keystatus[SDL_SCANCODE_LSHIFT] )
+						{
+							x_force = x_force * 0.5;
+							y_force = y_force * 0.5;
+						}
+					}
 				}
-			}
-			if (game_controller && !*inputPressed(impulses[IN_FORWARD]) && !*inputPressed(impulses[IN_BACK]))
-			{
-				y_force = game_controller->getLeftYPercent();
-
-				if (stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
+				else
 				{
-					y_force *= -1;
+					//Confused controls.
+					x_force = (*inputPressed(impulses[IN_LEFT]) - *inputPressed(impulses[IN_RIGHT]));
+					y_force = (*inputPressed(impulses[IN_BACK]) - (double) * inputPressed(impulses[IN_FORWARD]) * .25);
 				}
 
-				if (y_force < 0)
+				if (game_controller && !*inputPressed(impulses[IN_LEFT]) && !*inputPressed(impulses[IN_RIGHT]))
 				{
-					y_force *= 0.25f;    //Move backwards more slowly.
+					x_force = game_controller->getLeftXPercent();
+
+					if (stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
+					{
+						x_force *= -1;
+					}
+				}
+				if (game_controller && !*inputPressed(impulses[IN_FORWARD]) && !*inputPressed(impulses[IN_BACK]))
+				{
+					y_force = game_controller->getLeftYPercent();
+
+					if (stats[PLAYER_NUM]->EFFECTS[EFF_CONFUSED])
+					{
+						y_force *= -1;
+					}
+
+					if (y_force < 0)
+					{
+						y_force *= 0.25f;    //Move backwards more slowly.
+					}
 				}
 			}
+
 
 			real_t speedFactor = std::min((my->getDEX() * 0.1 + 15.5) * weightratio, 25 * 0.5 + 10);
 			if ( my->getDEX() <= 5 )

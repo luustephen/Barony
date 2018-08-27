@@ -229,6 +229,50 @@ void drawArc( int x, int y, real_t radius, real_t angle1, real_t angle2, Uint32 
 
 /*-------------------------------------------------------------------------------
 
+drawArcInvertedY, reversing the angle of direction in the y coordinate.
+
+draws an arc in either an opengl or SDL context
+
+-------------------------------------------------------------------------------*/
+
+void drawArcInvertedY(int x, int y, real_t radius, real_t angle1, real_t angle2, Uint32 color, Uint8 alpha)
+{
+	int c;
+
+	// update projection
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glMatrixMode(GL_PROJECTION);
+	glViewport(0, 0, xres, yres);
+	glLoadIdentity();
+	glOrtho(0, xres, 0, yres, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_BLEND);
+
+	// set line width
+	GLint lineWidth;
+	glGetIntegerv(GL_LINE_WIDTH, &lineWidth);
+	glLineWidth(2);
+
+	// draw line
+	glColor4f(((Uint8)(color >> mainsurface->format->Rshift)) / 255.f, ((Uint8)(color >> mainsurface->format->Gshift)) / 255.f, ((Uint8)(color >> mainsurface->format->Bshift)) / 255.f, alpha / 255.f);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glEnable(GL_LINE_SMOOTH);
+	glBegin(GL_LINE_STRIP);
+	for ( c = angle1; c <= angle2; c++ )
+	{
+		float degInRad = c * PI / 180.f;
+		glVertex2f(x + ceil(cos(degInRad)*radius) + 1, yres - (y - ceil(sin(degInRad)*radius)));
+	}
+	glEnd();
+	glDisable(GL_LINE_SMOOTH);
+
+	// reset line width
+	glLineWidth(lineWidth);
+}
+
+/*-------------------------------------------------------------------------------
+
 	drawLine
 
 	draws a line in either an opengl or SDL context
@@ -566,6 +610,126 @@ void drawImage( SDL_Surface* image, SDL_Rect* src, SDL_Rect* pos )
 	glVertex2f(pos->x + src->w, yres - pos->y);
 	glEnd();
 	glPopMatrix();
+	glEnable(GL_DEPTH_TEST);
+}
+
+/*-------------------------------------------------------------------------------
+
+drawImageRing
+
+blits an image in either an opengl or SDL context into a 2d ring.
+
+-------------------------------------------------------------------------------*/
+
+void drawImageRing(SDL_Surface* image, SDL_Rect* src, int radius, int thickness, int segments, real_t angStart, real_t angEnd, Uint8 alpha)
+{
+	SDL_Rect secondsrc;
+
+	// update projection
+	glPushMatrix();
+	glDisable(GL_DEPTH_TEST);
+	glMatrixMode(GL_PROJECTION);
+	glViewport(0, 0, xres, yres);
+	glLoadIdentity();
+	glOrtho(0, xres, 0, yres, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glEnable(GL_BLEND);
+
+	// for the use of a whole image
+	if ( src == NULL )
+	{
+		secondsrc.x = 0;
+		secondsrc.y = 0;
+		secondsrc.w = image->w;
+		secondsrc.h = image->h;
+		src = &secondsrc;
+	}
+
+	// draw a textured quad
+	glBindTexture(GL_TEXTURE_2D, texid[image->refcount]);
+	glColor4f(1, 1, 1, alpha / 255.f);
+	glPushMatrix();
+
+	double s;
+	real_t arcAngle = angStart;
+	int first = segments / 2;
+	real_t distance = std::round((angEnd - angStart) * segments / (2 * PI));
+	for ( int i = 0; i < first; ++i ) 
+	{
+		glBegin(GL_QUAD_STRIP);
+		for ( int j = 0; j <= static_cast<int>(distance); ++j )
+		{
+			s = i % first + 0.01;
+			arcAngle = ((j % segments) * 2 * PI / segments) + angStart; // angle of the line.
+
+			real_t arcx1 = (radius + thickness * cos(s * 2 * PI / first)) * cos(arcAngle);
+			real_t arcy1 = (radius + thickness * cos(s * 2 * PI / first)) * sin(arcAngle);
+
+			s = (i + 1) % first + 0.01;
+			real_t arcx2 = (radius + thickness * cos(s * 2 * PI / first)) * cos(arcAngle);
+			real_t arcy2 = (radius + thickness * cos(s * 2 * PI / first)) * sin(arcAngle);
+			//glTexCoord2f(1.f, 0.f);
+			glVertex2f(xres / 2 + arcx1, yres / 2 + arcy1);
+			//glTexCoord2f(0.f, 1.f);
+			glVertex2f(xres / 2 + arcx2, yres / 2 + arcy2);
+			//s = i % first + 0.01;
+			//arcAngle = (((j + 1) % segments) * 2 * PI / segments) + angStart; // angle of the line.
+			//real_t arcx3 = (radius + thickness * cos(s * 2 * PI / first)) * cos(arcAngle);
+			//real_t arcy3 = (radius + thickness * cos(s * 2 * PI / first)) * sin(arcAngle);
+
+			//s = (i + 1) % first + 0.01;
+			//real_t arcx4 = (radius + thickness * cos(s * 2 * PI / first)) * cos(arcAngle);
+			//real_t arcy4 = (radius + thickness * cos(s * 2 * PI / first)) * sin(arcAngle);
+
+			//std::vector<std::pair<real_t, real_t>> xycoords;
+			//xycoords.push_back(std::make_pair(arcx1, arcy1));
+			//xycoords.push_back(std::make_pair(arcx2, arcy2));
+			//xycoords.push_back(std::make_pair(arcx3, arcy3));
+			//xycoords.push_back(std::make_pair(arcx4, arcy4));
+			//std::sort(xycoords.begin(), xycoords.end());
+			//if ( xycoords.at(2).second < xycoords.at(3).second )
+			//{
+			//	glTexCoord2f(1.f, 0.f);
+			//	glVertex2f(xres / 2 + xycoords.at(2).first, yres / 2 + xycoords.at(2).second); // lower right.
+			//	glTexCoord2f(1.f, 1.f);
+			//	glVertex2f(xres / 2 + xycoords.at(3).first, yres / 2 + xycoords.at(3).second); // upper right.
+			//}
+			//else
+			//{
+			//	glTexCoord2f(1.f, 0.f);
+			//	glVertex2f(xres / 2 + xycoords.at(3).first, yres / 2 + xycoords.at(3).second); // lower right.
+			//	glTexCoord2f(1.f, 1.f);
+			//	glVertex2f(xres / 2 + xycoords.at(2).first, yres / 2 + xycoords.at(2).second); // upper right.
+			//}
+			//if ( xycoords.at(0).second < xycoords.at(1).second )
+			//{
+			//	glTexCoord2f(0.f, 0.f);
+			//	glVertex2f(xres / 2 + xycoords.at(0).first, yres / 2 + xycoords.at(0).second); // lower left.
+			//	glTexCoord2f(0.f, 1.f);
+			//	glVertex2f(xres / 2 + xycoords.at(1).first, yres / 2 + xycoords.at(1).second); // upper left.
+			//}
+			//else
+			//{
+			//	glTexCoord2f(0.f, 0.f);
+			//	glVertex2f(xres / 2 + xycoords.at(1).first, yres / 2 + xycoords.at(1).second); // lower left.
+			//	glTexCoord2f(0.f, 1.f);
+			//	glVertex2f(xres / 2 + xycoords.at(0).first, yres / 2 + xycoords.at(0).second); // upper left.
+			//}
+			
+
+			//glVertex2f(xres / 2 + arcx3, yres / 2 + arcy3);
+			//glVertex2f(xres / 2 + arcx4, yres / 2 + arcy4);
+		}
+		glEnd();
+	}
+	glPopMatrix();
+	// debug lines
+	/*real_t x1 = xres / 2 + 300 * cos(angStart);
+	real_t y1 = yres / 2 - 300 * sin(angStart);
+	real_t x2 = xres / 2 + 300 * cos(angEnd);
+	real_t y2 = yres / 2 - 300 * sin(angEnd);
+	drawLine(xres / 2, yres / 2, x1, y1, 0xFFFFFFFF, 255);
+	drawLine(xres / 2, yres / 2, x2, y2, 0xFFFFFFFF, 255);*/
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -1162,7 +1326,18 @@ void drawEntities3D(view_t* camera, int mode)
 				}
 				else
 				{
-					glDrawSprite(camera, entity, mode);
+					if ( entity->behavior == &actSpriteNametag )
+					{
+						int playersTag = playerEntityMatchesUid(entity->parent);
+						if ( playersTag >= 0 )
+						{
+							glDrawSpriteFromImage(camera, entity, stats[playersTag]->name, mode);
+						}
+					}
+					else
+					{
+						glDrawSprite(camera, entity, mode);
+					}
 				}
 			}
 		}
@@ -1242,6 +1417,26 @@ void drawEntities2D(long camx, long camy)
 					Item* tmpItem = newItem(static_cast<ItemType>(entity->skill[10] - 2), static_cast<Status>(0), 0, 0, 0, 0, nullptr);
 					drawImageScaled(itemSprite(tmpItem), nullptr, &pos);
 					free(tmpItem);
+				}
+				else if ( entity->sprite == 133 )
+				{
+					pos.y += sprites[entity->sprite]->h / 2;
+					pos.x += sprites[entity->sprite]->w / 2;
+					switch ( entity->signalInputDirection )
+					{
+						case 0:
+							drawImageRotatedAlpha(sprites[entity->sprite], nullptr, &pos, 0.f, 255);
+							break;
+						case 1:
+							drawImageRotatedAlpha(sprites[entity->sprite], nullptr, &pos, 3 * PI / 2, 255);
+							break;
+						case 2:
+							drawImageRotatedAlpha(sprites[entity->sprite], nullptr, &pos, PI, 255);
+							break;
+						case 3:
+							drawImageRotatedAlpha(sprites[entity->sprite], nullptr, &pos, PI / 2, 255);
+							break;
+					}
 				}
 				else
 				{

@@ -52,6 +52,7 @@ void freeSpells()
 	list_FreeAll(&spell_stealWeapon.elements);
 	list_FreeAll(&spell_drainSoul.elements);
 	list_FreeAll(&spell_vampiricAura.elements);
+	list_FreeAll(&spell_charmMonster.elements);
 }
 
 void spell_magicMap(int player)
@@ -188,10 +189,10 @@ void spell_summonFamiliar(int player)
 				{
 					monster->flags[USERFLAG2] = true;
 				}
-				monster->monsterPlayerAllyIndex = player;
+				monster->monsterAllyIndex = player;
 				if ( multiplayer == SERVER )
 				{
-					serverUpdateEntitySkill(monster, 42); // update monsterPlayerAllyIndex for clients.
+					serverUpdateEntitySkill(monster, 42); // update monsterAllyIndex for clients.
 				}
 
 				// update followers for this player
@@ -206,10 +207,19 @@ void spell_summonFamiliar(int player)
 				{
 					strcpy((char*)net_packet->data, "LEAD");
 					SDLNet_Write32((Uint32)monster->getUID(), &net_packet->data[4]);
+					strcpy((char*)(&net_packet->data[8]), monsterStats->name);
+					net_packet->data[8 + strlen(monsterStats->name)] = 0;
 					net_packet->address.host = net_clients[player - 1].host;
 					net_packet->address.port = net_clients[player - 1].port;
-					net_packet->len = 8;
+					net_packet->len = 8 + strlen(monsterStats->name) + 1;
 					sendPacketSafe(net_sock, -1, net_packet, player - 1);
+
+					serverUpdateAllyStat(player, monster->getUID(), monsterStats->LVL, monsterStats->HP, monsterStats->MAXHP, monsterStats->type);
+				}
+
+				if ( !FollowerMenu.recentEntity && player == clientnum )
+				{
+					FollowerMenu.recentEntity = monster;
 				}
 			}
 		}
@@ -302,27 +312,30 @@ bool spellEffectDominate(Entity& my, spellElement_t& element, Entity& caster, En
 			messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[2428], language[2427], MSG_COMBAT);
 		}
 
-		// change the color of the hit entity.
-		hit.entity->flags[USERFLAG2] = true;
-		serverUpdateEntityFlag(hit.entity, USERFLAG2);
-		hit.entity->monsterPlayerAllyIndex = parent->skill[2];
+		hit.entity->monsterAllyIndex = parent->skill[2];
 		if ( multiplayer == SERVER )
 		{
-			serverUpdateEntitySkill(hit.entity, 42); // update monsterPlayerAllyIndex for clients.
+			serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
 		}
-		int bodypart = 0;
-		for ( node_t* node = (hit.entity)->children.first; node != nullptr; node = node->next )
+		// change the color of the hit entity.
+		if ( hitstats->type != HUMAN && hitstats->type != AUTOMATON )
 		{
-			if ( bodypart >= LIMB_HUMANOID_TORSO )
+			hit.entity->flags[USERFLAG2] = true;
+			serverUpdateEntityFlag(hit.entity, USERFLAG2);
+			int bodypart = 0;
+			for ( node_t* node = (hit.entity)->children.first; node != nullptr; node = node->next )
 			{
-				Entity* tmp = (Entity*)node->element;
-				if ( tmp )
+				if ( bodypart >= LIMB_HUMANOID_TORSO )
 				{
-					tmp->flags[USERFLAG2] = true;
-					serverUpdateEntityFlag(tmp, USERFLAG2);
+					Entity* tmp = (Entity*)node->element;
+					if ( tmp )
+					{
+						tmp->flags[USERFLAG2] = true;
+						serverUpdateEntityFlag(tmp, USERFLAG2);
+					}
 				}
+				++bodypart;
 			}
-			++bodypart;
 		}
 
 		caster.drainMP(hitstats->HP); //Drain additional MP equal to health of monster.
@@ -358,8 +371,6 @@ void spellEffectAcid(Entity& my, spellElement_t& element, Entity* parent, int re
 				// test for friendly fire
 				if ( parent && parent->checkFriend(hit.entity) )
 				{
-					/*my.removeLightField();
-					list_RemoveNode(my.mynode);*/
 					return;
 				}
 			}
@@ -490,8 +501,6 @@ void spellEffectStealWeapon(Entity& my, spellElement_t& element, Entity* parent,
 				// test for friendly fire
 				if ( parent && parent->checkFriend(hit.entity) )
 				{
-					/*my.removeLightField();
-					list_RemoveNode(my.mynode);*/
 					return;
 				}
 			}
@@ -646,8 +655,6 @@ void spellEffectDrainSoul(Entity& my, spellElement_t& element, Entity* parent, i
 				// test for friendly fire
 				if ( parent && parent->checkFriend(hit.entity) )
 				{
-					/*my.removeLightField();
-					list_RemoveNode(my.mynode);*/
 					return;
 				}
 			}
@@ -834,4 +841,330 @@ spell_t* spellEffectVampiricAura(Entity* caster, spell_t* spell, int extramagic_
 	createParticleDropRising(caster, 600, 0.7);
 	serverSpawnMiscParticles(caster, PARTICLE_EFFECT_VAMPIRIC_AURA, 600);
 	return channeled_spell;
+}
+
+void spellEffectCharmMonster(Entity& my, spellElement_t& element, Entity* parent, int resistance, bool magicstaff)
+{
+	if ( hit.entity )
+	{
+		if ( hit.entity->behavior == &actMonster || hit.entity->behavior == &actPlayer )
+		{
+			if ( !(svFlags & SV_FLAG_FRIENDLYFIRE) )
+			{
+				// test for friendly fire
+				if ( parent && parent->checkFriend(hit.entity) )
+				{
+					return;
+				}
+			}
+
+			Stat* hitstats = hit.entity->getStats();
+			if ( !hitstats )
+			{
+				return;
+			}
+
+			Uint32 color = SDL_MapRGB(mainsurface->format, 0, 255, 0);
+
+			int player = -1;
+			if ( hit.entity->behavior == &actPlayer )
+			{
+				player = hit.entity->skill[2];
+			}
+
+			int difficulty = 0;
+			switch ( hitstats->type )
+			{
+				case HUMAN:
+				case RAT:
+				case SLIME:
+				case SPIDER:
+				case SKELETON:
+				case SCORPION:
+				case SHOPKEEPER:
+					difficulty = 0;
+					break;
+				case GOBLIN:
+				case TROLL:
+				case GHOUL:
+				case GNOME:
+				case SCARAB:
+				case AUTOMATON:
+				case SUCCUBUS:
+					difficulty = 1;
+					break;
+				case CREATURE_IMP:
+				case DEMON:
+				case KOBOLD:
+				case INCUBUS:
+				case INSECTOID:
+				case GOATMAN:
+					difficulty = 2;
+					break;
+				case CRYSTALGOLEM:
+				case VAMPIRE:
+					difficulty = 5;
+					break;
+				case COCKATRICE:
+				case SHADOW:
+				case LICH:
+				case DEVIL:
+				case LICH_ICE:
+				case LICH_FIRE:
+				case MINOTAUR:
+					difficulty = 666;
+					break;
+			}
+
+			int chance = 80;
+			bool allowStealFollowers = false;
+			Stat* casterStats = nullptr;
+
+			/************** CHANCE CALCULATION ***********/
+			if ( hitstats->EFFECTS[EFF_CONFUSED] || hitstats->EFFECTS[EFF_DRUNK] || player >= 0 )
+			{
+				difficulty -= 1; // players and confused/drunk monsters have lower resistance.
+			}
+			if ( strcmp(hitstats->name, "") && !monsterNameIsGeneric(*hitstats) )
+			{
+				difficulty += 1; // minibosses +1 difficulty.
+			}
+			chance -= difficulty * 30;
+			if ( parent )
+			{
+				casterStats = parent->getStats();
+				if ( casterStats )
+				{
+					chance += ((parent->getCHR() + casterStats->PROFICIENCIES[PRO_LEADERSHIP]) / 20) * 10;
+					if ( !magicstaff )
+					{
+						chance += ((parent->getINT() + casterStats->PROFICIENCIES[PRO_MAGIC]) / 20) * 10;
+					}
+
+					if ( parent->behavior == &actMonster )
+					{
+						allowStealFollowers = true;
+						if ( casterStats->type == INCUBUS || casterStats->type == SUCCUBUS )
+						{
+							if ( hitstats->type == DEMON || hitstats->type == INCUBUS
+								|| hitstats->type == SUCCUBUS || hitstats->type == CREATURE_IMP
+								|| hitstats->type == GOATMAN )
+							{
+								chance = 100; // bonus for demons.
+							}
+							else if ( difficulty <= 2 )
+							{
+								chance = 80; // special base chance for monsters.
+							}
+						}
+						else if ( difficulty <= 2 )
+						{
+							chance = 60; // special base chance for monsters.
+						}
+					}
+				}
+			}
+			if ( hit.entity->monsterState == MONSTER_STATE_WAIT )
+			{
+				chance += 10;
+			}
+			chance /= (1 + resistance);
+			/************** END CHANCE CALCULATION ***********/
+
+			// special cases:
+			if ( (hitstats->type == VAMPIRE && !strncmp(hitstats->name, "Bram Kindly", 11))
+				|| (hitstats->type == COCKATRICE && !strncmp(map.name, "Cockatrice Lair", 15))
+				)
+			{
+				chance = 0;
+			}
+
+			if ( hit.entity == parent )
+			{
+				// caster hit themselves somehow... get pacified.
+				int duration = element.duration;
+				duration /= (1 + resistance);
+				if ( hit.entity->setEffect(EFF_PACIFY, true, duration, true) )
+				{
+					playSoundEntity(hit.entity, 168, 128); // Healing.ogg
+					if ( player >= 0 )
+					{
+						color = SDL_MapRGB(mainsurface->format, 255, 0, 0);
+						messagePlayerColor(player, color, language[3144]);
+					}
+					if ( parent )
+					{
+						if ( parent->behavior == &actPlayer )
+						{
+							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[3139], language[3140], MSG_COMBAT);
+						}
+						// update enemy bar for attacker
+						if ( !strcmp(hitstats->name, "") )
+						{
+							if ( hitstats->type < KOBOLD ) //Original monster count
+							{
+								updateEnemyBar(parent, hit.entity, language[90 + hitstats->type], hitstats->HP, hitstats->MAXHP);
+							}
+							else if ( hitstats->type >= KOBOLD ) //New monsters
+							{
+								updateEnemyBar(parent, hit.entity, language[2000 + (hitstats->type - KOBOLD)], hitstats->HP, hitstats->MAXHP);
+							}
+						}
+						else
+						{
+							updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
+						}
+					}
+				}
+			}
+			else if ( chance <= 0 )
+			{
+				// no effect.
+				playSoundEntity(hit.entity, 163, 64); // FailedSpell1V1.ogg
+				if ( parent && parent->behavior == &actPlayer )
+				{
+					messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[2905], language[2906], MSG_COMBAT);
+				}
+				if ( player >= 0 )
+				{
+					color = SDL_MapRGB(mainsurface->format, 0, 255, 0);
+					messagePlayerColor(player, color, language[3141]);
+				}
+			}
+			else if ( parent && rand() % 100 < chance
+				&& (hitstats->leader_uid == 0 || (allowStealFollowers && hitstats->leader_uid != parent->getUID()) )
+				&& player < 0 
+				&& hitstats->type != SHOPKEEPER
+				)
+			{
+				// fully charmed. (players not affected here.)
+				// does not affect shopkeepers
+				// succubus/incubus can steal followers from others, checking to see if they don't already follow them.
+				if ( forceFollower(*parent, *hit.entity) )
+				{
+					serverSpawnMiscParticles(hit.entity, PARTICLE_EFFECT_CHARM_MONSTER, 0);
+					createParticleCharmMonster(hit.entity);
+					playSoundEntity(hit.entity, 174, 64); // WeirdSpell.ogg
+					if ( parent->behavior == &actPlayer )
+					{
+						parent->increaseSkill(PRO_LEADERSHIP);
+						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[3137], language[3138], MSG_COMBAT);
+						hit.entity->monsterAllyIndex = parent->skill[2];
+						if ( multiplayer == SERVER )
+						{
+							serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
+						}
+					}
+
+					// change the color of the hit entity.
+					if ( hitstats->type != HUMAN && hitstats->type != AUTOMATON )
+					{
+						hit.entity->flags[USERFLAG2] = true;
+						serverUpdateEntityFlag(hit.entity, USERFLAG2);
+						int bodypart = 0;
+						for ( node_t* node = (hit.entity)->children.first; node != nullptr; node = node->next )
+						{
+							if ( bodypart >= LIMB_HUMANOID_TORSO )
+							{
+								Entity* tmp = (Entity*)node->element;
+								if ( tmp )
+								{
+									tmp->flags[USERFLAG2] = true;
+									serverUpdateEntityFlag(tmp, USERFLAG2);
+								}
+							}
+							++bodypart;
+						}
+					}
+					if ( parent->behavior == &actMonster )
+					{
+						if ( parent->monsterTarget == hit.entity->getUID() )
+						{
+							parent->monsterReleaseAttackTarget(); // monsters stop attacking their new friend.
+						}
+
+						// handle players losing their allies.
+						if ( hit.entity->monsterAllyIndex != -1 )
+						{
+							hit.entity->monsterAllyIndex = -1;
+							if ( multiplayer == SERVER )
+							{
+								serverUpdateEntitySkill(hit.entity, 42); // update monsterAllyIndex for clients.
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				// had a chance, or currently in service of another monster, or a player, or spell no parent, failed to completely charm. 
+				// loses will to attack.
+				int duration = element.duration;
+				duration /= (1 + resistance);
+				if ( hitstats->type == SHOPKEEPER )
+				{
+					duration = 100;
+				}
+				if ( hit.entity->setEffect(EFF_PACIFY, true, duration, true) )
+				{
+					playSoundEntity(hit.entity, 168, 128); // Healing.ogg
+					if ( player >= 0 )
+					{
+						color = SDL_MapRGB(mainsurface->format, 255, 0, 0);
+						messagePlayerColor(player, color, language[3144]);
+					}
+					if ( parent )
+					{
+						if ( parent->behavior == &actPlayer )
+						{
+							messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[3139], language[3140], MSG_COMBAT);
+						}
+						// update enemy bar for attacker
+						if ( !strcmp(hitstats->name, "") )
+						{
+							if ( hitstats->type < KOBOLD ) //Original monster count
+							{
+								updateEnemyBar(parent, hit.entity, language[90 + hitstats->type], hitstats->HP, hitstats->MAXHP);
+							}
+							else if ( hitstats->type >= KOBOLD ) //New monsters
+							{
+								updateEnemyBar(parent, hit.entity, language[2000 + (hitstats->type - KOBOLD)], hitstats->HP, hitstats->MAXHP);
+							}
+						}
+						else
+						{
+							updateEnemyBar(parent, hit.entity, hitstats->name, hitstats->HP, hitstats->MAXHP);
+						}
+					}
+					if ( hitstats->type == SHOPKEEPER && player >= 0 )
+					{
+						// reverses shop keeper grudges.
+						swornenemies[SHOPKEEPER][HUMAN] = false;
+						monsterally[SHOPKEEPER][HUMAN] = true;
+						hit.entity->monsterReleaseAttackTarget();
+					}
+				}
+				else
+				{
+					// resists the charm.
+					playSoundEntity(hit.entity, 163, 64); // FailedSpell1V1.ogg
+					if ( parent && parent->behavior == &actPlayer )
+					{
+						messagePlayerMonsterEvent(parent->skill[2], color, *hitstats, language[3142], language[3143], MSG_COMBAT);
+					}
+					if ( player >= 0 )
+					{
+						color = SDL_MapRGB(mainsurface->format, 0, 255, 0);
+						messagePlayerColor(player, color, language[3141]);
+					}
+				}
+			}
+		}
+		spawnMagicEffectParticles(hit.entity->x, hit.entity->y, hit.entity->z, my.sprite);
+	}
+	else
+	{
+		spawnMagicEffectParticles(my.x, my.y, my.z, my.sprite);
+	}
+	return;
 }

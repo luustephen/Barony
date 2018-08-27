@@ -231,7 +231,7 @@ typedef enum ItemType
 	SPELLBOOK_STEAL_WEAPON,
 	SPELLBOOK_DRAIN_SOUL,
 	SPELLBOOK_VAMPIRIC_AURA,
-	SPELLBOOK_BLANK_5,
+	SPELLBOOK_CHARM_MONSTER,
 	POTION_EMPTY,
 	ARTIFACT_ORB_BLUE,
 	ARTIFACT_ORB_RED,
@@ -239,6 +239,7 @@ typedef enum ItemType
 	ARTIFACT_ORB_GREEN,
 	TUNIC,
 	HAT_FEZ,
+	MAGICSTAFF_CHARM,
 	SCROLL_EQUIPMENT,
 	POTION_STURDY,
 	FIREBOW,
@@ -324,6 +325,8 @@ public:
 	Uint32 uid;        // item uid
 	Sint32 x, y;       // slot coordinates in item grid
 	Uint32 ownerUid;   // original owner
+	Uint32 interactNPCUid; // if NPC is interacting with item
+	bool forcedPickupByPlayer; // player used interact on NPC with item on floor
 
 	// weight, category and other generic info reported by function calls
 

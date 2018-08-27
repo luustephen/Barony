@@ -20,6 +20,7 @@
 #include "init.hpp"
 #include "net.hpp"
 #include "editor.hpp"
+#include "menu.hpp"
 #ifdef STEAMWORKS
 #include <steam/steam_api.h>
 #include "steam.hpp"
@@ -66,7 +67,7 @@ int initApp(char* title, int fullscreen)
 	// open log file
 	if ( !logfile )
 	{
-		logfile = freopen("log.txt", "wb" /*or "wt"*/, stderr);
+		openLogFile();
 	}
 
 	for (c = 0; c < NUM_JOY_STATUS; ++c)
@@ -98,29 +99,41 @@ int initApp(char* title, int fullscreen)
 	PHYSFS_init("/");
 	if ( !PHYSFS_isInit() )
 	{
-		printlog("[PhysFS]: failed to initialize!");
+		printlog("[PhysFS]: failed to initialize! Error code: %d", PHYSFS_getLastErrorCode());
 		return 13;
 	}
-	if ( PHYSFS_mount("./", NULL, 1) )
+	else
 	{
-		printlog("[PhysFS]: successfully mounted base ./ folder");
-		if ( PHYSFS_setWriteDir("./") )
+		printlog("[PhysFS]: successfully initialized, returned: %d", PHYSFS_getLastErrorCode());
+	}
+	if ( !PHYSFS_mount(datadir, NULL, 1) )
+	{
+		printlog("[PhysFS]: unsuccessfully mounted base %s folder. Error code: %d", datadir, PHYSFS_getLastErrorCode());
+		return 13;
+	}
+	if ( PHYSFS_mount(outputdir, NULL, 1) )
+	{
+		printlog("[PhysFS]: successfully mounted output %s folder", outputdir);
+		if ( PHYSFS_setWriteDir(outputdir) )
 		{
+			PHYSFS_mkdir("savegames");
 			if ( PHYSFS_mkdir("mods") )
 			{
-				PHYSFS_setWriteDir("./mods/");
-				printlog("[PhysFS]: successfully set write folder ./mods/");
+				std::string path = outputdir;
+				path.append(PHYSFS_getDirSeparator()).append("mods");
+				PHYSFS_setWriteDir(path.c_str());
+				printlog("[PhysFS]: successfully set write folder %s", path.c_str());
 			}
 			else
 			{
-				printlog("[PhysFS]: unsuccessfully created mods/ folder");
+				printlog("[PhysFS]: unsuccessfully created mods/ folder. Error code: %d", PHYSFS_getLastErrorCode());
 				return 13;
 			}
 		}
 	}
 	else
 	{
-		printlog("[PhysFS]: unsuccessfully mounted base ./ folder");
+		printlog("[PhysFS]: unsuccessfully mounted base %s folder. Error code: %d", outputdir, PHYSFS_getLastErrorCode());
 		return 13;
 	}
 
@@ -137,6 +150,8 @@ int initApp(char* title, int fullscreen)
 	g_SteamLeaderboards = new CSteamLeaderboards();
 	g_SteamWorkshop = new CSteamWorkshop();
 	g_SteamStatistics = new CSteamStatistics(g_SteamStats, NUM_STEAM_STATISTICS);
+	// Preloads mod content from a workshop fileID
+	//gamemodsWorkshopPreloadMod(YOUR WORKSHOP FILE ID HERE, "YOUR WORKSHOP TITLE HERE");
 #endif
 
 	window_title = title;
@@ -486,7 +501,7 @@ int initApp(char* title, int fullscreen)
 		{
 			for (x = 0; x < strlen(name); x++)
 			{
-				if ( name[x] >= '0' && name[x] < '9' )
+				if ( name[x] >= '0' && name[x] <= '9' )
 				{
 					// animated tiles if the tile name ends in a number 0-9.
 					animatedtiles[c] = true;
@@ -614,7 +629,7 @@ int loadLanguage(char* lang)
 	// open log file
 	if ( !logfile )
 	{
-		logfile = freopen("log.txt", "wb" /*or "wt"*/, stderr);
+		openLogFile();
 	}
 
 	// compose filename
@@ -2535,20 +2550,22 @@ bool loadItemLists()
 	// open log file
 	if ( !logfile )
 	{
-		logfile = freopen("log.txt", "wb" /*or "wt"*/, stderr);
+		openLogFile();
 	}
 
 	// compose filename
-	char filename[128] = "items/items_global.txt";
+	//char filename[128] = "items/items_global.txt";
+	std::string itemsTxtDirectory = PHYSFS_getRealDir("items/items_global.txt");
+	itemsTxtDirectory.append(PHYSFS_getDirSeparator()).append("items/items_global.txt");
 	// check if item list is valid
-	if ( !dataPathExists(filename) )
+	if ( !dataPathExists(itemsTxtDirectory.c_str()) )
 	{
 		// file doesn't exist
-		printlog("error: unable to locate global item list file: '%s'", filename);
+		printlog("error: unable to locate global item list file: '%s'", itemsTxtDirectory.c_str());
 		return false;
 	}
 
-	std::vector<std::string> itemLevels = getLinesFromDataFile(filename);
+	std::vector<std::string> itemLevels = getLinesFromDataFile(itemsTxtDirectory);
 	std::string line;
 	int itemIndex = 0;
 
@@ -2572,7 +2589,7 @@ bool loadItemLists()
 		}
 	}
 
-	printlog("successfully loaded global item list '%s' \n", filename);
+	printlog("successfully loaded global item list '%s' \n", itemsTxtDirectory.c_str());
 	/*for ( c = 0; c < NUMITEMS; ++c )
 	{
 		printlog("%s level: %d", items[c].name_identified, items[c].level);

@@ -43,6 +43,7 @@
 #include <signal.h>
 #include <string.h>
 #include <execinfo.h>
+#include <sys/stat.h>
 
 const unsigned STACK_SIZE = 10;
 
@@ -65,6 +66,12 @@ void segfault_sigaction(int signal, siginfo_t* si, void* arg)
 
 	exit(0);
 }
+
+#endif
+
+#ifdef APPLE
+
+#include <sys/stat.h>
 
 #endif
 
@@ -771,9 +778,17 @@ void gameLogic(void)
 					}
 					darkmap = false;
 					numplayers = 0;
-					int result = physfsLoadMapFile(currentlevel, mapseed, false);
+					int checkMapHash = -1;
+					int result = physfsLoadMapFile(currentlevel, mapseed, false, &checkMapHash);
+					if ( checkMapHash == 0 )
+					{
+						conductGameChallenges[CONDUCT_MODDED] = 1;
+					}
 
 					minimapPings.clear(); // clear minimap pings
+
+					// clear follower menu entities.
+					FollowerMenu.closeFollowerMenuGUI(true);
 
 					assignActions(&map);
 					generatePathMaps();
@@ -846,7 +861,7 @@ void gameLogic(void)
 								break;
 						}
 					}
-					if ( MFLAG_DISABLETELEPORT )
+					if ( MFLAG_DISABLETELEPORT || MFLAG_DISABLEOPENING )
 					{
 						messagePlayer(clientnum, language[2382]);
 					}
@@ -890,10 +905,18 @@ void gameLogic(void)
 										monster->flags[USERFLAG2] = true;
 										serverUpdateEntityFlag(monster, USERFLAG2);
 									}
-									monster->monsterPlayerAllyIndex = c;
+									monster->monsterAllyIndex = c;
 									if ( multiplayer == SERVER )
 									{
-										serverUpdateEntitySkill(monster, 42); // update monsterPlayerAllyIndex for clients.
+										serverUpdateEntitySkill(monster, 42); // update monsterAllyIndex for clients.
+									}
+
+									if ( multiplayer != CLIENT )
+									{
+										monster->monsterAllyClass = monsterStats->allyClass;
+										monster->monsterAllyPickupItems = monsterStats->allyItemPickup;
+										serverUpdateEntitySkill(monster, 46); // update monsterAllyClass
+										serverUpdateEntitySkill(monster, 44); // update monsterAllyPickupItems
 									}
 
 									newNode = list_AddNodeLast(&stats[c]->FOLLOWERS);
@@ -911,10 +934,19 @@ void gameLogic(void)
 									{
 										strcpy((char*)net_packet->data, "LEAD");
 										SDLNet_Write32((Uint32)monster->getUID(), &net_packet->data[4]);
+										strcpy((char*)(&net_packet->data[8]), monsterStats->name);
+										net_packet->data[8 + strlen(monsterStats->name)] = 0;
 										net_packet->address.host = net_clients[c - 1].host;
 										net_packet->address.port = net_clients[c - 1].port;
-										net_packet->len = 8;
+										net_packet->len = 8 + strlen(monsterStats->name) + 1;
 										sendPacketSafe(net_sock, -1, net_packet, c - 1);
+
+										serverUpdateAllyStat(c, monster->getUID(), monsterStats->LVL, monsterStats->HP, monsterStats->MAXHP, monsterStats->type);
+									}
+
+									if ( !FollowerMenu.recentEntity && c == clientnum )
+									{
+										FollowerMenu.recentEntity = monster;
 									}
 								}
 								else
@@ -2290,6 +2322,14 @@ int main(int argc, char** argv)
 		size_t datadirsz = std::min(sizeof(datadir) - 1, strlen(BASE_DATA_DIR));
 		strncpy(datadir, BASE_DATA_DIR, datadirsz);
 		datadir[datadirsz] = '\0';
+#ifdef WINDOWS
+		strcpy(outputdir, "./");
+#else
+		char *basepath = getenv("HOME");
+		snprintf(outputdir, sizeof(outputdir), "%s/.barony", basepath);
+		if (access(outputdir, F_OK) == -1)
+			mkdir(outputdir, 0777);
+#endif
 		// read command line arguments
 		if ( argc > 1 )
 		{
@@ -2337,6 +2377,7 @@ int main(int argc, char** argv)
 			}
 		}
 		printlog("Data path is %s", datadir);
+		printlog("Output path is %s", outputdir);
 
 
 		// load default language file (english)
@@ -2354,7 +2395,7 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			loadConfig("default.cfg");
+			loadDefaultConfig();
 		}
 
 		// initialize engine
@@ -2451,6 +2492,10 @@ int main(int argc, char** argv)
 
 			// handle steam callbacks
 #ifdef STEAMWORKS
+			if ( g_SteamLeaderboards )
+			{
+				g_SteamLeaderboards->ProcessLeaderboardUpload();
+			}
 			SteamAPI_RunCallbacks();
 #endif
 
@@ -2663,13 +2708,18 @@ int main(int argc, char** argv)
 						if ( loadingmap == false )
 						{
 							currentlevel = startfloor;
+							int checkMapHash = -1;
 							if ( startfloor )
 							{
-								physfsLoadMapFile(currentlevel, 0, true);
+								physfsLoadMapFile(currentlevel, 0, true, &checkMapHash);
 							}
 							else
 							{
-								physfsLoadMapFile(0, 0, true);
+								physfsLoadMapFile(0, 0, true, &checkMapHash);
+							}
+							if ( checkMapHash == 0 )
+							{
+								conductGameChallenges[CONDUCT_MODDED] = 1;
 							}
 						}
 						else
@@ -2677,7 +2727,12 @@ int main(int argc, char** argv)
 							if ( genmap == false )
 							{
 								std::string fullMapName = physfsFormatMapName(maptoload);
-								loadMap(fullMapName.c_str(), &map, map.entities, map.creatures);
+								int checkMapHash = -1;
+								loadMap(fullMapName.c_str(), &map, map.entities, map.creatures, &checkMapHash);
+								if ( checkMapHash == 0 )
+								{
+									conductGameChallenges[CONDUCT_MODDED] = 1;
+								}
 							}
 							else
 							{
@@ -2752,9 +2807,9 @@ int main(int argc, char** argv)
 					{
 						shootmode = true;
 						gui_mode = GUI_MODE_INVENTORY;
-						identifygui_active = false;
-						selectedIdentifySlot = -1;
+						CloseIdentifyGUI();
 						closeRemoveCurseGUI();
+						FollowerMenu.closeFollowerMenuGUI();
 						if ( shopkeeper != 0 )
 						{
 							if ( multiplayer != CLIENT )
@@ -2868,9 +2923,10 @@ int main(int argc, char** argv)
 						else
 						{
 							shootmode = true;
-							identifygui_active = false;
-							selectedIdentifySlot = -1;
+							gui_mode = GUI_MODE_INVENTORY;
+							CloseIdentifyGUI();
 							closeRemoveCurseGUI();
+							FollowerMenu.closeFollowerMenuGUI();
 						}
 
 						//What even is this code? When should it be run?
@@ -2903,10 +2959,7 @@ int main(int argc, char** argv)
 							//Clean up shopkeeper gamepad code here.
 							selectedShopSlot = -1;
 						}
-						if ( shootmode == false )
-						{
-						}
-						else
+						if ( shootmode )
 						{
 							if (openedChest[clientnum])
 							{
@@ -2986,6 +3039,18 @@ int main(int argc, char** argv)
 						playSound(139, 64);
 					}
 
+					if ( !command && (*inputPressed(impulses[IN_FOLLOWERMENU_CYCLENEXT]) || *inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_CYCLE])) )
+					{
+						FollowerMenu.selectNextFollower();
+						proficienciesPage = 1;
+						if ( shootmode && !lock_right_sidebar )
+						{
+							openStatusScreen(GUI_MODE_INVENTORY, INVENTORY_MODE_ITEM);
+						}
+						*inputPressed(impulses[IN_FOLLOWERMENU_CYCLENEXT]) = 0;
+						*inputPressed(joyimpulses[INJOY_GAME_FOLLOWERMENU_CYCLE]) = 0;
+					}
+
 					// commands
 					if ( ( *inputPressed(impulses[IN_CHAT]) || *inputPressed(impulses[IN_COMMAND]) ) && !command )
 					{
@@ -3003,6 +3068,8 @@ int main(int argc, char** argv)
 						inputstr = command_str;
 						*inputPressed(impulses[IN_COMMAND]) = 0;
 						SDL_StartTextInput();
+
+						FollowerMenu.closeFollowerMenuGUI();
 					}
 					if ( command )
 					{
@@ -3023,6 +3090,9 @@ int main(int argc, char** argv)
 						{
 							keystatus[SDL_SCANCODE_RETURN] = 0;
 							command = false;
+
+							strncpy(command_str, messageSanitizePercentSign(command_str, nullptr).c_str(), 127);
+
 							if ( multiplayer != CLIENT )
 							{
 								if ( command_str[0] == '/' )
@@ -3132,6 +3202,14 @@ int main(int argc, char** argv)
 					if ( shootmode == false )
 					{
 						SDL_SetRelativeMouseMode(SDL_FALSE);
+						if ( proficienciesPage == 1 )
+						{
+							drawPartySheet();
+						}
+						else
+						{
+							drawSkillsSheet();
+						}
 					}
 					else
 					{
@@ -3259,6 +3337,47 @@ int main(int argc, char** argv)
 								}
 							}
 						}
+						else if ( FollowerMenu.selectMoveTo &&
+							(FollowerMenu.optionSelected == ALLY_CMD_MOVETO_SELECT
+							|| FollowerMenu.optionSelected == ALLY_CMD_ATTACK_SELECT) )
+						{
+							pos.x = mousex - cursor_bmp->w / 2;
+							pos.y = mousey - cursor_bmp->h / 2;
+							drawImageAlpha(cursor_bmp, NULL, &pos, 192);
+							if ( FollowerMenu.optionSelected == ALLY_CMD_MOVETO_SELECT )
+							{
+								ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Move to...");
+							}
+							else
+							{
+								if ( !strcmp(FollowerMenu.interactText, "") )
+								{
+									if ( FollowerMenu.followerToCommand )
+									{
+										int type = FollowerMenu.followerToCommand->getMonsterTypeFromSprite();
+										if ( FollowerMenu.allowedInteractItems(type)
+											|| FollowerMenu.allowedInteractFood(type)
+											|| FollowerMenu.allowedInteractWorld(type)
+										)
+										{
+											ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Interact with...");
+										}
+										else
+										{
+											ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Attack...");
+										}
+									}
+									else
+									{
+										ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Interact with...");
+									}
+								}
+								else
+								{
+									ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "%s", FollowerMenu.interactText);
+								}
+							}
+						}
 						else if (draw_cursor)
 						{
 							pos.x = mousex - cursor_bmp->w / 2;
@@ -3274,7 +3393,50 @@ int main(int argc, char** argv)
 						pos.y = yres / 2 - cross_bmp->h / 2;
 						pos.w = 0;
 						pos.h = 0;
-						drawImageAlpha(cross_bmp, NULL, &pos, 128);
+						if ( FollowerMenu.selectMoveTo && (FollowerMenu.optionSelected == ALLY_CMD_MOVETO_SELECT
+							|| FollowerMenu.optionSelected == ALLY_CMD_ATTACK_SELECT) )
+						{
+							pos.x = xres / 2 - cursor_bmp->w / 2;
+							pos.y = yres / 2 - cursor_bmp->h / 2;
+							drawImageAlpha(cursor_bmp, NULL, &pos, 192);
+							if ( FollowerMenu.optionSelected == ALLY_CMD_MOVETO_SELECT )
+							{
+								ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Move to...");
+							}
+							else
+							{
+								if ( !strcmp(FollowerMenu.interactText, "") )
+								{
+									if ( FollowerMenu.followerToCommand )
+									{
+										int type = FollowerMenu.followerToCommand->getMonsterTypeFromSprite();
+										if ( FollowerMenu.allowedInteractItems(type)
+											|| FollowerMenu.allowedInteractFood(type)
+											|| FollowerMenu.allowedInteractWorld(type)
+											)
+										{
+											ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Interact with...");
+										}
+										else
+										{
+											ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Attack...");
+										}
+									}
+									else
+									{
+										ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "Interact with...");
+									}
+								}
+								else
+								{
+									ttfPrintTextFormatted(ttf12, pos.x + 24, pos.y + 24, "%s", FollowerMenu.interactText);
+								}
+							}
+						}
+						else
+						{
+							drawImageAlpha(cross_bmp, NULL, &pos, 128);
+						}
 					}
 				}
 				else if ( !multiplayer )
