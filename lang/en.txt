@@ -2945,31 +2945,28 @@ dungeon level %d, client (player %d) (direct ip), %s#
 2295 tunic#
 2296 fez#
 2297 fez#
-<<<<<<< HEAD
-2298 scroll of equipment#
-2299 scroll#
-2300 potion of sturdiness#
-2301 potion#
-2302 firebow#
-2303 firebow#
-2304 frostbow#
-2305 frostbow#
-2306 scroll of war#
-2307 scroll#
-2308 potion of fire breathing#
-2309 potion#
-2310 scroll of lullaby#
-2311 scroll#
-2312 Noisy Cricket#
-2313 magic crossbow#
-2314 dodge roll#
-2315 dodge roll#
-2316 iron warhammer#
-2317 iron warhammer#
-=======
 2298 magicstaff of charm monster#
 2299 magicstaff#
->>>>>>> 021441a942e35c83bd77ed1f847f4f2fffc3534b
+2300 scroll of equipment#
+2301 scroll#
+2302 potion of sturdiness#
+2303 potion#
+2304 firebow#
+2305 firebow#
+2306 frostbow#
+2307 frostbow#
+2308 scroll of war#
+2309 scroll#
+2310 potion of fire breathing#
+2311 potion#
+2312 scroll of lullaby#
+2313 scroll#
+2314 Noisy Cricket#
+2315 magic crossbow#
+2316 dodge roll#
+2317 dodge roll#
+2318 iron warhammer#
+2319 iron warhammer#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
@@ -3712,7 +3709,6 @@ IDENTICAL MOD LISTS LOADED!#
 
 #
 3003 Steam Achievements are disabled#
-
 3004 Loading modded language file...#
 3005 Unloading modded language file...#
 3006 Loading modded item sprites...#
@@ -3766,28 +3762,6 @@ IDENTICAL MOD LISTS LOADED!#
 3034 User Interface Options#
 3035 There's no ground beneath your feet to place that!#
 
-<<<<<<< HEAD
-# Mods
-4100 A bunch of equipment suddenly appears before you!#
-4101 Your equipment shakes, but ultimately happens.#
-4102 Your equipment pouch feels lighter.#
-4103 You feel lucky.#
-4104 Select Scroll to Copy#
-4105 You successfully copied a scroll.#
-4106 You are not smart enough to copy a scroll.#
-4107 You feel your armor harden around you.#
-4108 Your armor feels paper thin.#
-4109 You feel your armor return to normal.#
-4110 An all out war starts!#
-4111 A wave of chaos passes over you then subsides.#
-4112 An inferno spews forth from your mouth!#
-4113 You can't drink when spitting flames!#
-4114 You sing a soothing melody for those around you.#
-4115 You feel tired for a moment then it passes.#
-4116 You can't equip an off-hand item with this weapon.#
-
-4200 end#
-=======
 # Follower Radial Menu Text
 3036 Follower Options:#
 3037 Wait here#
@@ -3911,5 +3885,24 @@ for this option. (Required: %s, Current: %s)#
 3143 The charm had no effect on %s!#
 3144 A magical charm seizes your will to fight!#
 3145 The slime envelops and consumes the %s!#
-3149 end#
->>>>>>> 021441a942e35c83bd77ed1f847f4f2fffc3534b
+
+# Mods
+4100 A bunch of equipment suddenly appears before you!#
+4101 Your equipment shakes, but ultimately happens.#
+4102 Your equipment pouch feels lighter.#
+4103 You feel lucky.#
+4104 Select Scroll to Copy#
+4105 You successfully copied a scroll.#
+4106 You are not smart enough to copy a scroll.#
+4107 You feel your armor harden around you.#
+4108 Your armor feels paper thin.#
+4109 You feel your armor return to normal.#
+4110 An all out war starts!#
+4111 A wave of chaos passes over you then subsides.#
+4112 An inferno spews forth from your mouth!#
+4113 You can't drink when spitting flames!#
+4114 You sing a soothing melody for those around you.#
+4115 You feel tired for a moment then it passes.#
+4116 You can't equip an off-hand item with this weapon.#
+
+4200 end#

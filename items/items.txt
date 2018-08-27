@@ -2141,6 +2141,14 @@ ARMOR
 20
 items/images/Fez.png
 
+63
+412
+1
+MAGICSTAFF
+30
+500
+items/images/PurpleMysticStaff.png
+
 58
 58
 1
@@ -2164,16 +2172,16 @@ items/images/PotionGreen.png
 items/images/PotionPurple.png
 items/images/PotionWhite.png
 
-685
 686
+687
 1
 WEAPON
 20
 160
 items/images/Firebow.png
 
-689
 690
+691
 1
 WEAPON
 20
@@ -2211,8 +2219,8 @@ SCROLL
 150
 items/images/Scroll.png
 
-694
 695
+696
 1
 WEAPON
 30
@@ -2228,8 +2236,8 @@ ARMOR
 items/images/OrbBlue.png
 items/images/OrbBlue.png
 
-697
 698
+699
 1
 WEAPON
 30

@@ -4468,17 +4468,17 @@ void Entity::attack(int pose, int charge, Entity* target)
 				}
 				else if (myStats->weapon->type == FIREBOW)
 				{
-					entity = newEntity(688, 1, map.entities, nullptr); // fire arrow
+					entity = newEntity(689, 1, map.entities, nullptr); // fire arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else if (myStats->weapon->type == FROSTBOW)
 				{
-					entity = newEntity(692, 1, map.entities, nullptr); // frost arrow
+					entity = newEntity(693, 1, map.entities, nullptr); // frost arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else if (myStats->weapon->type == ARTIFACT_BOW)
 				{
-					entity = newEntity(693, 1, map.entities, nullptr); // poison arrow
+					entity = newEntity(694, 1, map.entities, nullptr); // poison arrow
 					playSoundEntity(this, 239 + rand() % 3, 96);
 				}
 				else
