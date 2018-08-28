@@ -2876,7 +2876,7 @@ void item_ScrollEquipment(Item* item, int player)
 	else if (item->beatitude >= 4)
 	{
 		messagePlayer(player, language[4100]);
-		int numItems = 5;						//Number of items that can possibly spawn
+		int numItems = 7;						//Number of items that can possibly spawn
 		int maxPossible = rand() % 2 + 1;		//Max number of items that actually spawn
 		int* whichItem = new int[maxPossible];
 
@@ -2899,6 +2899,10 @@ void item_ScrollEquipment(Item* item, int player)
 				dropItem(newItem(ARTIFACT_MACE, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
 			else if ( whichItem[i] == k++ )
 				dropItem(newItem(ARTIFACT_BOW, EXCELLENT, item->beatitude-3, 1, rand(), true, &stats[player]->inventory), player);
+			else if (whichItem[i] == k++)
+				dropItem(newItem(COMPLIANT_ROD, EXCELLENT, item->beatitude - 3, 1, rand(), true, &stats[player]->inventory), player);
+			else if (whichItem[i] == k++)
+				dropItem(newItem(NOISY_CRICKET, DECREPIT, item->beatitude - 3, 1, rand(), true, &stats[player]->inventory), player);
 		}
 		delete[] whichItem;
 		whichItem = NULL;

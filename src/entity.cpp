@@ -5267,7 +5267,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 					if ( myStats->weapon != NULL )
 					{
 						weaponType = myStats->weapon->type;
-						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW )
+						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW || weaponType == COMPLIANT_ROD )
 						{
 							artifactWeapon = true;
 						}
@@ -7943,7 +7943,7 @@ int getWeaponSkill(Item* weapon)
 		return -1;
 	}
 
-	if ( weapon->type == QUARTERSTAFF || weapon->type == IRON_SPEAR || weapon->type == STEEL_HALBERD || weapon->type == ARTIFACT_SPEAR || weapon->type == CRYSTAL_SPEAR )
+	if ( weapon->type == QUARTERSTAFF || weapon->type == IRON_SPEAR || weapon->type == STEEL_HALBERD || weapon->type == ARTIFACT_SPEAR || weapon->type == CRYSTAL_SPEAR || weapon->type == COMPLIANT_ROD)
 	{
 		return PRO_POLEARM;
 	}

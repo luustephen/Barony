@@ -2243,3 +2243,11 @@ WEAPON
 30
 80
 items/images/IronWarhammer.png
+
+700
+701
+1
+WEAPON
+30
+500
+items/images/CompliantRod.png

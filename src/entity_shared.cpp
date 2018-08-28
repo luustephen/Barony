@@ -358,6 +358,7 @@ char itemNameStrings[NUM_ITEM_STRINGS][32] =
 	"noisy_cricket",
 	"dodge_roll",
 	"iron_warhammer",
+	"compliant_rod",
 	""
 };
 
@@ -477,7 +478,8 @@ char itemStringsByType[10][NUM_ITEM_STRINGS_BY_TYPE][32] =
 		"frostbow",
 		"potion_firebreath",
 		"noisy_cricket",
-		"iron_warhammer"
+		"iron_warhammer",
+		"compliant_rod"
 		""
 	},
 	{

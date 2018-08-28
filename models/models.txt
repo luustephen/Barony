@@ -698,3 +698,6 @@ models/items/NoisyCricket_FP.vox
 models/particles/Empty.vox
 models/items/IronWarhammer.vox
 models/items/IronWarhammer_FP.vox
+models/items/CompliantRod.vox
+models/items/CompliantRod_FP.vox
+models/items/CompliantRodExtended_FP.vox

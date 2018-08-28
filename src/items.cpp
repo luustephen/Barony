@@ -2148,6 +2148,9 @@ void useItem(Item* item, int player)
 		case IRON_WARHAMMER:
 			equipItem(item, &stats[player]->weapon, player);
 			break;
+		case COMPLIANT_ROD:
+			equipItem(item, &stats[player]->weapon, player);
+			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
 			break;
@@ -2664,6 +2667,10 @@ Sint32 Item::weaponGetAttack() const
 	else if (type == NOISY_CRICKET)
 	{
 		attack += 15;
+	}
+	else if (type == COMPLIANT_ROD)
+	{
+		attack += 10;
 	}
 	// old formula
 	//attack *= (double)(status / 5.0);

@@ -448,6 +448,10 @@ void actHudWeapon(Entity* my)
 							my->sprite++;
 						}
 					}
+					else if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+					{
+						my->sprite++;
+					}
 				}
 			}
 #else
@@ -1034,6 +1038,10 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 1)     // prepare for first swing
 	{
+		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		{
+			my->sprite++;
+		}
 		HUDWEAPON_YAW -= .25;
 		if (HUDWEAPON_YAW < 0)
 		{
@@ -1285,6 +1293,10 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 4)     // prepare for second swing
 	{
+		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		{
+			my->sprite++;
+		}
 		HUDWEAPON_YAW = 0;
 		HUDWEAPON_PITCH -= .25;
 		if (HUDWEAPON_PITCH < 0)
@@ -1391,6 +1403,10 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 5)     // second swing
 	{
+		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		{
+			my->sprite++;
+		}
 		HUDWEAPON_MOVEX = sin(HUDWEAPON_YAW) * 1;
 		HUDWEAPON_MOVEY = cos(HUDWEAPON_YAW) * -6;
 		HUDWEAPON_YAW += .35;
@@ -1820,10 +1836,10 @@ void actHudShield(Entity* my)
 					float y_force = (*inputPressed(impulses[IN_FORWARD]) - (double)* inputPressed(impulses[IN_BACK]));
 					real_t speedFactor = std::min((players[clientnum]->entity->getDEX() * 0.1 + 15.5), 25 * 0.5 + 10) / 2;
 
-					char buffer[20];
-					sprintf(buffer, "%f", players[clientnum]->entity->vel_y);
+					//char buffer[20];
+					//sprintf(buffer, "%f", players[clientnum]->entity->vel_y);
 
-					messagePlayer(clientnum, buffer);
+					//messagePlayer(clientnum, buffer);
 					if (x_force == 0 && y_force == 0)
 					{
 						y_force = 1;

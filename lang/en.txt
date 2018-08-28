@@ -2967,6 +2967,8 @@ dungeon level %d, client (player %d) (direct ip), %s#
 2317 dodge roll#
 2318 iron warhammer#
 2319 iron warhammer#
+2320 Compliant Rod#
+2321 magic quarterstaff#
 
 #Additional ingame text.
 2350 A fragment breaks away from your %s.#
