@@ -448,10 +448,6 @@ void actHudWeapon(Entity* my)
 							my->sprite++;
 						}
 					}
-					else if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
-					{
-						my->sprite++;
-					}
 				}
 			}
 #else

@@ -4639,11 +4639,16 @@ void Entity::attack(int pose, int charge, Entity* target)
 			}
 		}
 
+		int rodStrikeRange = STRIKERANGE * 2; //Custom strike distance for Compliant Rod
 		// normal attacks
 		if ( target == nullptr )
 		{
 			playSoundEntity(this, 23 + rand() % 5, 128); // whoosh noise
 			dist = lineTrace(this, x, y, yaw, STRIKERANGE, 0, false);
+			if (myStats != nullptr && myStats->weapon != NULL && myStats->weapon->type == COMPLIANT_ROD)
+			{
+				dist = lineTrace(this, x, y, yaw, rodStrikeRange, 0, false);
+			}
 		}
 		else
 		{
@@ -6321,7 +6326,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 		}
 		else
 		{
-			if ( dist != STRIKERANGE )
+			if ( dist != STRIKERANGE && myStats != nullptr && myStats->weapon != NULL && myStats->weapon->type != COMPLIANT_ROD || dist != rodStrikeRange && myStats != nullptr && myStats->weapon != NULL && myStats->weapon->type == COMPLIANT_ROD)
 			{
 				// hit a wall
 				if ( myStats->weapon != NULL )
@@ -6448,7 +6453,6 @@ void Entity::attack(int pose, int charge, Entity* target)
 					playSoundPos(hit.x, hit.y, 183, 64);
 				}
 			}
-
 			// apply AoE shake effect
 			if ( pose == MONSTER_POSE_GOLEM_SMASH && target == nullptr )
 			{

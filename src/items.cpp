@@ -2150,6 +2150,10 @@ void useItem(Item* item, int player)
 			break;
 		case COMPLIANT_ROD:
 			equipItem(item, &stats[player]->weapon, player);
+			if (player == clientnum && stats[player] != nullptr && stats[player]->weapon != NULL && stats[player]->weapon->type == COMPLIANT_ROD)
+			{
+				messagePlayer(player, language[4117]);
+			}
 			break;
 		default:
 			printlog("error: item %d used, but it has no use case!\n", (int)item->type);
