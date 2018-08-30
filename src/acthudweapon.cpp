@@ -721,6 +721,11 @@ void actHudWeapon(Entity* my)
 								players[clientnum]->entity->attack(0, 0, nullptr);
 								HUDWEAPON_MOVEX = -4;
 								HUDWEAPON_CHOP = 3;
+								int knockbackFactor = 15;
+								float knockbackX = cos(players[clientnum]->entity->yaw) * knockbackFactor;					//How far to knockback with cricket
+								float knockbackY = sin(players[clientnum]->entity->yaw) * knockbackFactor;
+								players[clientnum]->entity->vel_x = -knockbackX;
+								players[clientnum]->entity->vel_y = -knockbackY;
 								// set delay before crossbow can fire again
 								throwGimpTimer = 60;
 							}
@@ -1034,7 +1039,7 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 1)     // prepare for first swing
 	{
-		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		if (stats[clientnum]->weapon != NULL && stats[clientnum]->weapon->type == COMPLIANT_ROD)
 		{
 			my->sprite++;
 		}
@@ -1289,7 +1294,7 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 4)     // prepare for second swing
 	{
-		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		if (stats[clientnum]->weapon != NULL && stats[clientnum]->weapon->type == COMPLIANT_ROD)
 		{
 			my->sprite++;
 		}
@@ -1399,7 +1404,7 @@ void actHudWeapon(Entity* my)
 	}
 	else if (HUDWEAPON_CHOP == 5)     // second swing
 	{
-		if (stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		if (stats[clientnum]->weapon != NULL && stats[clientnum]->weapon->type == COMPLIANT_ROD)
 		{
 			my->sprite++;
 		}
@@ -1420,7 +1425,7 @@ void actHudWeapon(Entity* my)
 			if ( stats[clientnum]->weapon )
 			{
 				int weaponSkill = getWeaponSkill(stats[clientnum]->weapon);
-				if ( weaponSkill == PRO_SWORD || stats[clientnum]->weapon->type == STEEL_HALBERD )
+				if ( weaponSkill == PRO_SWORD || stats[clientnum]->weapon->type == STEEL_HALBERD || stats[clientnum]->weapon->type == COMPLIANT_ROD )
 				{
 					HUDWEAPON_CHOP = 7;  // swords + halberds can stab
 				}
@@ -1475,6 +1480,10 @@ void actHudWeapon(Entity* my)
 	}
 	else if ( HUDWEAPON_CHOP == 7 )     // prepare for third swing
 	{
+		if (stats[clientnum]->weapon != NULL && stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		{
+			my->sprite++;
+		}
 		HUDWEAPON_MOVEX -= .35;
 		if ( HUDWEAPON_MOVEX < 0 )
 		{
@@ -1538,6 +1547,10 @@ void actHudWeapon(Entity* my)
 	}
 	else if ( HUDWEAPON_CHOP == 8 )     // third swing
 	{
+		if (stats[clientnum]->weapon != NULL && stats[clientnum]->weapon->type == COMPLIANT_ROD)
+		{
+			my->sprite++;
+		}
 		HUDWEAPON_MOVEX += 2;
 		if ( HUDWEAPON_MOVEX > 4 )
 		{
