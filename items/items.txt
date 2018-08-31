@@ -2227,14 +2227,13 @@ WEAPON
 500
 items/images/NoisyCricket.png
 
-610
-610
-2
+703
+704
+1
 ARMOR
 1
 1
-items/images/OrbBlue.png
-items/images/OrbBlue.png
+items/images/DodgeRoll.png
 
 698
 699

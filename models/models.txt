@@ -701,3 +701,5 @@ models/items/IronWarhammer_FP.vox
 models/items/CompliantRod.vox
 models/items/CompliantRod_FP.vox
 models/items/CompliantRodExtended_FP.vox
+models/items/DodgeRoll.vox
+models/items/DodgeRoll_FP.vox

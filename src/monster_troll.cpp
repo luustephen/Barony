@@ -69,6 +69,7 @@ void initTroll(Entity* my, Stat* myStats)
 				myStats->OLDHP = myStats->HP;
 				myStats->GOLD += 300;
 				myStats->LVL += 10;
+				newItem(COMPLIANT_ROD, EXCELLENT, 4, 1, rand(), true, &myStats->inventory);
 			}
 
 			// random effects

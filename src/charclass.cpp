@@ -823,11 +823,6 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
-			// crossbow
-			item = newItem(NOISY_CRICKET, WORN, 0, 1, 0, true, NULL);
-			item2 = itemPickup(player, item);
-			hotbar[1].item = item2->uid;
-			free(item);
 		}
 	}
 	// wizard

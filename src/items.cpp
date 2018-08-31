@@ -2144,6 +2144,10 @@ void useItem(Item* item, int player)
 			break;
 		case DODGE_ROLL:
 			equipItem(item, &stats[player]->shield, player);
+			if (player == clientnum && stats[player] != nullptr && stats[player]->shield != NULL && stats[player]->shield->type == DODGE_ROLL)
+			{
+				messagePlayer(player, language[4118]);
+			}
 			break;
 		case IRON_WARHAMMER:
 			equipItem(item, &stats[player]->weapon, player);
