@@ -823,6 +823,10 @@ void initClass(int player)
 			item2 = itemPickup(player, item);
 			free(item);
 
+			item = newItem(NOISY_CRICKET, DECREPIT, 0, 1, 0, true, NULL);
+			item2 = itemPickup(player, item);
+			free(item);
+
 		}
 	}
 	// wizard

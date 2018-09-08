@@ -3908,5 +3908,6 @@ for this option. (Required: %s, Current: %s)#
 4116 You can't equip an off-hand item with this weapon.#
 4117 You feel the rod expand and contract flexibly in your hand.#
 4118 Use the block key to roll.#
+4119 This weapon looks decrepit from repeated use.#
 
 4200 end#

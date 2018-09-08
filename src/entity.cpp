@@ -4396,7 +4396,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 			else if ( myStats->weapon->type == SHORTBOW || myStats->weapon->type == CROSSBOW || myStats->weapon->type == SLING || myStats->weapon->type == ARTIFACT_BOW || myStats->weapon->type == FIREBOW || myStats->weapon->type == FROSTBOW || myStats->weapon->type == NOISY_CRICKET)
 			{
 				// damage weapon if applicable
-				if ( rand() % 50 == 0 && myStats->weapon->type != ARTIFACT_BOW )
+				if ( rand() % 50 == 0 && myStats->weapon->type != ARTIFACT_BOW || rand() % 50 > 40 && myStats->weapon->type == NOISY_CRICKET)
 				{
 					if ( myStats->weapon != NULL )
 					{
@@ -5263,6 +5263,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 					}
 
 					// damage weapon if applicable
+					messagePlayer(player, language[65]);
 
 					bool isWeakWeapon = false;
 					bool artifactWeapon = false;
@@ -5272,7 +5273,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 					if ( myStats->weapon != NULL )
 					{
 						weaponType = myStats->weapon->type;
-						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW || weaponType == COMPLIANT_ROD )
+						if ( weaponType == ARTIFACT_AXE || weaponType == ARTIFACT_MACE || weaponType == ARTIFACT_SPEAR || weaponType == ARTIFACT_SWORD || weaponType == ARTIFACT_BOW || weaponType == COMPLIANT_ROD)
 						{
 							artifactWeapon = true;
 						}
@@ -5280,6 +5281,7 @@ void Entity::attack(int pose, int charge, Entity* target)
 						{
 							// crystal weapons degrade faster.
 							isWeakWeapon = true;
+							messagePlayer(player, language[66]);
 						}
 
 						if ( !artifactWeapon )
