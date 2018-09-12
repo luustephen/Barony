@@ -19,7 +19,7 @@
 #endif
 
 // REMEMBER TO CHANGE THIS WITH EVERY NEW OFFICIAL VERSION!!!
-#define VERSION "v3.2.1"
+#define VERSION "v3.2.2"
 #define GAME_CODE
 
 //#define MAX_FPS_LIMIT 60 //TODO: Make this configurable.
@@ -269,6 +269,46 @@ extern std::vector<std::string> randomPlayerNamesFemale;
 extern std::vector<std::string> physFSFilesInDirectory;
 void loadRandomNames();
 
-
 void mapLevel(int player);
+
+class TileEntityListHandler
+{
+private:
+	static const int kMaxMapDimension = 256;
+public:
+	list_t gridEntities[kMaxMapDimension][kMaxMapDimension];
+
+	void clearTile(int x, int y);
+	void emptyGridEntities();
+	list_t* getTileList(int x, int y);
+	node_t* addEntity(Entity& entity);
+	node_t* updateEntity(Entity& entity);
+	std::vector<list_t*> getEntitiesWithinRadius(int u, int v, int radius);
+	std::vector<list_t*> getEntitiesWithinRadiusAroundEntity(Entity* entity, int radius);
+
+	TileEntityListHandler()
+	{
+		for ( int i = 0; i < kMaxMapDimension; ++i )
+		{
+			for ( int j = 0; j < kMaxMapDimension; ++j )
+			{
+				gridEntities[i][j].first = nullptr;
+				gridEntities[i][j].last = nullptr;
+			}
+		}
+	};
+
+	~TileEntityListHandler()
+	{
+		for ( int i = 0; i < kMaxMapDimension; ++i )
+		{
+			for ( int j = 0; j < kMaxMapDimension; ++j )
+			{
+				clearTile(i, j);
+			}
+		}
+	};
+};
+extern TileEntityListHandler TileEntityList;
+
 
